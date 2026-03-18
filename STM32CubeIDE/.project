@@ -62,6 +62,41 @@
 			<locationURI>PARENT-2-PROJECT_LOC/O3_Bootloader%20-%20copia%20(2)/Boot/Src/boot_jump.c</locationURI>
 		</link>
 		<link>
+			<name>FATFS/App/fatfs_usb.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/FATFS/App/fatfs_usb.c</locationURI>
+		</link>
+		<link>
+			<name>FATFS/App/fatfs_usb.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/FATFS/App/fatfs_usb.h</locationURI>
+		</link>
+		<link>
+			<name>FATFS/Target/ffconf.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/FATFS/Target/ffconf.h</locationURI>
+		</link>
+		<link>
+			<name>USB_Host/App/usb_host.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/USB_Host/App/usb_host.c</locationURI>
+		</link>
+		<link>
+			<name>USB_Host/App/usb_host.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/USB_Host/App/usb_host.h</locationURI>
+		</link>
+		<link>
+			<name>USB_Host/Target/usbh_conf.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/USB_Host/Target/usbh_conf.c</locationURI>
+		</link>
+		<link>
+			<name>USB_Host/Target/usbh_conf.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/USB_Host/Target/usbh_conf.h</locationURI>
+		</link>
+		<link>
 			<name>Drivers/CMSIS/Include/cachel1_armv7.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/CMSIS/Include/cachel1_armv7.h</locationURI>
@@ -502,6 +537,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_gpio.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c</locationURI>
+		</link>
+		<link>
 			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr.c</locationURI>
@@ -522,9 +562,99 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc_ex.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_usb.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_usb.c</locationURI>
+		</link>
+		<link>
 			<name>Drivers/STM32U5xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/diskio.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/diskio.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/diskio.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/diskio.h</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/ff.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/ff.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/ff.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/ff.h</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/ff_gen_drv.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/ff_gen_drv.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/ff_gen_drv.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/ff_gen_drv.h</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/ffsystem_baremetal.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/ffsystem_baremetal.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/ffunicode.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/ffunicode.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ctlreq.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ctlreq.h</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_def.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_def.h</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ioreq.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ioreq.h</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_pipes.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_pipes.h</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/CMSIS/Device/ST/STM32U5xx/Include/stm32u599xx.h</name>
@@ -540,6 +670,46 @@
 			<name>Drivers/CMSIS/Device/ST/STM32U5xx/Include/system_stm32u5xx.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/CMSIS/Device/ST/STM32U5xx/Include/system_stm32u5xx.h</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.h</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc.h</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_bot.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_bot.h</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_scsi.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_scsi.h</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.c</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

@@ -18,6 +18,8 @@
 #include "stm32u5xx_hal.h"
 #include "main.h"
 #include "boot_jump.h"
+#include "usb_host.h"
+#include "fatfs_usb.h"
 #include <stdio.h>
 
 
@@ -28,6 +30,8 @@ static void SystemPower_Config(void);
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void Recovery_Loop(void);
+static uint32_t g_pwrinit_vosr;
+static uint32_t g_pwrinit_svmsr;
 
 int _write(int file, char *ptr, int len)
 {
@@ -50,11 +54,24 @@ int main(void)
 {
     /* 1 — HAL and system init */
     HAL_Init();
-    /* Phase 1 skeleton: keep bring-up independent from board power config. */
-    /* SystemPower_Config(); */
+    __HAL_RCC_PWR_CLK_ENABLE();
+    g_pwrinit_vosr = PWR->VOSR;
+    g_pwrinit_svmsr = PWR->SVMSR;
+    SystemPower_Config();
+    if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE2) != HAL_OK)
+    {
+        Error_Handler();
+    }
     SystemClock_Config();
     MX_GPIO_Init();
 
+    printf("[PWRINIT] VOSR=%08lx\n", g_pwrinit_vosr);
+    printf("[PWRINIT] SVMSR=%08lx\n", g_pwrinit_svmsr);
+    printf("FATFS init...\n");
+    MX_FATFS_USB_Init();
+
+    printf("USB host init...\n");
+    MX_USB_HOST_Init();
     printf("BL start\n");
 
     /* 2 — Check for a valid application */
@@ -80,10 +97,18 @@ int main(void)
  * ----------------------------------------------------------------------- */
 static void Recovery_Loop(void)
 {
+    uint32_t last_blink = HAL_GetTick();
+
     while (1)
     {
-        HAL_GPIO_TogglePin(BOOT_LED_GPIO_Port, BOOT_LED_Pin);
-        HAL_Delay(250);
+        MX_USB_HOST_Process();
+        USBH_AppTask();
+
+        if ((HAL_GetTick() - last_blink) >= 250U)
+        {
+            last_blink = HAL_GetTick();
+            HAL_GPIO_TogglePin(BOOT_LED_GPIO_Port, BOOT_LED_Pin);
+        }
     }
 }
 
@@ -93,9 +118,9 @@ static void Recovery_Loop(void)
  * ----------------------------------------------------------------------- */
 static void SystemPower_Config(void)
 {
-    HAL_PWREx_DisableUCPDDeadBattery();
+//    HAL_PWREx_DisableUCPDDeadBattery();
 
-    if (HAL_PWREx_ConfigSupply(PWR_SMPS_SUPPLY) != HAL_OK)
+    if (HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY) != HAL_OK)
     {
         Error_Handler();
     }
@@ -103,17 +128,27 @@ static void SystemPower_Config(void)
 
 /* -----------------------------------------------------------------------
  * SystemClock_Config
- *   Minimal Phase 1 clock tree:
- *     HSI internal oscillator as SYSCLK, no PLL, no external dependencies.
+ *   Keep SYSCLK on HSI for stable bring-up, but enable HSE + PLL1 so the
+ *   USB PHY can use a valid dedicated clock source.
  * ----------------------------------------------------------------------- */
 static void SystemClock_Config(void)
 {
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSIState       = RCC_HSI_ON;
-    RCC_OscInitStruct.PLL.PLLState   = RCC_PLL_NONE;
+    RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
+    RCC_OscInitStruct.PLL.PLLState   = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLMBOOST  = RCC_PLLMBOOST_DIV2;
+    RCC_OscInitStruct.PLL.PLLM       = 5;
+    RCC_OscInitStruct.PLL.PLLN       = 64;
+    RCC_OscInitStruct.PLL.PLLP       = 10;
+    RCC_OscInitStruct.PLL.PLLQ       = 2;
+    RCC_OscInitStruct.PLL.PLLR       = 2;
+    RCC_OscInitStruct.PLL.PLLRGE     = RCC_PLLVCIRANGE_0;
+    RCC_OscInitStruct.PLL.PLLFRACN   = 0;
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
     {
         Error_Handler();

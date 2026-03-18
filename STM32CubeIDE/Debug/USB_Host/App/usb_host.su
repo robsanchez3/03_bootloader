@@ -1,0 +1,5 @@
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:52:6:MX_USB_HOST_Init	8	static
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:87:9:USBH_IsFlashReady	4	static
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:96:6:MX_USB_HOST_Process	8	static
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:101:6:USBH_AppTask	16	static
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:127:13:USBH_UserProcess	24	static

@@ -24,6 +24,13 @@ C_DEPS :=
 SUBDIRS := \
 Boot/Src \
 Drivers/STM32U5xx_HAL_Driver/Src \
+Drivers/Vendor/FatFs/source \
+Drivers/Vendor/FatFs/source/drivers/USB \
+FATFS/App \
+Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src \
+Middlewares/ST/STM32_USB_Host_Library/Core/Src \
 Src \
 Startup \
+USB_Host/App \
+USB_Host/Target \
 
