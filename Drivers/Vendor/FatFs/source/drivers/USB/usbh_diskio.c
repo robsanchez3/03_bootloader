@@ -15,13 +15,18 @@
 #include "usbh_diskio.h"
 #include "usbh_core.h"
 #include "usbh_msc.h"
+#include <string.h>
 
 /* Private defines -----------------------------------------------------------*/
 #define USB_DEFAULT_BLOCK_SIZE  512U
+#define USB_READ_RETRIES        3U
 
 /* Private variables ---------------------------------------------------------*/
 /* hUsbHostHS is declared in USB_Host/App/usb_host.c */
 extern USBH_HandleTypeDef  hUsbHostHS;
+
+/* Use a fixed aligned bounce buffer for MSC reads triggered by FatFS. */
+static uint8_t usbh_sector_buf[USB_DEFAULT_BLOCK_SIZE] __attribute__((aligned(32)));
 
 /* Private function prototypes -----------------------------------------------*/
 DSTATUS USBH_initialize(BYTE lun);
@@ -79,16 +84,33 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_ERROR;
   MSC_LUNTypeDef info;
-  USBH_StatusTypeDef msc_res;
+  UINT i;
+  UINT attempt;
 
-  msc_res = USBH_MSC_Read(&hUsbHostHS, lun, sector, buff, count);
+  for (i = 0; i < count; i++)
+  {
+    res = RES_ERROR;
 
-  if (msc_res == USBH_OK)
-  {
-    res = RES_OK;
-  }
-  else
-  {
+    for (attempt = 0; attempt < USB_READ_RETRIES; attempt++)
+    {
+      if (USBH_MSC_Read(&hUsbHostHS, lun, sector + i, usbh_sector_buf, 1U) == USBH_OK)
+      {
+        memcpy(buff + (i * USB_DEFAULT_BLOCK_SIZE), usbh_sector_buf, USB_DEFAULT_BLOCK_SIZE);
+        res = RES_OK;
+        break;
+      }
+
+      if (attempt + 1U < USB_READ_RETRIES)
+      {
+        HAL_Delay(2U);
+      }
+    }
+
+    if (res == RES_OK)
+    {
+      continue;
+    }
+
     USBH_MSC_GetLUNInfo(&hUsbHostHS, lun, &info);
     switch (info.sense.asc)
     {
@@ -102,6 +124,7 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
         res = RES_ERROR;
         break;
     }
+    break;
   }
   return res;
 }

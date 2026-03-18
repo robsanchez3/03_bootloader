@@ -1,0 +1,62 @@
+USB Host / MSC / FatFS POC Status
+=================================
+
+Date
+2026-03-18
+
+Objective of this phase
+- Validate, inside O3_Bootloader, the minimum chain needed to access a USB pen drive.
+- Scope: host bring-up, MSC enumeration, FatFS mount, and proof of file access path.
+- Out of scope: firmware update logic, image validation, flash programming, boot jump policy.
+
+Current technical status
+- Bootloader bring-up is stable.
+- USB OTG HS host starts correctly.
+- USB pen drive is detected and enumerated.
+- MSC class becomes active and capacity is reported.
+- FatFS driver is linked and f_mount() returns success.
+- Raw sector reads work:
+  - MBR sector 0 read OK.
+  - Partition entry parsed correctly.
+  - Boot sector at real partition LBA read OK.
+- FatFS file-path access is functionally demonstrated:
+  - f_stat("0:/UPDATE/test.txt") has returned FR_OK in successful runs.
+  - The content of test.txt has been read successfully in successful runs.
+
+Observed instability
+- File-system level access is not yet fully stable/repeatable.
+- Across runs, file access has shown mixed outcomes:
+  - FR_OK
+  - FR_DISK_ERR
+  - FR_NO_FILESYSTEM
+- This means USB Host + MSC base is working and file access is functionally possible,
+  but FatFS access is not yet robust enough to treat as production-ready.
+
+Key project changes that must be kept
+- STM32CubeIDE/Src/main.c
+  - __HAL_RCC_PWR_CLK_ENABLE()
+  - SystemPower_Config() using PWR_LDO_SUPPLY
+  - HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE2)
+  - Recovery_Loop() processing USB continuously without a blocking 250 ms delay
+- USB_Host/Target/usbh_conf.h
+  - USBH_IN_NAK_PROCESS = 1U
+- USB_Host/Target/usbh_conf.c
+  - dma_enable = DISABLE
+  - USBH_LL_ActivatePipe() implementation
+
+What is considered validated
+- USB host bring-up
+- USB device detection
+- MSC enumeration
+- Basic MSC sector reads
+- MBR and boot-sector access
+- Successful read of 0:/UPDATE/test.txt in at least some runs
+
+What is NOT considered closed
+- Stable, repeatable FatFS file access
+- Any real bootloader update workflow
+
+Recommended next phase
+- Freeze this base as the USB/MSC POC baseline.
+- Open a dedicated stabilization task for FatFS file access on the bootloader project.
+- Only after file access is stable, define and implement the real bootloader update flow.

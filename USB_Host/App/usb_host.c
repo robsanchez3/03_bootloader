@@ -35,6 +35,11 @@ ApplicationTypeDef  Appli_state = APPLICATION_IDLE;
 /* USER CODE BEGIN PV */
 static uint8_t usb_test_read_pending;
 static uint8_t usb_test_read_done;
+static uint32_t usb_connect_tick;
+static uint8_t usb_reenum_attempted;
+static uint8_t usb_media_recovery_attempted;
+
+#define USB_ENUM_TIMEOUT_MS 3000U
 
 /* USER CODE END PV */
 
@@ -42,6 +47,8 @@ static uint8_t usb_test_read_done;
 static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
 
 /* USER CODE BEGIN PFP */
+static uint8_t USBH_AppIsTransientFatFsError(FRESULT res);
+static uint8_t USBH_AppIsLunReady(uint8_t lun);
 
 /* USER CODE END PFP */
 
@@ -96,11 +103,23 @@ uint8_t USBH_IsFlashReady(void)
 void MX_USB_HOST_Process(void)
 {
   USBH_Process(&hUsbHostHS);
+
+  if ((Appli_state == APPLICATION_START) &&
+      (usb_reenum_attempted == 0U) &&
+      ((HAL_GetTick() - usb_connect_tick) >= USB_ENUM_TIMEOUT_MS))
+  {
+    USB_LOG("[USB] enum timeout -> re-enumerate\n");
+    usb_reenum_attempted = 1U;
+    (void)USBH_ReEnumerate(&hUsbHostHS);
+    usb_connect_tick = HAL_GetTick();
+  }
 }
 
 void USBH_AppTask(void)
 {
-  FRESULT read_res;
+  FILINFO fno;
+  FRESULT fat_res;
+  FRESULT read_file_res;
 
   if ((usb_test_read_pending == 0U) || (usb_test_read_done != 0U))
   {
@@ -112,10 +131,59 @@ void USBH_AppTask(void)
     return;
   }
 
+  if (USBH_AppIsLunReady(0U) == 0U)
+  {
+    return;
+  }
+
+  fat_res = f_stat("0:/UPDATE/test.txt", &fno);
+  USB_LOG("[USB] f_stat result = %d\n", fat_res);
+  if (fat_res == FR_OK)
+  {
+    USB_LOG("[USB] reading 0:/UPDATE/test.txt\n");
+    read_file_res = USB_FATFS_ReadTestFile("0:/UPDATE/test.txt");
+    USB_LOG("[USB] file read result = %d\n", read_file_res);
+
+    if (read_file_res == FR_OK)
+    {
+      usb_test_read_done = 1U;
+      return;
+    }
+
+    if ((USBH_AppIsTransientFatFsError(read_file_res) != 0U) &&
+        (usb_media_recovery_attempted == 0U))
+    {
+      USB_LOG("[USB] media error -> re-enumerate\n");
+      usb_media_recovery_attempted = 1U;
+      (void)USBH_ReEnumerate(&hUsbHostHS);
+      return;
+    }
+
+    if (USBH_AppIsTransientFatFsError(read_file_res) == 0U)
+    {
+      usb_test_read_done = 1U;
+      return;
+    }
+  }
+  else
+  {
+    if ((USBH_AppIsTransientFatFsError(fat_res) != 0U) &&
+        (usb_media_recovery_attempted == 0U))
+    {
+      USB_LOG("[USB] media error -> re-enumerate\n");
+      usb_media_recovery_attempted = 1U;
+      (void)USBH_ReEnumerate(&hUsbHostHS);
+      return;
+    }
+
+    if (USBH_AppIsTransientFatFsError(fat_res) == 0U)
+    {
+      usb_test_read_done = 1U;
+      return;
+    }
+  }
+
   usb_test_read_done = 1U;
-  USB_LOG("[USB] reading 0:/UPDATE/test.txt\n");
-  read_res = USB_FATFS_ReadTestFile("0:/UPDATE/test.txt");
-  USB_LOG("[USB] read result = %d\n", read_res);
 }
 
 /**
@@ -141,18 +209,23 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
       USB_LOG("[USB] HOST_USER_CONNECTION -> START\n");
       usb_test_read_pending = 0U;
       usb_test_read_done = 0U;
+      usb_connect_tick = HAL_GetTick();
+      usb_reenum_attempted = 0U;
+      usb_media_recovery_attempted = 0U;
       Appli_state = APPLICATION_START;
       break;
 
     case HOST_USER_CLASS_ACTIVE:
       USB_LOG("[USB] HOST_USER_CLASS_ACTIVE -> mount %s\n", USBHPath);
-      mount_res = f_mount(&USBHFatFS, (TCHAR const*)USBHPath, 0);
+      mount_res = f_mount(&USBHFatFS, (TCHAR const*)USBHPath, 1);
       USB_LOG("[USB] f_mount result = %d\n", mount_res);
       if (mount_res == FR_OK)
       {
         usb_test_read_pending = 1U;
         usb_test_read_done = 0U;
       }
+      usb_reenum_attempted = 0U;
+      usb_media_recovery_attempted = 0U;
       Appli_state = APPLICATION_READY;
       break;
 
@@ -162,6 +235,8 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
       USB_LOG("[USB] f_unmount result = %d\n", mount_res);
       usb_test_read_pending = 0U;
       usb_test_read_done = 0U;
+      usb_reenum_attempted = 0U;
+      usb_media_recovery_attempted = 0U;
       Appli_state = APPLICATION_DISCONNECT;
       break;
 
@@ -169,4 +244,28 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
       break;
   }
   /* USER CODE END CALL_BACK_1 */
+}
+
+static uint8_t USBH_AppIsTransientFatFsError(FRESULT res)
+{
+  switch (res)
+  {
+    case FR_DISK_ERR:
+    case FR_NOT_READY:
+    case FR_NO_FILESYSTEM:
+      return 1U;
+
+    default:
+      return 0U;
+  }
+}
+
+static uint8_t USBH_AppIsLunReady(uint8_t lun)
+{
+  if ((hUsbHostHS.pActiveClass == NULL) || (hUsbHostHS.pActiveClass->pData == NULL))
+  {
+    return 0U;
+  }
+
+  return USBH_MSC_UnitIsReady(&hUsbHostHS, lun);
 }

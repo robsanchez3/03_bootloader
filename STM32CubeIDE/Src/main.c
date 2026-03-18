@@ -64,7 +64,6 @@ int main(void)
     }
     SystemClock_Config();
     MX_GPIO_Init();
-
     printf("[PWRINIT] VOSR=%08lx\n", g_pwrinit_vosr);
     printf("[PWRINIT] SVMSR=%08lx\n", g_pwrinit_svmsr);
     printf("FATFS init...\n");

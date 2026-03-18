@@ -569,23 +569,12 @@ static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_
   MSC_HandleTypeDef *MSC_Handle = (MSC_HandleTypeDef *) phost->pActiveClass->pData;
   USBH_StatusTypeDef error = USBH_BUSY;
   USBH_StatusTypeDef scsi_status = USBH_BUSY;
-  static uint8_t last_rw_state = 0xFFU;
-
-  if (MSC_Handle->unit[lun].state != last_rw_state)
-  {
-    USBH_UsrLog("MSC RW state -> %u", MSC_Handle->unit[lun].state);
-    last_rw_state = MSC_Handle->unit[lun].state;
-  }
 
   /* Switch MSC REQ state machine */
   switch (MSC_Handle->unit[lun].state)
   {
     case MSC_READ:
       scsi_status = USBH_MSC_SCSI_Read(phost, lun, 0U, NULL, 0U);
-      if (scsi_status != USBH_BUSY)
-      {
-        USBH_UsrLog("MSC_READ status: %d", scsi_status);
-      }
 
       if (scsi_status == USBH_OK)
       {
