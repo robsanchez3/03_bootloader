@@ -14,6 +14,8 @@ extern FATFS USBHFatFS;
 extern FIL USBHFile;
 
 void MX_FATFS_USB_Init(void);
+FRESULT USB_FATFS_Mount(void);
+FRESULT USB_FATFS_Unmount(void);
 FRESULT USB_FATFS_ReadTestFile(const char *path);
 
 #ifdef __cplusplus

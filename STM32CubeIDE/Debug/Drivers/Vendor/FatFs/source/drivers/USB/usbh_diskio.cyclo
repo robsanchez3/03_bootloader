@@ -1,3 +1,3 @@
-C:/Roberto/O3/O3_Bootloader/Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c:63:9:USBH_initialize	1
-C:/Roberto/O3/O3_Bootloader/Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c:72:9:USBH_status	2
-C:/Roberto/O3/O3_Bootloader/Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c:83:9:USBH_read	10
+C:/Roberto/O3/O3_Bootloader/Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c:64:9:USBH_initialize	1
+C:/Roberto/O3/O3_Bootloader/Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c:73:9:USBH_status	4
+C:/Roberto/O3/O3_Bootloader/Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c:89:9:USBH_read	12

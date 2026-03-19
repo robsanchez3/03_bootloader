@@ -44,6 +44,10 @@ EndBSPDependencies */
 #include "usbh_msc_bot.h"
 #include "usbh_msc_scsi.h"
 
+#define MSC_INQUIRY_TIMEOUT_MS        5000U
+#define MSC_READ_CAPACITY_TIMEOUT_MS  5000U
+#define MSC_REQUEST_SENSE_TIMEOUT_MS  5000U
+
 
 /** @addtogroup USBH_LIB
   * @{
@@ -100,6 +104,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_MSC_ClassRequest(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_MSC_SOFProcess(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_t lun);
+static const char *USBH_MSC_StateName(uint8_t state);
 
 USBH_ClassTypeDef  USBH_msc =
 {
@@ -329,6 +334,26 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
   USBH_StatusTypeDef error = USBH_BUSY;
   USBH_StatusTypeDef scsi_status = USBH_BUSY;
   USBH_StatusTypeDef ready_status = USBH_BUSY;
+  static uint8_t last_msc_state = 0xFFU;
+  static uint8_t last_lun_state = 0xFFU;
+  static uint8_t last_lun_index = 0xFFU;
+
+  if (MSC_Handle->state != last_msc_state)
+  {
+    last_msc_state = MSC_Handle->state;
+    USBH_UsrLog("[MSC] core state -> %s", USBH_MSC_StateName(MSC_Handle->state));
+  }
+
+  if ((MSC_Handle->current_lun < MSC_Handle->max_lun) &&
+      ((MSC_Handle->current_lun != last_lun_index) ||
+       (MSC_Handle->unit[MSC_Handle->current_lun].state != last_lun_state)))
+  {
+    last_lun_index = MSC_Handle->current_lun;
+    last_lun_state = MSC_Handle->unit[MSC_Handle->current_lun].state;
+    USBH_UsrLog("[MSC] lun %u state -> %s",
+                (unsigned int)MSC_Handle->current_lun,
+                USBH_MSC_StateName(MSC_Handle->unit[MSC_Handle->current_lun].state));
+  }
 
   switch (MSC_Handle->state)
   {
@@ -356,6 +381,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
               USBH_UsrLog("Inquiry Product : %s", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.product_id);
               USBH_UsrLog("Inquiry Version : %s", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.revision_id);
               MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_TEST_UNIT_READY;
+              MSC_Handle->timer = phost->Timer;
             }
             else if (scsi_status == USBH_FAIL)
             {
@@ -363,6 +389,16 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             }
             else
             {
+              if ((phost->Timer - MSC_Handle->timer) >= MSC_INQUIRY_TIMEOUT_MS)
+              {
+                USBH_UsrLog("[MSC] Inquiry timeout");
+                MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_REQUEST_SENSE;
+                if (phost->pUser != NULL)
+                {
+                  phost->pUser(phost, HOST_USER_UNRECOVERED_ERROR);
+                }
+              }
+
               if (scsi_status == USBH_UNRECOVERED_ERROR)
               {
                 MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
@@ -388,6 +424,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
               MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_READ_CAPACITY10;
               MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_OK;
               MSC_Handle->unit[MSC_Handle->current_lun].prev_ready_state = USBH_OK;
+              MSC_Handle->timer = phost->Timer;
             }
             else if (ready_status == USBH_FAIL)
             {
@@ -438,6 +475,16 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             }
             else
             {
+              if ((phost->Timer - MSC_Handle->timer) >= MSC_READ_CAPACITY_TIMEOUT_MS)
+              {
+                USBH_UsrLog("[MSC] ReadCapacity timeout");
+                MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_REQUEST_SENSE;
+                if (phost->pUser != NULL)
+                {
+                  phost->pUser(phost, HOST_USER_UNRECOVERED_ERROR);
+                }
+              }
+
               if (scsi_status == USBH_UNRECOVERED_ERROR)
               {
                 MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
@@ -476,6 +523,17 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             }
             else
             {
+              if ((phost->Timer - MSC_Handle->timer) >= MSC_REQUEST_SENSE_TIMEOUT_MS)
+              {
+                USBH_UsrLog("[MSC] RequestSense timeout");
+                MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
+                MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_ERROR;
+                if (phost->pUser != NULL)
+                {
+                  phost->pUser(phost, HOST_USER_UNRECOVERED_ERROR);
+                }
+              }
+
               if (scsi_status == USBH_UNRECOVERED_ERROR)
               {
                 MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
@@ -541,6 +599,31 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
       break;
   }
   return error;
+}
+
+static const char *USBH_MSC_StateName(uint8_t state)
+{
+  switch (state)
+  {
+    case MSC_INIT:
+      return "MSC_INIT";
+    case MSC_READ_INQUIRY:
+      return "MSC_READ_INQUIRY";
+    case MSC_TEST_UNIT_READY:
+      return "MSC_TEST_UNIT_READY";
+    case MSC_READ_CAPACITY10:
+      return "MSC_READ_CAPACITY10";
+    case MSC_REQUEST_SENSE:
+      return "MSC_REQUEST_SENSE";
+    case MSC_UNRECOVERED_ERROR:
+      return "MSC_UNRECOVERED_ERROR";
+    case MSC_USER_NOTIFY:
+      return "MSC_USER_NOTIFY";
+    case MSC_IDLE:
+      return "MSC_IDLE";
+    default:
+      return "MSC_UNKNOWN";
+  }
 }
 
 

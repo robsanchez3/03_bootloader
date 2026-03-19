@@ -1,2 +1,4 @@
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:9:8:MX_FATFS_USB_Init	8	static
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:21:11:USB_FATFS_ReadTestFile	24	static
+C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:9:6:MX_FATFS_USB_Init	8	static
+C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:21:9:USB_FATFS_Mount	16	static
+C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:32:9:USB_FATFS_Unmount	16	static
+C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:43:9:USB_FATFS_ReadTestFile	24	static

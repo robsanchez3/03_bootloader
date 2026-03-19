@@ -19,7 +19,8 @@
 
 /* Private defines -----------------------------------------------------------*/
 #define USB_DEFAULT_BLOCK_SIZE  512U
-#define USB_READ_RETRIES        3U
+#define USB_READ_RETRIES       12U
+#define USB_READ_RETRY_DELAY_MS 25U
 
 /* Private variables ---------------------------------------------------------*/
 /* hUsbHostHS is declared in USB_Host/App/usb_host.c */
@@ -71,6 +72,11 @@ DSTATUS USBH_initialize(BYTE lun)
   */
 DSTATUS USBH_status(BYTE lun)
 {
+  if ((hUsbHostHS.pActiveClass == NULL) || (hUsbHostHS.pActiveClass->pData == NULL))
+  {
+    return RES_ERROR;
+  }
+
   if (USBH_MSC_UnitIsReady(&hUsbHostHS, lun))
     return RES_OK;
   else
@@ -93,6 +99,15 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 
     for (attempt = 0; attempt < USB_READ_RETRIES; attempt++)
     {
+      if (USBH_MSC_UnitIsReady(&hUsbHostHS, lun) == 0U)
+      {
+        if (attempt + 1U < USB_READ_RETRIES)
+        {
+          HAL_Delay(USB_READ_RETRY_DELAY_MS);
+        }
+        continue;
+      }
+
       if (USBH_MSC_Read(&hUsbHostHS, lun, sector + i, usbh_sector_buf, 1U) == USBH_OK)
       {
         memcpy(buff + (i * USB_DEFAULT_BLOCK_SIZE), usbh_sector_buf, USB_DEFAULT_BLOCK_SIZE);
@@ -102,7 +117,7 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 
       if (attempt + 1U < USB_READ_RETRIES)
       {
-        HAL_Delay(2U);
+        HAL_Delay(USB_READ_RETRY_DELAY_MS);
       }
     }
 

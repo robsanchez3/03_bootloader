@@ -1,7 +1,10 @@
-C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:59:6:MX_USB_HOST_Init	4
-C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:94:9:USBH_IsFlashReady	1
-C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:103:6:MX_USB_HOST_Process	4
-C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:118:6:USBH_AppTask	13
-C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:195:13:USBH_UserProcess	6
-C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:249:16:USBH_AppIsTransientFatFsError	3
-C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:263:16:USBH_AppIsLunReady	3
+../../Drivers/CMSIS/Include/core_cm33.h:2711:34:__NVIC_SystemReset	1
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:78:6:MX_USB_HOST_Init	4
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:113:9:USBH_IsFlashReady	1
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:122:6:MX_USB_HOST_Process	4
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:147:6:USBH_AppTask	15
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:234:13:USBH_UserProcess	6
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:304:16:USBH_AppIsTransientFatFsError	3
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:318:16:USBH_AppIsLunReady	3
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:328:16:USBH_AppTimeReached	2
+C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.c:333:13:USBH_AppPowerCycle	2
