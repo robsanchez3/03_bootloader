@@ -1,0 +1,34 @@
+• El plan tiene que empezar por una realidad del proyecto: hoy todavía no estás en fase de “bootloader USB” completa, sino en fase de POC de acceso al
+  pendrive. Eso está documentado en USB_POC_status.txt:12 y USB_POC_status.txt:26: el USB enumera y a veces lee 0:/UPDATE/test.txt, pero el acceso FatFS no
+  es estable (FR_OK, FR_DISK_ERR, FR_NO_FILESYSTEM). Además, el flujo de arranque real aún no está activo: Boot_IsApplicationValid() devuelve siempre 1 y
+  1. Estabilizar USB MSC + FatFS. No sigas con actualización de firmware hasta que el montaje y lectura de archivos sean repetibles al 100%. La lógica
+     actual de mount/read con retries está en USB_Host/App/usb_host.c:143 y las primitivas FatFS en FATFS/App/fatfs_usb.c:21.
+  2. Reactivar el arranque normal. Implementar de verdad Boot_IsApplicationValid() y Boot_JumpToApplication() para que el bootloader pueda decidir: app
+     válida -> arrancar app; app inválida o modo update -> quedarse en recuperación. La región de app ya está definida en Boot/Inc/boot_jump.h:6.
+  3. Definir el contrato de actualización USB. Recomiendo usar algo simple y determinista como 0:/UPDATE/app.bin más 0:/UPDATE/app.json o manifest.txt con
+     tamaño, versión, CRC y, si quieres robustez real, firma.
+  4. Implementar la máquina de estados del bootloader. Estados mínimos: BOOT_CHECK_APP, BOOT_WAIT_USB, BOOT_SCAN_UPDATE, BOOT_VALIDATE_IMAGE,
+     BOOT_PROGRAM_FLASH, BOOT_VERIFY_FLASH, BOOT_MARK_OK, BOOT_JUMP_APP, BOOT_ERROR.
+  5. Añadir validación de imagen antes de grabar. Mínimo: tamaño, rango destino, vector table coherente, MSP dentro de RAM, reset handler dentro de
+     APP_BASE..APP_END, CRC32. Si el producto va a campo, mejor firma criptográfica.
+  6. Implementar programación de flash por bloques. Leer app.bin desde USB en chunks, borrar sectores de aplicación, programar, verificar cada bloque y al
+     final verificar imagen completa.
+  7. Añadir mecanismo anti-brick. Mantener un “boot control block” en flash con flags tipo pending, valid, confirmed. Nunca sobrescribas el bootloader. Sólo
+     marcas la app como válida cuando termine programación y verificación.
+  8. Definir política de arranque. Ejemplo recomendado: si hay botón de servicio pulsado o no hay app válida -> entrar en modo USB update; si hay app válida
+     y no hay petición de update -> saltar a la app; si hay USB con imagen válida más nueva -> actualizar y luego arrancar.
+  9. Mejorar observabilidad. Mantén logs ITM/serial y añade códigos LED para USB detectado, leyendo, validando, grabando, error CRC, jump.
+  10. Cerrar con pruebas de sistema. Casos mínimos: sin USB con app válida, sin USB sin app válida, USB con imagen correcta, USB con CRC incorrecto, USB
+     extraído en mitad de grabación, corte de alimentación durante update.
+
+  Orden recomendado de trabajo
+
+  1. Fase A: estabilizar FatFS.
+  2. Fase B: arreglar Boot_IsApplicationValid() y Boot_JumpToApplication().
+  3. Fase C: parser de manifest + lectura de app.bin.
+  4. Fase D: borrado/programación/verificación de flash.
+  5. Fase E: flags de estado y recuperación ante fallo.
+  6. Fase F: endurecimiento y pruebas.
+
+  Si quieres, el siguiente paso útil es que te prepare un plan de implementación ya desglosado por archivos y funciones de este repo, para ejecutar la Fase
+  A y la Fase B.

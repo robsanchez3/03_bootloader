@@ -59,7 +59,7 @@
 		<link>
 			<name>Boot/Src/boot_jump.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/O3_Bootloader%20-%20copia%20(2)/Boot/Src/boot_jump.c</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/boot_jump.c</locationURI>
 		</link>
 		<link>
 			<name>FATFS/App/fatfs_usb.c</name>

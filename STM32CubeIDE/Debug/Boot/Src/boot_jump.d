@@ -1,5 +1,4 @@
-Boot/Src/boot_jump.o: \
- C:/Roberto/O3/O3_Bootloader\ -\ copia\ (2)/Boot/Src/boot_jump.c \
+Boot/Src/boot_jump.o: C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c \
  ../../Boot/Inc/boot_jump.h ../Inc/main.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_conf.h \

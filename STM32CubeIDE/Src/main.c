@@ -30,8 +30,6 @@ static void SystemPower_Config(void);
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void Recovery_Loop(void);
-static uint32_t g_pwrinit_vosr;
-static uint32_t g_pwrinit_svmsr;
 
 int _write(int file, char *ptr, int len)
 {
@@ -55,8 +53,6 @@ int main(void)
     /* 1 — HAL and system init */
     HAL_Init();
     __HAL_RCC_PWR_CLK_ENABLE();
-    g_pwrinit_vosr = PWR->VOSR;
-    g_pwrinit_svmsr = PWR->SVMSR;
     SystemPower_Config();
     if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE2) != HAL_OK)
     {
@@ -64,13 +60,17 @@ int main(void)
     }
     SystemClock_Config();
     MX_GPIO_Init();
-    printf("[PWRINIT] VOSR=%08lx\n", g_pwrinit_vosr);
-    printf("[PWRINIT] SVMSR=%08lx\n", g_pwrinit_svmsr);
+
+    /* Phase B debug mode:
+     * keep USB/FatFS code disabled to remove noise while validating the
+     * bootloader-to-application jump path only. */
+#if 0
     printf("FATFS init...\n");
     MX_FATFS_USB_Init();
 
     printf("USB host init...\n");
     MX_USB_HOST_Init();
+#endif
     printf("BL start\n");
 
     /* 2 — Check for a valid application */
@@ -100,8 +100,12 @@ static void Recovery_Loop(void)
 
     while (1)
     {
+#if 0
+        /* Phase B debug mode:
+         * USB processing is disabled while validating only the jump path. */
         MX_USB_HOST_Process();
         USBH_AppTask();
+#endif
 
         if ((HAL_GetTick() - last_blink) >= 250U)
         {

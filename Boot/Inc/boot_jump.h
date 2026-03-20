@@ -11,6 +11,7 @@
 /* RAM boundaries used to validate the application MSP */
 #define RAM_BASE          (0x20000000U)
 #define RAM_END           (0x2026FFFFU)
+#define RAM_TOP           (RAM_END + 1U)
 
 /**
  * @brief  Check that a valid application is present at app_base.
