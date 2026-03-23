@@ -1,3 +1,3 @@
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c:16:13:Boot_DisableAllInterrupts	16	static
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c:27:5:Boot_IsApplicationValid	32	static
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c:68:6:Boot_JumpToApplication	48	static,ignoring_inline_asm
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c:5:13:Boot_DisableAllInterrupts	16	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c:16:5:Boot_IsApplicationValid	32	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c:54:6:Boot_JumpToApplication	48	static,ignoring_inline_asm

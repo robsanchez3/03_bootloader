@@ -64,7 +64,7 @@ int main(void)
     /* Phase B debug mode:
      * keep USB/FatFS code disabled to remove noise while validating the
      * bootloader-to-application jump path only. */
-#if 0
+#if 1
     printf("FATFS init...\n");
     MX_FATFS_USB_Init();
 
