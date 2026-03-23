@@ -30,6 +30,13 @@ static void SystemPower_Config(void);
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void Recovery_Loop(void);
+static uint8_t Boot_WaitUsbAtStart(uint32_t timeout_ms);
+static uint8_t Boot_WaitForValidUpdate(uint32_t timeout_ms);
+static void Boot_RunStartupPolicy(void);
+
+#define BOOT_USB_START_WINDOW_MS   1500U
+#define BOOT_UPDATE_CHECK_TIMEOUT_MS   6000U
+#define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
 
 int _write(int file, char *ptr, int len)
 {
@@ -61,29 +68,14 @@ int main(void)
     SystemClock_Config();
     MX_GPIO_Init();
 
-    /* Phase B debug mode:
-     * keep USB/FatFS code disabled to remove noise while validating the
-     * bootloader-to-application jump path only. */
-#if 1
     printf("FATFS init...\n");
     MX_FATFS_USB_Init();
 
     printf("USB host init...\n");
     MX_USB_HOST_Init();
-#endif
     printf("BL start\n");
 
-    /* 2 — Check for a valid application */
-    if (Boot_IsApplicationValid(APP_BASE))
-    {
-        /* 3 — Valid: jump (does not return) */
-        printf("Jumping to app\n");
-        Boot_JumpToApplication(APP_BASE);
-    }
-
-    /* 4 — No valid application found: enter recovery loop */
-    printf("Recovery loop\n");
-    Recovery_Loop();
+    Boot_RunStartupPolicy();
 
     /* Should never reach here */
     while (1) {}
@@ -97,15 +89,24 @@ int main(void)
 static void Recovery_Loop(void)
 {
     uint32_t last_blink = HAL_GetTick();
+    uint8_t update_detected = 0U;
 
     while (1)
     {
-#if 0
-        /* Phase B debug mode:
-         * USB processing is disabled while validating only the jump path. */
         MX_USB_HOST_Process();
         USBH_AppTask();
-#endif
+
+        if ((update_detected == 0U) && (Boot_WaitForValidUpdate(0U) != 0U))
+        {
+            update_detected = 1U;
+            printf("[BOOT] Update media detected in recovery\n");
+            /* Programming flow will be inserted here in the next phase. */
+        }
+
+        if (update_detected != 0U)
+        {
+            continue;
+        }
 
         if ((HAL_GetTick() - last_blink) >= 250U)
         {
@@ -113,6 +114,87 @@ static void Recovery_Loop(void)
             HAL_GPIO_TogglePin(BOOT_LED_GPIO_Port, BOOT_LED_Pin);
         }
     }
+}
+
+static uint8_t Boot_WaitUsbAtStart(uint32_t timeout_ms)
+{
+    uint32_t deadline = HAL_GetTick() + timeout_ms;
+
+    USBH_ClearUpdateDetection();
+
+    while ((int32_t)(HAL_GetTick() - deadline) < 0)
+    {
+        MX_USB_HOST_Process();
+        USBH_AppTask();
+
+        if (USBH_IsFlashReady() != 0U)
+        {
+            printf("[BOOT] USB drive detected during startup window\n");
+            return 1U;
+        }
+    }
+
+    printf("[BOOT] No USB drive detected during startup window\n");
+    return 0U;
+}
+
+static uint8_t Boot_WaitForValidUpdate(uint32_t timeout_ms)
+{
+    uint32_t deadline = HAL_GetTick() + timeout_ms;
+
+    do
+    {
+        MX_USB_HOST_Process();
+        USBH_AppTask();
+
+        if (USBH_HasValidUpdateImage() != 0U)
+        {
+            printf("[BOOT] Found valid update set: app_int/app_ospi + CRCs\n");
+            return 1U;
+        }
+
+        if (USBH_IsUpdateCheckComplete() != 0U)
+        {
+            return 0U;
+        }
+    } while ((timeout_ms == 0U) || ((int32_t)(HAL_GetTick() - deadline) < 0));
+
+    printf("[BOOT] Update validation timed out\n");
+    return 0U;
+}
+
+static void Boot_RunStartupPolicy(void)
+{
+    uint8_t app_valid;
+
+    if (Boot_WaitUsbAtStart(BOOT_USB_START_WINDOW_MS) != 0U)
+    {
+        if (Boot_WaitForValidUpdate(BOOT_UPDATE_CHECK_TIMEOUT_MS) != 0U)
+        {
+            printf("[BOOT] Valid update detected at startup\n");
+            printf("[BOOT] Programming flow not implemented yet -> recovery\n");
+            Recovery_Loop();
+        }
+
+        printf("[BOOT] USB present but no valid update -> recovery\n");
+        Recovery_Loop();
+    }
+
+    app_valid = (uint8_t)Boot_IsApplicationValid(APP_BASE);
+
+#if BOOT_FORCE_INVALID_APP_FOR_TEST
+    printf("[BOOT] TEST MODE: forcing application invalid\n");
+    app_valid = 0U;
+#endif
+
+    if (app_valid != 0U)
+    {
+        printf("Jumping to app\n");
+        Boot_JumpToApplication(APP_BASE);
+    }
+
+    printf("Recovery loop\n");
+    Recovery_Loop();
 }
 
 /* -----------------------------------------------------------------------

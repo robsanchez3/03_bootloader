@@ -69,7 +69,8 @@ USB_Host/App/usb_host.o: \
  ../../Drivers/Vendor/FatFs/source/ff_gen_drv.h \
  ../../Drivers/Vendor/FatFs/source/diskio.h \
  ../../Drivers/Vendor/FatFs/source/ff.h \
- ../../Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.h
+ ../../Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.h \
+ ../../Boot/Inc/boot_jump.h
 C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.h:
 ../../Drivers/CMSIS/Device/ST/STM32U5xx/Include/stm32u5xx.h:
 ../../Drivers/CMSIS/Device/ST/STM32U5xx/Include/stm32u599xx.h:
@@ -142,3 +143,4 @@ C:/Roberto/O3/O3_Bootloader/USB_Host/App/usb_host.h:
 ../../Drivers/Vendor/FatFs/source/diskio.h:
 ../../Drivers/Vendor/FatFs/source/ff.h:
 ../../Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.h:
+../../Boot/Inc/boot_jump.h:

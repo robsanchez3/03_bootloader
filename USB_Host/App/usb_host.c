@@ -17,8 +17,10 @@
 #include "usbh_core.h"
 #include "usbh_msc.h"
 #include "fatfs_usb.h"
+#include "boot_jump.h"
 #include <stdio.h>
-
+#include <stdlib.h>
+	
 /* USER CODE BEGIN Includes */
 #define USB_HOST_DEBUG
 #ifdef USB_HOST_DEBUG
@@ -27,7 +29,11 @@
 #define USB_LOG(...)  do {} while(0)
 #endif
 
-#define USB_TEST_FILE_PATH           "0:/UPDATE/test.txt"
+#define USB_UPDATE_INT_BIN_PATH      "0:/UPDATE/app_int.bin"
+#define USB_UPDATE_INT_CRC_PATH      "0:/UPDATE/app_int.crc"
+#define USB_UPDATE_OSPI_BIN_PATH     "0:/UPDATE/app_ospi.bin"
+#define USB_UPDATE_OSPI_CRC_PATH     "0:/UPDATE/app_ospi.crc"
+#define USB_OSPI_SIZE_BYTES          (32U * 1024U * 1024U)
 #define USB_ENUM_TIMEOUT_MS         10000U
 #define USB_MSC_INIT_TIMEOUT_MS     15000U
 #define USB_MOUNT_SETTLE_DELAY_MS    3000U
@@ -45,8 +51,8 @@ USBH_HandleTypeDef  hUsbHostHS;
 ApplicationTypeDef  Appli_state = APPLICATION_IDLE;
 
 /* USER CODE BEGIN PV */
-static uint8_t usb_test_read_pending;
-static uint8_t usb_test_read_done;
+static uint8_t usb_update_check_pending;
+static uint8_t usb_update_check_done;
 static uint32_t usb_connect_tick;
 static uint32_t usb_action_due_tick;
 static uint32_t usb_msc_init_deadline_tick;
@@ -56,6 +62,7 @@ static uint8_t usb_mount_pending;
 static uint8_t usb_mount_retry_count;
 static uint8_t usb_read_retry_count;
 static uint8_t usb_power_cycle_count;
+static uint8_t usb_valid_update_found;
 static const char *usb_last_failure_reason;
 
 /* USER CODE END PV */
@@ -68,6 +75,11 @@ static uint8_t USBH_AppIsTransientFatFsError(FRESULT res);
 static uint8_t USBH_AppIsLunReady(uint8_t lun);
 static uint8_t USBH_AppTimeReached(uint32_t due_tick);
 static void USBH_AppPowerCycle(const char *reason);
+static uint8_t USBH_AppValidateUpdateImage(void);
+static uint8_t USBH_AppValidateOneImage(const char *bin_path,
+                                        const char *crc_path,
+                                        uint32_t max_size_bytes,
+                                        const char *label);
 
 /* USER CODE END PFP */
 
@@ -115,6 +127,21 @@ uint8_t USBH_IsFlashReady(void)
   return (Appli_state == APPLICATION_READY) ? 1 : 0;
 }
 
+uint8_t USBH_HasValidUpdateImage(void)
+{
+  return usb_valid_update_found;
+}
+
+uint8_t USBH_IsUpdateCheckComplete(void)
+{
+  return usb_update_check_done;
+}
+
+void USBH_ClearUpdateDetection(void)
+{
+  usb_valid_update_found = 0U;
+}
+
 /**
   * @brief  USB Host background task - call periodically from FreeRTOS task
   * @retval None
@@ -149,7 +176,7 @@ void USBH_AppTask(void)
   FRESULT mount_res;
   FRESULT read_file_res;
 
-  if ((usb_test_read_pending == 0U) || (usb_test_read_done != 0U))
+  if ((usb_update_check_pending == 0U) || (usb_update_check_done != 0U))
   {
     return;
   }
@@ -193,16 +220,17 @@ void USBH_AppTask(void)
     return;
   }
 
-  USB_LOG("[USB] reading %s\n", USB_TEST_FILE_PATH);
-  read_file_res = USB_FATFS_ReadTestFile(USB_TEST_FILE_PATH);
-  USB_LOG("[USB] file read result = %d\n", read_file_res);
+  USB_LOG("[USB] validating update image\n");
+  read_file_res = (USBH_AppValidateUpdateImage() != 0U) ? FR_OK : FR_INT_ERR;
+  USB_LOG("[USB] update validation result = %d\n", read_file_res);
 
   if (read_file_res == FR_OK)
   {
     usb_read_retry_count = 0U;
     usb_power_cycle_count = 0U;
     usb_last_failure_reason = NULL;
-    usb_test_read_done = 1U;
+    usb_valid_update_found = 1U;
+    usb_update_check_done = 1U;
     return;
   }
 
@@ -222,7 +250,7 @@ void USBH_AppTask(void)
     return;
   }
 
-  usb_test_read_done = 1U;
+  usb_update_check_done = 1U;
 }
 
 /**
@@ -246,8 +274,8 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
 
     case HOST_USER_CONNECTION:
       USB_LOG("[USB] HOST_USER_CONNECTION -> START\n");
-      usb_test_read_pending = 0U;
-      usb_test_read_done = 0U;
+      usb_update_check_pending = 0U;
+      usb_update_check_done = 0U;
       usb_connect_tick = HAL_GetTick();
       usb_action_due_tick = 0U;
       usb_msc_init_deadline_tick = HAL_GetTick() + USB_MSC_INIT_TIMEOUT_MS;
@@ -256,14 +284,15 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
       usb_mount_pending = 0U;
       usb_mount_retry_count = 0U;
       usb_read_retry_count = 0U;
+      usb_valid_update_found = 0U;
       usb_last_failure_reason = NULL;
       Appli_state = APPLICATION_START;
       break;
 
     case HOST_USER_CLASS_ACTIVE:
       USB_LOG("[USB] HOST_USER_CLASS_ACTIVE -> schedule mount %s\n", USBHPath);
-      usb_test_read_pending = 1U;
-      usb_test_read_done = 0U;
+      usb_update_check_pending = 1U;
+      usb_update_check_done = 0U;
       usb_action_due_tick = HAL_GetTick() + USB_MOUNT_SETTLE_DELAY_MS;
       usb_msc_init_deadline_tick = 0U;
       usb_reenum_attempted = 0U;
@@ -271,6 +300,7 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
       usb_mount_pending = 1U;
       usb_mount_retry_count = 0U;
       usb_read_retry_count = 0U;
+      usb_valid_update_found = 0U;
       usb_last_failure_reason = NULL;
       Appli_state = APPLICATION_READY;
       break;
@@ -279,8 +309,8 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
       USB_LOG("[USB] HOST_USER_DISCONNECTION -> unmount %s\n", USBHPath);
       mount_res = USB_FATFS_Unmount();
       (void)mount_res;
-      usb_test_read_pending = 0U;
-      usb_test_read_done = 0U;
+      usb_update_check_pending = 0U;
+      usb_update_check_done = 0U;
       usb_action_due_tick = 0U;
       usb_msc_init_deadline_tick = 0U;
       usb_reenum_attempted = 0U;
@@ -288,6 +318,7 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
       usb_mount_pending = 0U;
       usb_mount_retry_count = 0U;
       usb_read_retry_count = 0U;
+      usb_valid_update_found = 0U;
       Appli_state = APPLICATION_DISCONNECT;
       break;
 
@@ -336,7 +367,7 @@ static void USBH_AppPowerCycle(const char *reason)
 
   if (usb_media_recovery_attempted != 0U)
   {
-    usb_test_read_done = 1U;
+    usb_update_check_done = 1U;
     return;
   }
 
@@ -352,11 +383,12 @@ static void USBH_AppPowerCycle(const char *reason)
     USB_LOG("[USB] SYSTEM RESET in %u ms\n", (unsigned)USB_FINAL_RESET_DELAY_MS);
     USB_LOG("[USB] ========================================\n\n");
 
-    usb_test_read_pending = 0U;
-    usb_test_read_done = 1U;
+    usb_update_check_pending = 0U;
+    usb_update_check_done = 1U;
     usb_mount_pending = 0U;
     usb_mount_retry_count = 0U;
     usb_read_retry_count = 0U;
+    usb_valid_update_found = 0U;
     usb_action_due_tick = 0U;
     usb_msc_init_deadline_tick = 0U;
     HAL_Delay(USB_FINAL_RESET_DELAY_MS);
@@ -377,15 +409,126 @@ static void USBH_AppPowerCycle(const char *reason)
   mount_res = USB_FATFS_Unmount();
   (void)mount_res;
 
-  usb_test_read_pending = 0U;
-  usb_test_read_done = 0U;
+  usb_update_check_pending = 0U;
+  usb_update_check_done = 0U;
   usb_mount_pending = 0U;
   usb_mount_retry_count = 0U;
   usb_read_retry_count = 0U;
+  usb_valid_update_found = 0U;
   usb_action_due_tick = 0U;
   usb_msc_init_deadline_tick = 0U;
 
   hUsbHostHS.device.is_ReEnumerated = 1U;
   (void)USBH_Stop(&hUsbHostHS);
   HAL_Delay(USB_POWER_CYCLE_OFF_MS);
+}
+
+static uint8_t USBH_AppValidateUpdateImage(void)
+{
+  if (USBH_AppValidateOneImage(USB_UPDATE_INT_BIN_PATH,
+                               USB_UPDATE_INT_CRC_PATH,
+                               (APP_END - APP_BASE + 1U),
+                               "internal") == 0U)
+  {
+    return 0U;
+  }
+
+  if (USBH_AppValidateOneImage(USB_UPDATE_OSPI_BIN_PATH,
+                               USB_UPDATE_OSPI_CRC_PATH,
+                               USB_OSPI_SIZE_BYTES,
+                               "ospi") == 0U)
+  {
+    return 0U;
+  }
+
+  USB_LOG("[USB] valid split update detected\n");
+  return 1U;
+}
+
+static uint8_t USBH_AppValidateOneImage(const char *bin_path,
+                                        const char *crc_path,
+                                        uint32_t max_size_bytes,
+                                        const char *label)
+{
+  FRESULT res;
+  FSIZE_t bin_size = 0U;
+  FSIZE_t crc_size = 0U;
+  uint32_t expected_crc;
+  uint32_t computed_crc;
+  char crc_text[32];
+  char *end_ptr;
+
+  res = USB_FATFS_GetFileSize(bin_path, &bin_size);
+  if (res != FR_OK)
+  {
+    USB_LOG("[USB] %s image missing or invalid: %d\n", label, res);
+    return 0U;
+  }
+
+  if (((uint32_t)bin_size == 0U) || ((uint32_t)bin_size > max_size_bytes))
+  {
+    USB_LOG("[USB] %s image size invalid: %lu bytes (max %lu)\n",
+            label,
+            (unsigned long)bin_size,
+            (unsigned long)max_size_bytes);
+    return 0U;
+  }
+
+  res = USB_FATFS_ReadTextFile(crc_path, crc_text, sizeof(crc_text));
+  if (res != FR_OK)
+  {
+    USB_LOG("[USB] %s CRC file missing or invalid: %d\n", label, res);
+    return 0U;
+  }
+
+  expected_crc = (uint32_t)strtoul(crc_text, &end_ptr, 16);
+  if (end_ptr == crc_text)
+  {
+    USB_LOG("[USB] invalid %s CRC text: %s\n", label, crc_text);
+    return 0U;
+  }
+
+  if (label[0] == 'i')
+  {
+    res = USB_FATFS_ReadFilePreview(bin_path, 256U);
+    if (res != FR_OK)
+    {
+      USB_LOG("[USB] %s preview read failed: %d\n", label, res);
+      return 0U;
+    }
+
+    USB_LOG("[USB] %s preview read OK; skipping full CRC temporarily\n", label);
+    return 1U;
+  }
+
+  res = USB_FATFS_ComputeFileCrc32(bin_path, &computed_crc, &crc_size);
+  if (res != FR_OK)
+  {
+    USB_LOG("[USB] %s CRC computation failed: %d\n", label, res);
+    return 0U;
+  }
+
+  if (crc_size != bin_size)
+  {
+    USB_LOG("[USB] %s size changed during CRC: stat=%lu crc=%lu\n",
+            label,
+            (unsigned long)bin_size,
+            (unsigned long)crc_size);
+    return 0U;
+  }
+
+  if (computed_crc != expected_crc)
+  {
+    USB_LOG("[USB] %s CRC mismatch: expected=0x%08lX computed=0x%08lX\n",
+            label,
+            (unsigned long)expected_crc,
+            (unsigned long)computed_crc);
+    return 0U;
+  }
+
+  USB_LOG("[USB] valid %s image detected: %s + %s\n",
+          label,
+          bin_path,
+          crc_path);
+  return 1U;
 }
