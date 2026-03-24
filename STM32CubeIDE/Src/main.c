@@ -31,11 +31,10 @@ static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void Recovery_Loop(void);
 static uint8_t Boot_WaitUsbAtStart(uint32_t timeout_ms);
-static uint8_t Boot_WaitForValidUpdate(uint32_t timeout_ms);
+static uint8_t Boot_WaitForValidUpdate(void);
 static void Boot_RunStartupPolicy(void);
 
-#define BOOT_USB_START_WINDOW_MS   1500U
-#define BOOT_UPDATE_CHECK_TIMEOUT_MS   6000U
+#define BOOT_USB_START_WINDOW_MS   3000U
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
 
 int _write(int file, char *ptr, int len)
@@ -96,7 +95,7 @@ static void Recovery_Loop(void)
         MX_USB_HOST_Process();
         USBH_AppTask();
 
-        if ((update_detected == 0U) && (Boot_WaitForValidUpdate(0U) != 0U))
+        if ((update_detected == 0U) && (Boot_WaitForValidUpdate() != 0U))
         {
             update_detected = 1U;
             printf("[BOOT] Update media detected in recovery\n");
@@ -127,22 +126,20 @@ static uint8_t Boot_WaitUsbAtStart(uint32_t timeout_ms)
         MX_USB_HOST_Process();
         USBH_AppTask();
 
-        if (USBH_IsFlashReady() != 0U)
+        if (USBH_HasPhysicalConnection() != 0U)
         {
-            printf("[BOOT] USB drive detected during startup window\n");
+            printf("[BOOT] USB physical connection detected during startup window\n");
             return 1U;
         }
     }
 
-    printf("[BOOT] No USB drive detected during startup window\n");
+    printf("[BOOT] No USB physical connection detected during startup window\n");
     return 0U;
 }
 
-static uint8_t Boot_WaitForValidUpdate(uint32_t timeout_ms)
+static uint8_t Boot_WaitForValidUpdate(void)
 {
-    uint32_t deadline = HAL_GetTick() + timeout_ms;
-
-    do
+    while (1)
     {
         MX_USB_HOST_Process();
         USBH_AppTask();
@@ -157,10 +154,7 @@ static uint8_t Boot_WaitForValidUpdate(uint32_t timeout_ms)
         {
             return 0U;
         }
-    } while ((timeout_ms == 0U) || ((int32_t)(HAL_GetTick() - deadline) < 0));
-
-    printf("[BOOT] Update validation timed out\n");
-    return 0U;
+    }
 }
 
 static void Boot_RunStartupPolicy(void)
@@ -169,7 +163,7 @@ static void Boot_RunStartupPolicy(void)
 
     if (Boot_WaitUsbAtStart(BOOT_USB_START_WINDOW_MS) != 0U)
     {
-        if (Boot_WaitForValidUpdate(BOOT_UPDATE_CHECK_TIMEOUT_MS) != 0U)
+        if (Boot_WaitForValidUpdate() != 0U)
         {
             printf("[BOOT] Valid update detected at startup\n");
             printf("[BOOT] Programming flow not implemented yet -> recovery\n");
@@ -177,6 +171,12 @@ static void Boot_RunStartupPolicy(void)
         }
 
         printf("[BOOT] USB present but no valid update -> recovery\n");
+        Recovery_Loop();
+    }
+
+    if (USBH_WasUsbSeen() != 0U)
+    {
+        printf("[BOOT] USB activity seen during startup -> recovery\n");
         Recovery_Loop();
     }
 

@@ -172,9 +172,20 @@ void HAL_HCD_MspDeInit(HCD_HandleTypeDef *hcdHandle)
 
 /* HCD -> USBH Library callbacks ------------------------------------------- */
 
+extern USBH_HandleTypeDef hUsbHostHS;
+volatile uint32_t g_usb_sof_bad_pdata_count = 0U;
+volatile void *g_usb_sof_bad_pdata_last = NULL;
+
 void HAL_HCD_SOF_Callback(HCD_HandleTypeDef *hhcd)
 {
-  USBH_LL_IncTimer(hhcd->pData);
+  if ((hhcd == NULL) || (hhcd->pData != &hUsbHostHS))
+  {
+    g_usb_sof_bad_pdata_count++;
+    g_usb_sof_bad_pdata_last = (hhcd != NULL) ? hhcd->pData : NULL;
+    return;
+  }
+
+  USBH_LL_IncTimer(&hUsbHostHS);
 }
 
 void HAL_HCD_Connect_Callback(HCD_HandleTypeDef *hhcd)
@@ -224,7 +235,7 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     hhcd_USB_OTG_HS.Init.speed         = HCD_SPEED_HIGH;
     hhcd_USB_OTG_HS.Init.dma_enable    = DISABLE;
     hhcd_USB_OTG_HS.Init.phy_itface    = USB_OTG_HS_EMBEDDED_PHY;
-    hhcd_USB_OTG_HS.Init.Sof_enable    = DISABLE;
+    hhcd_USB_OTG_HS.Init.Sof_enable    = ENABLE;
 
     if (HAL_HCD_Init(&hhcd_USB_OTG_HS) != HAL_OK)
     {

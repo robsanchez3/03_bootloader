@@ -42,6 +42,8 @@ void    MX_USB_HOST_Init(void);
 void    MX_USB_HOST_Process(void);
 void    USBH_AppTask(void);
 uint8_t USBH_IsFlashReady(void);
+uint8_t USBH_WasUsbSeen(void);
+uint8_t USBH_HasPhysicalConnection(void);
 uint8_t USBH_HasValidUpdateImage(void);
 uint8_t USBH_IsUpdateCheckComplete(void);
 void    USBH_ClearUpdateDetection(void);

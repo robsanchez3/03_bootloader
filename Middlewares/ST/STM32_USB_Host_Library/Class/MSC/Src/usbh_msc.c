@@ -43,10 +43,48 @@ EndBSPDependencies */
 #include "usbh_msc.h"
 #include "usbh_msc_bot.h"
 #include "usbh_msc_scsi.h"
+#include "stm32u5xx_hal_hcd.h"
+#include <stdio.h>
 
 #define MSC_INQUIRY_TIMEOUT_MS        5000U
 #define MSC_READ_CAPACITY_TIMEOUT_MS  5000U
 #define MSC_REQUEST_SENSE_TIMEOUT_MS  5000U
+
+typedef struct
+{
+  uint32_t signature;
+  uint32_t timer_now;
+  uint32_t timer_start;
+  uint32_t address;
+  uint32_t length;
+  uint32_t host_gstate;
+  uint32_t port_enabled;
+  uint32_t current_lun;
+  uint32_t unit_state;
+  uint32_t unit_error;
+  uint32_t bot_state;
+  uint32_t bot_cmd_state;
+  uint32_t in_pipe;
+  uint32_t out_pipe;
+  uint32_t hhcd_state;
+  uint32_t hhcd_error_code;
+  uint32_t in_urb_state;
+  uint32_t out_urb_state;
+  uint32_t in_hc_state;
+  uint32_t out_hc_state;
+  uint32_t in_err_cnt;
+  uint32_t out_err_cnt;
+  uint32_t in_hcchar;
+  uint32_t in_hcint;
+  uint32_t in_hcintmsk;
+  uint32_t in_hctsiz;
+  uint32_t out_hcchar;
+  uint32_t out_hcint;
+  uint32_t out_hcintmsk;
+  uint32_t out_hctsiz;
+} MSC_ReadTimeoutSnapshot;
+
+volatile MSC_ReadTimeoutSnapshot g_msc_read_timeout_snapshot;
 
 
 /** @addtogroup USBH_LIB
@@ -878,6 +916,83 @@ USBH_StatusTypeDef USBH_MSC_Read(USBH_HandleTypeDef *phost,
   {
     if (((phost->Timer - timeout) > (10000U * length)) || (phost->device.PortEnabled == 0U))
     {
+      HCD_HandleTypeDef *hhcd = (HCD_HandleTypeDef *)phost->pData;
+      uint32_t in_pipe = MSC_Handle->InPipe;
+      uint32_t out_pipe = MSC_Handle->OutPipe;
+      USB_OTG_HostChannelTypeDef *in_hc_regs = NULL;
+      USB_OTG_HostChannelTypeDef *out_hc_regs = NULL;
+
+      g_msc_read_timeout_snapshot.signature = 0x4D534354U; /* MSCT */
+      g_msc_read_timeout_snapshot.timer_now = phost->Timer;
+      g_msc_read_timeout_snapshot.timer_start = timeout;
+      g_msc_read_timeout_snapshot.address = address;
+      g_msc_read_timeout_snapshot.length = length;
+      g_msc_read_timeout_snapshot.host_gstate = phost->gState;
+      g_msc_read_timeout_snapshot.port_enabled = phost->device.PortEnabled;
+      g_msc_read_timeout_snapshot.current_lun = MSC_Handle->current_lun;
+      g_msc_read_timeout_snapshot.unit_state = MSC_Handle->unit[lun].state;
+      g_msc_read_timeout_snapshot.unit_error = MSC_Handle->unit[lun].error;
+      g_msc_read_timeout_snapshot.bot_state = MSC_Handle->hbot.state;
+      g_msc_read_timeout_snapshot.bot_cmd_state = MSC_Handle->hbot.cmd_state;
+      g_msc_read_timeout_snapshot.in_pipe = in_pipe;
+      g_msc_read_timeout_snapshot.out_pipe = out_pipe;
+
+      if (hhcd != NULL)
+      {
+        in_hc_regs = (USB_OTG_HostChannelTypeDef *)((uint32_t)hhcd->Instance +
+                                                    USB_OTG_HOST_CHANNEL_BASE +
+                                                    (in_pipe * USB_OTG_HOST_CHANNEL_SIZE));
+        out_hc_regs = (USB_OTG_HostChannelTypeDef *)((uint32_t)hhcd->Instance +
+                                                     USB_OTG_HOST_CHANNEL_BASE +
+                                                     (out_pipe * USB_OTG_HOST_CHANNEL_SIZE));
+        g_msc_read_timeout_snapshot.hhcd_state = hhcd->State;
+        g_msc_read_timeout_snapshot.hhcd_error_code = hhcd->ErrorCode;
+        g_msc_read_timeout_snapshot.in_urb_state = hhcd->hc[in_pipe].urb_state;
+        g_msc_read_timeout_snapshot.out_urb_state = hhcd->hc[out_pipe].urb_state;
+        g_msc_read_timeout_snapshot.in_hc_state = hhcd->hc[in_pipe].state;
+        g_msc_read_timeout_snapshot.out_hc_state = hhcd->hc[out_pipe].state;
+        g_msc_read_timeout_snapshot.in_err_cnt = hhcd->hc[in_pipe].ErrCnt;
+        g_msc_read_timeout_snapshot.out_err_cnt = hhcd->hc[out_pipe].ErrCnt;
+        g_msc_read_timeout_snapshot.in_hcchar = in_hc_regs->HCCHAR;
+        g_msc_read_timeout_snapshot.in_hcint = in_hc_regs->HCINT;
+        g_msc_read_timeout_snapshot.in_hcintmsk = in_hc_regs->HCINTMSK;
+        g_msc_read_timeout_snapshot.in_hctsiz = in_hc_regs->HCTSIZ;
+        g_msc_read_timeout_snapshot.out_hcchar = out_hc_regs->HCCHAR;
+        g_msc_read_timeout_snapshot.out_hcint = out_hc_regs->HCINT;
+        g_msc_read_timeout_snapshot.out_hcintmsk = out_hc_regs->HCINTMSK;
+        g_msc_read_timeout_snapshot.out_hctsiz = out_hc_regs->HCTSIZ;
+      }
+      else
+      {
+        g_msc_read_timeout_snapshot.hhcd_state = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.hhcd_error_code = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.in_urb_state = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.out_urb_state = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.in_hc_state = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.out_hc_state = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.in_err_cnt = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.out_err_cnt = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.in_hcchar = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.in_hcint = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.in_hcintmsk = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.in_hctsiz = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.out_hcchar = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.out_hcint = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.out_hcintmsk = 0xFFFFFFFFU;
+        g_msc_read_timeout_snapshot.out_hctsiz = 0xFFFFFFFFU;
+      }
+
+      printf("[MSC-READ] timeout/fail: lun=%u addr=%lu len=%lu timer=%lu start=%lu port=%u unit_state=%u unit_err=%u bot_state=%u bot_cmd=%u\n",
+             (unsigned)lun,
+             (unsigned long)address,
+             (unsigned long)length,
+             (unsigned long)phost->Timer,
+             (unsigned long)timeout,
+             (unsigned)phost->device.PortEnabled,
+             (unsigned)MSC_Handle->unit[lun].state,
+             (unsigned)MSC_Handle->unit[lun].error,
+             (unsigned)MSC_Handle->hbot.state,
+             (unsigned)MSC_Handle->hbot.cmd_state);
       return USBH_FAIL;
     }
   }

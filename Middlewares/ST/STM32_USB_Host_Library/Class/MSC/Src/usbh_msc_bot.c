@@ -52,6 +52,25 @@ EndBSPDependencies */
   * @}
   */
 
+typedef struct
+{
+  uint32_t signature;
+  uint32_t urb_status;
+  uint32_t bot_state;
+  uint32_t bot_cmd_state;
+  uint32_t in_pipe;
+  uint32_t out_pipe;
+  uint32_t in_urb_state;
+  uint32_t out_urb_state;
+  uint32_t in_hc_state;
+  uint32_t out_hc_state;
+  uint32_t in_err_cnt;
+  uint32_t out_err_cnt;
+} BOT_ErrorSnapshot;
+
+volatile BOT_ErrorSnapshot g_bot_error_snapshot;
+static uint8_t g_bot_reset_recovery_step;
+
 /** @defgroup USBH_MSC_BOT_Private_Defines
   * @{
   */
@@ -231,6 +250,27 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
         if (URB_Status == USBH_URB_STALL)
         {
           MSC_Handle->hbot.state = BOT_ERROR_OUT;
+
+#if (USBH_USE_OS == 1U)
+          USBH_OS_PutMessage(phost, USBH_URB_EVENT, 0U, 0U);
+#endif /* (USBH_USE_OS == 1U) */
+        }
+        else if (URB_Status == USBH_URB_ERROR)
+        {
+          g_bot_error_snapshot.signature = 0x424F5445U; /* BOTE */
+          g_bot_error_snapshot.urb_status = (uint32_t)URB_Status;
+          g_bot_error_snapshot.bot_state = (uint32_t)MSC_Handle->hbot.state;
+          g_bot_error_snapshot.bot_cmd_state = (uint32_t)MSC_Handle->hbot.cmd_state;
+          g_bot_error_snapshot.in_pipe = (uint32_t)MSC_Handle->InPipe;
+          g_bot_error_snapshot.out_pipe = (uint32_t)MSC_Handle->OutPipe;
+          g_bot_error_snapshot.in_urb_state = (uint32_t)USBH_LL_GetURBState(phost, MSC_Handle->InPipe);
+          g_bot_error_snapshot.out_urb_state = (uint32_t)USBH_LL_GetURBState(phost, MSC_Handle->OutPipe);
+          g_bot_error_snapshot.in_hc_state = (uint32_t)((HCD_HandleTypeDef *)phost->pData)->hc[MSC_Handle->InPipe].state;
+          g_bot_error_snapshot.out_hc_state = (uint32_t)((HCD_HandleTypeDef *)phost->pData)->hc[MSC_Handle->OutPipe].state;
+          g_bot_error_snapshot.in_err_cnt = (uint32_t)((HCD_HandleTypeDef *)phost->pData)->hc[MSC_Handle->InPipe].ErrCnt;
+          g_bot_error_snapshot.out_err_cnt = (uint32_t)((HCD_HandleTypeDef *)phost->pData)->hc[MSC_Handle->OutPipe].ErrCnt;
+          g_bot_reset_recovery_step = 0U;
+          MSC_Handle->hbot.state = BOT_UNRECOVERED_ERROR;
 
 #if (USBH_USE_OS == 1U)
           USBH_OS_PutMessage(phost, USBH_URB_EVENT, 0U, 0U);
@@ -501,10 +541,33 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
 
 
     case BOT_UNRECOVERED_ERROR:
-      status = USBH_MSC_BOT_REQ_Reset(phost);
-      if (status == USBH_OK)
+      if (g_bot_reset_recovery_step == 0U)
       {
-        MSC_Handle->hbot.state = BOT_SEND_CBW;
+        status = USBH_MSC_BOT_REQ_Reset(phost);
+        if (status == USBH_OK)
+        {
+          g_bot_reset_recovery_step = 1U;
+        }
+      }
+      else if (g_bot_reset_recovery_step == 1U)
+      {
+        status = USBH_ClrFeature(phost, MSC_Handle->OutEp);
+        if (status == USBH_OK)
+        {
+          g_bot_reset_recovery_step = 2U;
+        }
+      }
+      else
+      {
+        status = USBH_ClrFeature(phost, MSC_Handle->InEp);
+        if (status == USBH_OK)
+        {
+          g_bot_reset_recovery_step = 0U;
+          (void)USBH_LL_SetToggle(phost, MSC_Handle->OutPipe, 0U);
+          (void)USBH_LL_SetToggle(phost, MSC_Handle->InPipe, 0U);
+          MSC_Handle->hbot.cmd_state = BOT_CMD_SEND;
+          MSC_Handle->hbot.state = BOT_SEND_CBW;
+        }
       }
       break;
 

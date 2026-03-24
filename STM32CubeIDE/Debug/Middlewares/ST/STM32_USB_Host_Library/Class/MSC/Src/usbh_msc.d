@@ -64,7 +64,8 @@ Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o: \
  ../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_bot.h \
  ../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_scsi.h \
  ../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_bot.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_scsi.h
+ ../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_scsi.h \
+ ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_hcd.h
 ../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc.h:
 ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h:
 ../../USB_Host/Target/usbh_conf.h:
@@ -131,3 +132,4 @@ Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o: \
 ../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_scsi.h:
 ../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_bot.h:
 ../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_scsi.h:
+../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_hcd.h:

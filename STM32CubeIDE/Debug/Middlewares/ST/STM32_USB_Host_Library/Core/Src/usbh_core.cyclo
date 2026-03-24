@@ -12,10 +12,10 @@ C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_
 C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:473:20:USBH_Process	37
 C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:800:27:USBH_HandleEnum	32
 C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1114:6:USBH_LL_SetTimer	1
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1126:6:USBH_LL_IncTimer	1
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1139:13:USBH_HandleSof	3
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1154:6:USBH_LL_PortEnabled	1
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1172:6:USBH_LL_PortDisabled	1
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1187:9:USBH_IsPortEnabled	1
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1199:20:USBH_LL_Connect	1
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1219:20:USBH_LL_Disconnect	1
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1126:6:USBH_LL_IncTimer	2
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1143:13:USBH_HandleSof	3
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1158:6:USBH_LL_PortEnabled	1
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1176:6:USBH_LL_PortDisabled	1
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1191:9:USBH_IsPortEnabled	1
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1203:20:USBH_LL_Connect	1
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c:1223:20:USBH_LL_Disconnect	1

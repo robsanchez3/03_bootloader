@@ -5,6 +5,7 @@ char USBHPath[4];
 FATFS USBHFatFS;
 FIL USBHFile;
 static uint8_t usb_file_buffer[256] __attribute__((aligned(32)));
+#define USB_FATFS_CRC_CHUNK_SIZE 64U
 
 static const char *USB_FATFS_ResultString(FRESULT res)
 {
@@ -97,13 +98,11 @@ FRESULT USB_FATFS_GetFileSize(const char *path, FSIZE_t *size_out)
     FRESULT res;
     FILINFO file_info;
 
-    printf("[FATFS] stat %s\n", path);
     res = f_stat(path, &file_info);
-    printf("[FATFS] f_stat -> %d (%s)\n", res, USB_FATFS_ResultString(res));
+    printf("[FATFS] stat %s -> %d (%s)\n", path, res, USB_FATFS_ResultString(res));
     if ((res == FR_OK) && (size_out != NULL))
     {
         *size_out = file_info.fsize;
-        printf("[FATFS] size=%lu bytes\n", (unsigned long)file_info.fsize);
     }
 
     return res;
@@ -119,12 +118,10 @@ FRESULT USB_FATFS_ReadTextFile(const char *path, char *buffer, UINT buffer_len)
         return FR_INVALID_PARAMETER;
     }
 
-    printf("[FATFS] open %s\n", path);
-
     res = f_open(&USBHFile, path, FA_READ);
-    printf("[FATFS] f_open -> %d (%s)\n", res, USB_FATFS_ResultString(res));
     if (res != FR_OK)
     {
+        printf("[FATFS] open %s -> %d (%s)\n", path, res, USB_FATFS_ResultString(res));
         return res;
     }
 
@@ -132,18 +129,13 @@ FRESULT USB_FATFS_ReadTextFile(const char *path, char *buffer, UINT buffer_len)
                  buffer,
                  (UINT)(buffer_len - 1U),
                  &bytes_read);
-    printf("[FATFS] f_read -> %d (%s), bytes=%u\n",
-           res,
-           USB_FATFS_ResultString(res),
-           (unsigned)bytes_read);
     if (res == FR_OK)
     {
         buffer[bytes_read] = '\0';
-        printf("[FATFS] preview: %s\n", buffer);
     }
     else
     {
-        printf("[FATFS] f_read failed: %d\n", res);
+        printf("[FATFS] read %s -> %d (%s)\n", path, res, USB_FATFS_ResultString(res));
     }
 
     if (f_close(&USBHFile) != FR_OK)
@@ -165,19 +157,18 @@ FRESULT USB_FATFS_ReadFilePreview(const char *path, UINT preview_len)
         read_len = sizeof(usb_file_buffer);
     }
 
-    printf("[FATFS] preview open %s\n", path);
     res = f_open(&USBHFile, path, FA_READ);
-    printf("[FATFS] preview f_open -> %d (%s)\n", res, USB_FATFS_ResultString(res));
     if (res != FR_OK)
     {
+        printf("[FATFS] preview open %s -> %d (%s)\n", path, res, USB_FATFS_ResultString(res));
         return res;
     }
 
     res = f_read(&USBHFile, usb_file_buffer, read_len, &bytes_read);
-    printf("[FATFS] preview f_read -> %d (%s), bytes=%u\n",
-           res,
-           USB_FATFS_ResultString(res),
-           (unsigned)bytes_read);
+    if (res != FR_OK)
+    {
+        printf("[FATFS] preview read %s -> %d (%s)\n", path, res, USB_FATFS_ResultString(res));
+    }
 
     if (f_close(&USBHFile) != FR_OK)
     {
@@ -193,32 +184,38 @@ FRESULT USB_FATFS_ComputeFileCrc32(const char *path, uint32_t *crc_out, FSIZE_t 
     UINT bytes_read;
     uint32_t crc = 0xFFFFFFFFU;
     FSIZE_t total_size = 0U;
+    uint32_t read_count = 0U;
 
     if (crc_out == NULL)
     {
         return FR_INVALID_PARAMETER;
     }
 
-    printf("[FATFS] open %s for CRC\n", path);
     res = f_open(&USBHFile, path, FA_READ);
-    printf("[FATFS] f_open -> %d (%s)\n", res, USB_FATFS_ResultString(res));
     if (res != FR_OK)
     {
+        printf("[FATFS] open %s for CRC -> %d (%s)\n", path, res, USB_FATFS_ResultString(res));
         return res;
     }
 
     do
     {
-        res = f_read(&USBHFile, usb_file_buffer, sizeof(usb_file_buffer), &bytes_read);
+        res = f_read(&USBHFile, usb_file_buffer, USB_FATFS_CRC_CHUNK_SIZE, &bytes_read);
         if (res != FR_OK)
         {
-            printf("[FATFS] f_read CRC -> %d (%s)\n", res, USB_FATFS_ResultString(res));
+            printf("[FATFS] read CRC %s -> %d (%s), reads=%lu bytes=%lu\n",
+                   path,
+                   res,
+                   USB_FATFS_ResultString(res),
+                   (unsigned long)read_count,
+                   (unsigned long)total_size);
             (void)f_close(&USBHFile);
             return res;
         }
 
         crc = USB_FATFS_Crc32Update(crc, usb_file_buffer, bytes_read);
         total_size += (FSIZE_t)bytes_read;
+        read_count++;
     } while (bytes_read > 0U);
 
     if (f_close(&USBHFile) != FR_OK)
@@ -231,11 +228,6 @@ FRESULT USB_FATFS_ComputeFileCrc32(const char *path, uint32_t *crc_out, FSIZE_t 
     {
         *size_out = total_size;
     }
-
-    printf("[FATFS] CRC32(%s) = 0x%08lX size=%lu\n",
-           path,
-           (unsigned long)(*crc_out),
-           (unsigned long)total_size);
 
     return FR_OK;
 }

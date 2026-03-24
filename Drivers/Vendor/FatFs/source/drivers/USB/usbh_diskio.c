@@ -15,6 +15,7 @@
 #include "usbh_diskio.h"
 #include "usbh_core.h"
 #include "usbh_msc.h"
+#include <stdio.h>
 #include <string.h>
 
 /* Private defines -----------------------------------------------------------*/
@@ -28,6 +29,11 @@ extern USBH_HandleTypeDef  hUsbHostHS;
 
 /* Use a fixed aligned bounce buffer for MSC reads triggered by FatFS. */
 static uint8_t usbh_sector_buf[USB_DEFAULT_BLOCK_SIZE] __attribute__((aligned(32)));
+volatile uint32_t g_usbh_last_ok_sector = 0U;
+volatile uint32_t g_usbh_first_fail_sector = 0U;
+volatile uint32_t g_usbh_last_fail_result = 0U;
+volatile uint32_t g_usbh_last_fail_lun = 0U;
+volatile uint32_t g_usbh_last_fail_count = 0U;
 
 /* Private function prototypes -----------------------------------------------*/
 DSTATUS USBH_initialize(BYTE lun);
@@ -92,6 +98,7 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
   MSC_LUNTypeDef info;
   UINT i;
   UINT attempt;
+  USBH_StatusTypeDef msc_res;
 
   for (i = 0; i < count; i++)
   {
@@ -101,6 +108,14 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
     {
       if (USBH_MSC_UnitIsReady(&hUsbHostHS, lun) == 0U)
       {
+        if ((attempt == 0U) || (attempt + 1U == USB_READ_RETRIES))
+        {
+          printf("[DISKIO] read l=%u s=%lu c=%u try=%u -> UnitNotReady\n",
+                 (unsigned)lun,
+                 (unsigned long)(sector + i),
+                 (unsigned)count,
+                 (unsigned)(attempt + 1U));
+        }
         if (attempt + 1U < USB_READ_RETRIES)
         {
           HAL_Delay(USB_READ_RETRY_DELAY_MS);
@@ -108,12 +123,22 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
         continue;
       }
 
-      if (USBH_MSC_Read(&hUsbHostHS, lun, sector + i, usbh_sector_buf, 1U) == USBH_OK)
+      msc_res = USBH_MSC_Read(&hUsbHostHS, lun, sector + i, usbh_sector_buf, 1U);
+
+      if (msc_res == USBH_OK)
       {
         memcpy(buff + (i * USB_DEFAULT_BLOCK_SIZE), usbh_sector_buf, USB_DEFAULT_BLOCK_SIZE);
+        g_usbh_last_ok_sector = (uint32_t)(sector + i);
         res = RES_OK;
         break;
       }
+
+      printf("[DISKIO] read l=%u s=%lu c=%u try=%u -> USBH_MSC_Read=%d\n",
+             (unsigned)lun,
+             (unsigned long)(sector + i),
+             (unsigned)count,
+             (unsigned)(attempt + 1U),
+             (int)msc_res);
 
       if (attempt + 1U < USB_READ_RETRIES)
       {
@@ -127,6 +152,19 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
     }
 
     USBH_MSC_GetLUNInfo(&hUsbHostHS, lun, &info);
+    if (g_usbh_first_fail_sector == 0U)
+    {
+      g_usbh_first_fail_sector = (uint32_t)(sector + i);
+    }
+    g_usbh_last_fail_result = (uint32_t)res;
+    g_usbh_last_fail_lun = (uint32_t)lun;
+    g_usbh_last_fail_count = (uint32_t)count;
+    printf("[DISKIO] read fail sense: key=0x%02X asc=0x%02X ascq=0x%02X state=%u err=%u\n",
+           (unsigned)info.sense.key,
+           (unsigned)info.sense.asc,
+           (unsigned)info.sense.ascq,
+           (unsigned)info.state,
+           (unsigned)info.error);
     switch (info.sense.asc)
     {
       case SCSI_ASC_LOGICAL_UNIT_NOT_READY:

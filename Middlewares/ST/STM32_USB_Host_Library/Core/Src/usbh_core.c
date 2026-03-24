@@ -1125,8 +1125,12 @@ void USBH_LL_SetTimer(USBH_HandleTypeDef *phost, uint32_t time)
   */
 void USBH_LL_IncTimer(USBH_HandleTypeDef *phost)
 {
+  if (phost == NULL)
+  {
+    return;
+  }
+
   phost->Timer++;
-  USBH_HandleSof(phost);
 }
 
 
