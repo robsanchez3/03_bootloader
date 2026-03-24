@@ -1,20 +1,12 @@
 /**
   * @brief Interrupt Service Routines — O3 Bootloader (minimal set)
   *
-  *  Phase 1: only fault handlers + SysTick for HAL_IncTick().
+  *  Phase 1 baseline: only fault handlers + SysTick for HAL_IncTick().
   *  The bootloader uses SysTick as HAL timebase (not TIM2 like the app).
   */
 
 #include "main.h"
 #include "stm32u5xx_hal.h"
-
-
-extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
-
-void OTG_HS_IRQHandler(void)
-{
-    HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
-}
 
 void NMI_Handler(void)
 {

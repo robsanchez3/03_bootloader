@@ -1,34 +1,337 @@
-• El plan tiene que empezar por una realidad del proyecto: hoy todavía no estás en fase de “bootloader USB” completa, sino en fase de POC de acceso al
-  pendrive. Eso está documentado en USB_POC_status.txt:12 y USB_POC_status.txt:26: el USB enumera y a veces lee 0:/UPDATE/test.txt, pero el acceso FatFS no
-  es estable (FR_OK, FR_DISK_ERR, FR_NO_FILESYSTEM). Además, el flujo de arranque real aún no está activo: Boot_IsApplicationValid() devuelve siempre 1 y
-  1. Estabilizar USB MSC + FatFS. No sigas con actualización de firmware hasta que el montaje y lectura de archivos sean repetibles al 100%. La lógica
-     actual de mount/read con retries está en USB_Host/App/usb_host.c:143 y las primitivas FatFS en FATFS/App/fatfs_usb.c:21.
-  2. Reactivar el arranque normal. Implementar de verdad Boot_IsApplicationValid() y Boot_JumpToApplication() para que el bootloader pueda decidir: app
-     válida -> arrancar app; app inválida o modo update -> quedarse en recuperación. La región de app ya está definida en Boot/Inc/boot_jump.h:6.
-  3. Definir el contrato de actualización USB. Recomiendo usar algo simple y determinista como 0:/UPDATE/app.bin más 0:/UPDATE/app.json o manifest.txt con
-     tamaño, versión, CRC y, si quieres robustez real, firma.
-  4. Implementar la máquina de estados del bootloader. Estados mínimos: BOOT_CHECK_APP, BOOT_WAIT_USB, BOOT_SCAN_UPDATE, BOOT_VALIDATE_IMAGE,
-     BOOT_PROGRAM_FLASH, BOOT_VERIFY_FLASH, BOOT_MARK_OK, BOOT_JUMP_APP, BOOT_ERROR.
-  5. Añadir validación de imagen antes de grabar. Mínimo: tamaño, rango destino, vector table coherente, MSP dentro de RAM, reset handler dentro de
-     APP_BASE..APP_END, CRC32. Si el producto va a campo, mejor firma criptográfica.
-  6. Implementar programación de flash por bloques. Leer app.bin desde USB en chunks, borrar sectores de aplicación, programar, verificar cada bloque y al
-     final verificar imagen completa.
-  7. Añadir mecanismo anti-brick. Mantener un “boot control block” en flash con flags tipo pending, valid, confirmed. Nunca sobrescribas el bootloader. Sólo
-     marcas la app como válida cuando termine programación y verificación.
-  8. Definir política de arranque. Ejemplo recomendado: si hay botón de servicio pulsado o no hay app válida -> entrar en modo USB update; si hay app válida
-     y no hay petición de update -> saltar a la app; si hay USB con imagen válida más nueva -> actualizar y luego arrancar.
-  9. Mejorar observabilidad. Mantén logs ITM/serial y añade códigos LED para USB detectado, leyendo, validando, grabando, error CRC, jump.
-  10. Cerrar con pruebas de sistema. Casos mínimos: sin USB con app válida, sin USB sin app válida, USB con imagen correcta, USB con CRC incorrecto, USB
-     extraído en mitad de grabación, corte de alimentación durante update.
+PLAN DE TRABAJO DEL BOOTLOADER STM32U599NIH6Q
+============================================
 
-  Orden recomendado de trabajo
+Fecha
+2026-03-24
 
-  1. Fase A: estabilizar FatFS.
-  2. Fase B: arreglar Boot_IsApplicationValid() y Boot_JumpToApplication().
-  3. Fase C: parser de manifest + lectura de app.bin.
-  4. Fase D: borrado/programación/verificación de flash.
-  5. Fase E: flags de estado y recuperación ante fallo.
-  6. Fase F: endurecimiento y pruebas.
+Contexto real del proyecto
+--------------------------
 
-  Si quieres, el siguiente paso útil es que te prepare un plan de implementación ya desglosado por archivos y funciones de este repo, para ejecutar la Fase
-  A y la Fase B.
+Estado actual confirmado:
+- El bootloader salta correctamente a la aplicacion principal situada en `0x08020000`.
+- La cesion de control a la app principal debe preservar exactamente el tratamiento actual de interrupciones y estado de core.
+- La grabacion en flash aun no esta implementada.
+- Existen restos de una implementacion USB previa que no debe considerarse valida como base de producto.
+
+Limitaciones actuales de la parte USB:
+- El proyecto contiene una POC de `USB Host + MSC + FatFs`.
+- Segun `USB_POC_status.txt`, la deteccion fisica y la enumeracion funcionan.
+- Tambien se ha demostrado acceso a fichero en algunas ejecuciones.
+- Sin embargo, el acceso FatFs no es estable ni repetible todavia.
+- Por tanto, el proyecto no debe considerarse aun en fase de "bootloader USB funcional", sino en fase de POC de acceso a pendrive.
+
+Objetivo general
+----------------
+
+Ejecutar el trabajo en tres bloques:
+
+1. Retirar por completo el codigo USB actual y dejar un baseline limpio del bootloader.
+2. Reimplantar desde cero un sistema de acceso a ficheros por pendrive USB.
+3. Demostrar de forma fiable el acceso y lectura de estos cuatro ficheros:
+   - `0:/UPDATE/app_ini.bin`
+   - `0:/UPDATE/app_ospi.bin`
+   - `0:/UPDATE/app_ini.crc`
+   - `0:/UPDATE/app_ospi.crc`
+
+Nota importante sobre nomenclatura
+----------------------------------
+
+La implementacion actual usa nombres `app_int.bin` y `app_int.crc` en parte del codigo USB existente.
+
+La nomenclatura objetivo a partir de ahora sera exclusivamente esta:
+- `app_ini.bin`
+- `app_ini.crc`
+- `app_ospi.bin`
+- `app_ospi.crc`
+
+No se debe mantener una doble nomenclatura porque induce errores y ambiguedad durante las pruebas.
+
+FASE 1. BASELINE LIMPIO SIN USB
+===============================
+
+Objetivo
+--------
+
+Dejar una version minima, limpia y coherente del bootloader, con solo las capacidades que hoy si funcionan:
+- inicializacion base de HW
+- validacion de aplicacion
+- salto a la app principal
+- bucle de recovery simple si no hay aplicacion valida
+
+Alcance
+-------
+
+Se retira del flujo activo todo lo relativo a:
+- USB Host
+- MSC
+- FatFs
+- deteccion de update por pendrive
+- lectura de ficheros
+- reintentos y power-cycle USB
+
+Trabajo tecnico
+---------------
+
+1. Simplificar `STM32CubeIDE/Src/main.c`
+   - Eliminar `#include` de `usb_host.h` y `fatfs_usb.h`.
+   - Eliminar la inicializacion `MX_FATFS_USB_Init()`.
+   - Eliminar la inicializacion `MX_USB_HOST_Init()`.
+   - Eliminar llamadas periodicas a `MX_USB_HOST_Process()` y `USBH_AppTask()`.
+   - Eliminar la politica de arranque basada en ventana USB.
+   - Eliminar la deteccion de update USB al arranque.
+   - Dejar una politica simple:
+     - si la app es valida, saltar a la aplicacion
+     - si no lo es, entrar en un bucle de recovery simple
+
+2. Preservar sin cambios funcionales:
+   - `Boot/Src/boot_jump.c`
+   - `Boot/Inc/boot_jump.h`
+   - secuencia de init de alimentacion y reloj
+   - restauracion de interrupciones y estado del core antes del salto
+
+3. Retirar del build los modulos USB/FatFs de la implementacion actual
+   - `USB_Host/App/usb_host.c`
+   - `USB_Host/App/usb_host.h`
+   - `FATFS/App/fatfs_usb.c`
+   - `FATFS/App/fatfs_usb.h`
+   - `Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c`
+   - `Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.h`
+   - modulos `USB Host Library` y `MSC` del build, si siguen enlazados
+   - `USB_Host/Target/usbh_conf.c`
+   - `USB_Host/Target/usbh_conf.h`
+
+4. Ajustar configuracion de proyecto
+   - Limpiar referencias de compilacion a USB/FatFs en la configuracion de CubeIDE.
+   - Verificar que el baseline compila sin dependencias USB residuales.
+
+Criterios de aceptacion de Fase 1
+---------------------------------
+
+- El bootloader compila limpio.
+- El codigo activo no contiene flujo funcional USB.
+- Si la app situada en `0x08020000` es valida, el salto sigue funcionando como ahora.
+- Si la app no es valida, el equipo permanece en recovery local simple.
+- No se modifica la mecanica de cesion de control a la app.
+
+FASE 2. REIMPLANTACION USB DESDE CERO
+=====================================
+
+Objetivo
+--------
+
+Reintroducir el acceso por pendrive USB desde una base minima y verificable, sin reaprovechar la logica de alto nivel de la POC anterior.
+
+Principio de diseno
+-------------------
+
+No mezclar en un mismo modulo:
+- bring-up USB
+- enumeracion MSC
+- acceso FatFs
+- validacion de archivos de update
+- politica de arranque
+
+Cada responsabilidad debe quedar separada para poder depurar y probar por capas.
+
+Arquitectura recomendada
+------------------------
+
+1. Capa `usb_host_ll`
+   Responsabilidad:
+   - init de periferico USB host
+   - VBUS
+   - callbacks HCD
+   - estado fisico de conexion
+
+2. Capa `usb_msc_service`
+   Responsabilidad:
+   - enumeracion MSC
+   - deteccion de unidad lista
+   - estado del medio
+
+3. Capa `usb_fs_service`
+   Responsabilidad:
+   - link de driver FatFs
+   - mount/unmount
+   - `stat/open/read/close`
+   - gestion de errores de sistema de ficheros
+
+4. Capa `usb_update_probe`
+   Responsabilidad:
+   - conocer los cuatro paths requeridos
+   - comprobar su presencia
+   - leer los archivos
+   - exponer resultados de prueba
+
+Archivos propuestos para esta fase
+----------------------------------
+
+Nuevos modulos recomendados:
+- `Boot/Inc/usb_update.h`
+- `Boot/Src/usb_update.c`
+- `Boot/Inc/usb_fs_service.h`
+- `Boot/Src/usb_fs_service.c`
+- `Boot/Inc/usb_msc_service.h`
+- `Boot/Src/usb_msc_service.c`
+
+Codigo reutilizable solo si se adapta de forma controlada:
+- `USB_Host/Target/usbh_conf.c`
+- `USB_Host/Target/usbh_conf.h`
+- `Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.c`
+- `Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.h`
+
+Reglas para la reimplantacion
+-----------------------------
+
+- No reutilizar la maquina de estados grande actual de `USB_Host/App/usb_host.c`.
+- No portar directamente la logica de retries y validacion embebida en la POC actual.
+- No introducir todavia grabacion en flash.
+- No modificar `Boot_JumpToApplication()`.
+- Mantener el arranque normal desacoplado del subsistema USB.
+
+API funcional minima recomendada
+--------------------------------
+
+- `UsbUpdate_Init(void)`
+- `UsbUpdate_Process(void)`
+- `UsbUpdate_DeviceConnected(void)`
+- `UsbUpdate_DeviceReady(void)`
+- `UsbUpdate_FilesPresent(void)`
+- `UsbUpdate_ReadCrcFile(...)`
+- `UsbUpdate_ReadBinChunk(...)`
+
+Paths definitivos
+-----------------
+
+Los unicos paths validos para la nueva implementacion seran:
+- `0:/UPDATE/app_ini.bin`
+- `0:/UPDATE/app_ospi.bin`
+- `0:/UPDATE/app_ini.crc`
+- `0:/UPDATE/app_ospi.crc`
+
+Criterios de aceptacion de Fase 2
+---------------------------------
+
+- El dispositivo USB se detecta de forma consistente.
+- La enumeracion MSC se completa.
+- El sistema de ficheros se monta correctamente.
+- Existe una API limpia para comprobar y leer los cuatro ficheros requeridos.
+- Todavia no hay borrado ni grabacion de flash.
+
+FASE 3. DEMOSTRACION FIABLE DE ACCESO A LOS 4 FICHEROS
+======================================================
+
+Objetivo
+--------
+
+Demostrar que el bootloader puede localizar y leer de forma fiable los cuatro ficheros objetivo en pendrive USB.
+
+Ficheros objetivo
+-----------------
+
+- `0:/UPDATE/app_ini.bin`
+- `0:/UPDATE/app_ospi.bin`
+- `0:/UPDATE/app_ini.crc`
+- `0:/UPDATE/app_ospi.crc`
+
+Secuencia de prueba obligatoria
+-------------------------------
+
+1. Detectar conexion fisica del pendrive.
+2. Esperar a que la clase MSC quede lista.
+3. Montar FatFs.
+4. Ejecutar `f_stat()` sobre los cuatro paths.
+5. Abrir y leer completamente los dos ficheros `.crc`.
+6. Abrir y leer los dos ficheros `.bin`.
+7. Leer al menos:
+   - cabecera
+   - bloques intermedios
+   - bloque final
+8. Opcional pero recomendable:
+   - calcular CRC32 completo de `app_ini.bin`
+   - calcular CRC32 completo de `app_ospi.bin`
+
+Instrumentacion necesaria
+-------------------------
+
+Los logs deben permitir distinguir claramente estos fallos:
+- fallo de deteccion fisica
+- fallo de enumeracion
+- unidad MSC no lista
+- fallo de mount
+- fallo de `f_stat`
+- fallo de `f_open`
+- fallo de `f_read`
+- desconexion del medio durante la lectura
+
+Definicion de exito funcional
+-----------------------------
+
+Se considerara exito funcional cuando en una ejecucion:
+- los cuatro `f_stat()` devuelvan `FR_OK`
+- los cuatro `f_open()` devuelvan `FR_OK`
+- las lecturas se completen sin `FR_DISK_ERR`
+- no aparezca `FR_NO_FILESYSTEM`
+
+Definicion de exito fiable
+--------------------------
+
+Se considerara acceso fiable cuando el ensayo se repita de forma estable, por ejemplo:
+- 10 ciclos consecutivos de arranque o insercion
+- sin `FR_DISK_ERR`
+- sin `FR_NO_FILESYSTEM`
+- sin lecturas truncadas
+- con tamanos coherentes en los cuatro ficheros
+
+Entregables de esta fase
+------------------------
+
+- logs de prueba repetibles
+- evidencia de acceso a los cuatro paths
+- lectura correcta de ambos `.crc`
+- lectura correcta de ambos `.bin`
+- recomendacion tecnica de si la base ya es apta para pasar a grabacion flash
+
+FASE 4. PASO POSTERIOR, FUERA DEL ALCANCE ACTUAL
+================================================
+
+Esta fase no forma parte del objetivo actual, pero queda registrada como siguiente paso natural:
+- validacion de imagen
+- borrado de flash interna
+- programacion de flash interna
+- programacion OSPI
+- verificacion de datos grabados
+- estrategia anti-brick
+- politica de confirmacion de arranque
+
+No debe iniciarse esta fase hasta cerrar con exito la Fase 3.
+
+ORDEN RECOMENDADO DE EJECUCION
+==============================
+
+1. Ejecutar Fase 1 y dejar el bootloader base totalmente limpio.
+2. Verificar build y salto correcto a la app principal.
+3. Ejecutar Fase 2 reintroduciendo solo la base LL de USB Host.
+4. Reintroducir MSC.
+5. Reintroducir FatFs.
+6. Implementar `usb_update_probe` con los cuatro paths definitivos.
+7. Ejecutar la campaña de repetibilidad de Fase 3.
+8. Solo si esa campaña es estable, abrir la fase de grabacion en flash.
+
+RIESGOS TECNICOS PRINCIPALES
+============================
+
+- El problema actual parece estar en la estabilidad de `MSC/FatFs`, no en VBUS o deteccion fisica.
+- Reutilizar en bloque la POC actual arrastraria complejidad y ambiguedad.
+- Mezclar arranque normal con logica USB dificulta el diagnostico.
+- Cambiar indebidamente la logica de salto a la app podria romper la unica parte ya validada del bootloader.
+
+CRITERIO DE DECISION PARA CONTINUAR
+===================================
+
+No avanzar a grabacion en flash hasta cumplir simultaneamente:
+- baseline limpio sin USB heredado
+- nueva cadena USB/MSC/FatFs funcional
+- acceso repetible a los cuatro ficheros objetivo
+
+Fin del plan.

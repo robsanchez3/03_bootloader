@@ -1,0 +1,9 @@
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:12:6:UsbUpdate_Init	2
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:25:6:UsbUpdate_Process	1
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:31:6:UsbUpdate_Reset	2
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:44:9:UsbUpdate_DeviceConnected	1
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:49:9:UsbUpdate_DeviceReady	1
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:54:9:UsbUpdate_FilesPresent	3
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:69:15:UsbUpdate_ProbeFiles	4
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:88:15:UsbUpdate_ReadFile	2
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:109:28:UsbUpdate_GetFileInfo	2

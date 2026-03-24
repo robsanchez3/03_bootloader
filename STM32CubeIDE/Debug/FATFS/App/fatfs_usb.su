@@ -1,9 +1,0 @@
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:10:20:USB_FATFS_ResultString	16	static
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:38:17:USB_FATFS_Crc32Update	32	static
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:62:6:MX_FATFS_USB_Init	8	static
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:74:9:USB_FATFS_Mount	24	static
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:85:9:USB_FATFS_Unmount	24	static
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:96:9:USB_FATFS_GetFileSize	56	static
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:111:9:USB_FATFS_ReadTextFile	40	static
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:149:9:USB_FATFS_ReadFilePreview	40	static
-C:/Roberto/O3/O3_Bootloader/FATFS/App/fatfs_usb.c:181:9:USB_FATFS_ComputeFileCrc32	64	static

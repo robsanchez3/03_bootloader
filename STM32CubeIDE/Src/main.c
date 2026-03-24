@@ -18,8 +18,6 @@
 #include "stm32u5xx_hal.h"
 #include "main.h"
 #include "boot_jump.h"
-#include "usb_host.h"
-#include "fatfs_usb.h"
 #include <stdio.h>
 
 
@@ -30,11 +28,8 @@ static void SystemPower_Config(void);
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void Recovery_Loop(void);
-static uint8_t Boot_WaitUsbAtStart(uint32_t timeout_ms);
-static uint8_t Boot_WaitForValidUpdate(void);
 static void Boot_RunStartupPolicy(void);
 
-#define BOOT_USB_START_WINDOW_MS   3000U
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
 
 int _write(int file, char *ptr, int len)
@@ -67,11 +62,7 @@ int main(void)
     SystemClock_Config();
     MX_GPIO_Init();
 
-    printf("FATFS init...\n");
-    MX_FATFS_USB_Init();
 
-    printf("USB host init...\n");
-    MX_USB_HOST_Init();
     printf("BL start\n");
 
     Boot_RunStartupPolicy();
@@ -83,30 +74,13 @@ int main(void)
 /* -----------------------------------------------------------------------
  * Recovery_Loop
  *   Blink the status LED to signal that no valid application was found.
- *   USB update logic will be inserted here in Phase 2.
  * ----------------------------------------------------------------------- */
 static void Recovery_Loop(void)
 {
     uint32_t last_blink = HAL_GetTick();
-    uint8_t update_detected = 0U;
 
     while (1)
     {
-        MX_USB_HOST_Process();
-        USBH_AppTask();
-
-        if ((update_detected == 0U) && (Boot_WaitForValidUpdate() != 0U))
-        {
-            update_detected = 1U;
-            printf("[BOOT] Update media detected in recovery\n");
-            /* Programming flow will be inserted here in the next phase. */
-        }
-
-        if (update_detected != 0U)
-        {
-            continue;
-        }
-
         if ((HAL_GetTick() - last_blink) >= 250U)
         {
             last_blink = HAL_GetTick();
@@ -115,70 +89,9 @@ static void Recovery_Loop(void)
     }
 }
 
-static uint8_t Boot_WaitUsbAtStart(uint32_t timeout_ms)
-{
-    uint32_t deadline = HAL_GetTick() + timeout_ms;
-
-    USBH_ClearUpdateDetection();
-
-    while ((int32_t)(HAL_GetTick() - deadline) < 0)
-    {
-        MX_USB_HOST_Process();
-        USBH_AppTask();
-
-        if (USBH_HasPhysicalConnection() != 0U)
-        {
-            printf("[BOOT] USB physical connection detected during startup window\n");
-            return 1U;
-        }
-    }
-
-    printf("[BOOT] No USB physical connection detected during startup window\n");
-    return 0U;
-}
-
-static uint8_t Boot_WaitForValidUpdate(void)
-{
-    while (1)
-    {
-        MX_USB_HOST_Process();
-        USBH_AppTask();
-
-        if (USBH_HasValidUpdateImage() != 0U)
-        {
-            printf("[BOOT] Found valid update set: app_int/app_ospi + CRCs\n");
-            return 1U;
-        }
-
-        if (USBH_IsUpdateCheckComplete() != 0U)
-        {
-            return 0U;
-        }
-    }
-}
-
 static void Boot_RunStartupPolicy(void)
 {
     uint8_t app_valid;
-
-    if (Boot_WaitUsbAtStart(BOOT_USB_START_WINDOW_MS) != 0U)
-    {
-        if (Boot_WaitForValidUpdate() != 0U)
-        {
-            printf("[BOOT] Valid update detected at startup\n");
-            printf("[BOOT] Programming flow not implemented yet -> recovery\n");
-            Recovery_Loop();
-        }
-
-        printf("[BOOT] USB present but no valid update -> recovery\n");
-        Recovery_Loop();
-    }
-
-    if (USBH_WasUsbSeen() != 0U)
-    {
-        printf("[BOOT] USB activity seen during startup -> recovery\n");
-        Recovery_Loop();
-    }
 
     app_valid = (uint8_t)Boot_IsApplicationValid(APP_BASE);
 
@@ -189,11 +102,11 @@ static void Boot_RunStartupPolicy(void)
 
     if (app_valid != 0U)
     {
-        printf("Jumping to app\n");
+        printf("[BOOT] Valid app found -> jump\n");
         Boot_JumpToApplication(APP_BASE);
     }
 
-    printf("Recovery loop\n");
+    printf("[BOOT] No valid app -> recovery loop\n");
     Recovery_Loop();
 }
 

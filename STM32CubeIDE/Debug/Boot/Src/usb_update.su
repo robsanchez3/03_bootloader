@@ -1,0 +1,9 @@
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:12:6:UsbUpdate_Init	16	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:25:6:UsbUpdate_Process	8	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:31:6:UsbUpdate_Reset	16	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:44:9:UsbUpdate_DeviceConnected	8	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:49:9:UsbUpdate_DeviceReady	8	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:54:9:UsbUpdate_FilesPresent	16	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:69:15:UsbUpdate_ProbeFiles	16	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:88:15:UsbUpdate_ReadFile	40	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_update.c:109:28:UsbUpdate_GetFileInfo	16	static

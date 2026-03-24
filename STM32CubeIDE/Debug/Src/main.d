@@ -52,20 +52,7 @@ Src/main.o: ../Src/main.c \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_exti.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_fdcan.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h \
- ../Inc/main.h ../../Boot/Inc/boot_jump.h ../../USB_Host/App/usb_host.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h \
- ../../USB_Host/Target/usbh_conf.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_def.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ioreq.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_pipes.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ctlreq.h \
- ../../FATFS/App/fatfs_usb.h ../../Drivers/Vendor/FatFs/source/ff.h \
- ../../FATFS/Target/ffconf.h \
- ../../Drivers/Vendor/FatFs/source/ff_gen_drv.h \
- ../../Drivers/Vendor/FatFs/source/diskio.h \
- ../../Drivers/Vendor/FatFs/source/ff.h \
- ../../Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.h
+ ../Inc/main.h ../../Boot/Inc/boot_jump.h
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_conf.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_rcc.h:
@@ -121,18 +108,3 @@ Src/main.o: ../Src/main.c \
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h:
 ../Inc/main.h:
 ../../Boot/Inc/boot_jump.h:
-../../USB_Host/App/usb_host.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h:
-../../USB_Host/Target/usbh_conf.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_def.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ioreq.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_pipes.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ctlreq.h:
-../../FATFS/App/fatfs_usb.h:
-../../Drivers/Vendor/FatFs/source/ff.h:
-../../FATFS/Target/ffconf.h:
-../../Drivers/Vendor/FatFs/source/ff_gen_drv.h:
-../../Drivers/Vendor/FatFs/source/diskio.h:
-../../Drivers/Vendor/FatFs/source/ff.h:
-../../Drivers/Vendor/FatFs/source/drivers/USB/usbh_diskio.h:
