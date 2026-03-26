@@ -8,6 +8,13 @@
 #include "main.h"
 #include "stm32u5xx_hal.h"
 
+extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
+
+void OTG_HS_IRQHandler(void)
+{
+    HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
+}
+
 void NMI_Handler(void)
 {
     while (1) {}

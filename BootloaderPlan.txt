@@ -39,8 +39,8 @@ Nota importante sobre nomenclatura
 La implementacion actual usa nombres `app_int.bin` y `app_int.crc` en parte del codigo USB existente.
 
 La nomenclatura objetivo a partir de ahora sera exclusivamente esta:
-- `app_ini.bin`
-- `app_ini.crc`
+- `app_int.bin`
+- `app_int.crc`
 - `app_ospi.bin`
 - `app_ospi.crc`
 
@@ -318,6 +318,10 @@ ORDEN RECOMENDADO DE EJECUCION
 7. Ejecutar la campaña de repetibilidad de Fase 3.
 8. Solo si esa campaña es estable, abrir la fase de grabacion en flash.
 
+Nota de base adoptada para Fase 2:
+- Se adopta como referencia de partida el contenido USB Host/MSC del proyecto `O3dev_edt_00`.
+- Si en el futuro aparecen problemas de enumeracion, temporizacion, BOT/SCSI o estabilidad general, revisar expresamente esa decision y comparar contra una referencia estandar de ST.
+
 RIESGOS TECNICOS PRINCIPALES
 ============================
 
@@ -325,6 +329,7 @@ RIESGOS TECNICOS PRINCIPALES
 - Reutilizar en bloque la POC actual arrastraria complejidad y ambiguedad.
 - Mezclar arranque normal con logica USB dificulta el diagnostico.
 - Cambiar indebidamente la logica de salto a la app podria romper la unica parte ya validada del bootloader.
+- La base `USB Host/MSC` adoptada desde `O3dev_edt_00` podria contener diferencias funcionales respecto al estandar de ST y debe considerarse una hipotesis prioritaria si hay incidencias posteriores.
 
 CRITERIO DE DECISION PARA CONTINUAR
 ===================================
@@ -333,5 +338,58 @@ No avanzar a grabacion en flash hasta cumplir simultaneamente:
 - baseline limpio sin USB heredado
 - nueva cadena USB/MSC/FatFs funcional
 - acceso repetible a los cuatro ficheros objetivo
+
+WORK JOURNAL
+============
+
+- Eliminé la POC USB heredada y construí la capa `Boot/USB` con `usb_msc_service`, diagnóstico y política de recuperación.  
+- Documenté la base oficial de ST y conservé el workaround `GetMaxLUN`/trazas controladas bajo `BOOT_USB_ST_TRACE_VERBOSE`.  
+- Medí repetibilidad con distintas esperas sobre VBUS (200, 500, 750 ms) y campañas de 10-20 ciclos para identificar fallos residuales.  
+- Implementé recuperación con `timeout before ENUMERATING`, incluida una rama de reset HW sencilla + `VBUS delay 1500 ms`, e instrumenté transiciones `IDLE→CONNECTED→ENUMERATING→READY`.  
+- Registré métricas: actualmente ~4 fallos en 20, la mayoría "timeout antes de enunciar" o desconexión temprana; el reset HW se dispara cuando el host queda atrapado en `DEVICE_CONNECTED` sin pasar a `ENUMERATING`.
+
+RESUME NOTES
+============
+
+- Mantener abiertos los cambios en `Boot/USB/Src/usb_msc_service.c`, `Boot/USB/Src/usbh_conf.c` y `Boot/USB/Inc/usbh_conf.h` (y trazas condicionales en `Middlewares/ST/...`).  
+- La recuperación está acotada a fallos tempranos y usa `USBH_LL_HardResetHostController` con mayor delay; el flujo normal sigue con 750 ms.  
+- Cuando retomes, repite la campaña con esta versión para comparar, después limpia las trazas condicionales y procede hacia `usb_fs_service`/lectura de ficheros.
+
+--- 2026-03-26 ---
+
+FIX: NAK storm en BULK IN causa CPU starvation al leer .bin completo
+---------------------------------------------------------------------
+Síntoma: al leer app_int.bin sector ~159518, el programa se cuelga
+indefinidamente. Pausando el debugger el PC siempre está en
+HCD_HC_IN_IRQHandler (GINTSTS_HCINT). Los prints de FatFS y diskio
+dejan de aparecer.
+
+Causa raíz:
+  USBH_IN_NAK_PROCESS=1U estaba definido en usbh_conf.h, lo que
+  implica que el middleware tiene soporte para URB_NAK_WAIT. Pero
+  USE_HAL_HCD_IN_NAK_AUTO_ACTIVATE_DISABLE NO estaba definido en
+  ningún lado.
+  Sin esa macro, el HAL HCD siempre re-activa el canal BULK IN
+  inmediatamente en la ISR al recibir NAK:
+    NAK → ISR: HC_NAK → Halt → ISR: CHH → CHENA → NAK → ...
+  Storm de >10k ISR/s → main thread muerto → RdWrProcess nunca avanza.
+
+Fix aplicado:
+  Core/Inc/stm32u5xx_hal_conf.h:
+    #define USE_HAL_HCD_IN_NAK_AUTO_ACTIVATE_DISABLE 1U
+
+  Con HAL_HCD_CHANNEL_NAK_COUNT=2U (default en stm32u5xx_hal_hcd.h):
+  - 1er NAK: ISR re-activa (NakCnt=1 < 2)
+  - 2o NAK:  ISR detiene (NakCnt=2 >= 2) → URB_NAK_WAIT, HC_IDLE
+  - Main thread: BOT_DATA_IN_WAIT ve URB_NAK_WAIT, espera 1ms (NakTimeout),
+    llama USBH_ActivatePipe → re-submit cooperativo desde main
+
+Otros fixes aplicados en esta sesión:
+  - usbh_msc_bot.c: BOT_DATA_IN_WAIT / BOT_RECEIVE_CSW_WAIT con check
+    PortEnabled antes de re-habilitar canal IN
+  - usbh_msc.c USBH_MSC_Read: propagar USBH_FAIL cuando RdWrProcess
+    retorna FAIL (evitaba que FatFS procesara basura)
+  - usbh_diskio.c: reset de hbot.state + hbot.cmd_state antes de
+    reintentar lectura con estado BOT no-IDLE
 
 Fin del plan.

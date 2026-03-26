@@ -43,48 +43,6 @@ EndBSPDependencies */
 #include "usbh_msc.h"
 #include "usbh_msc_bot.h"
 #include "usbh_msc_scsi.h"
-#include "stm32u5xx_hal_hcd.h"
-#include <stdio.h>
-
-#define MSC_INQUIRY_TIMEOUT_MS        5000U
-#define MSC_READ_CAPACITY_TIMEOUT_MS  5000U
-#define MSC_REQUEST_SENSE_TIMEOUT_MS  5000U
-
-typedef struct
-{
-  uint32_t signature;
-  uint32_t timer_now;
-  uint32_t timer_start;
-  uint32_t address;
-  uint32_t length;
-  uint32_t host_gstate;
-  uint32_t port_enabled;
-  uint32_t current_lun;
-  uint32_t unit_state;
-  uint32_t unit_error;
-  uint32_t bot_state;
-  uint32_t bot_cmd_state;
-  uint32_t in_pipe;
-  uint32_t out_pipe;
-  uint32_t hhcd_state;
-  uint32_t hhcd_error_code;
-  uint32_t in_urb_state;
-  uint32_t out_urb_state;
-  uint32_t in_hc_state;
-  uint32_t out_hc_state;
-  uint32_t in_err_cnt;
-  uint32_t out_err_cnt;
-  uint32_t in_hcchar;
-  uint32_t in_hcint;
-  uint32_t in_hcintmsk;
-  uint32_t in_hctsiz;
-  uint32_t out_hcchar;
-  uint32_t out_hcint;
-  uint32_t out_hcintmsk;
-  uint32_t out_hctsiz;
-} MSC_ReadTimeoutSnapshot;
-
-volatile MSC_ReadTimeoutSnapshot g_msc_read_timeout_snapshot;
 
 
 /** @addtogroup USBH_LIB
@@ -142,7 +100,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_MSC_ClassRequest(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_MSC_SOFProcess(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_t lun);
-static const char *USBH_MSC_StateName(uint8_t state);
+static const char *USBH_MSC_StatusString(USBH_StatusTypeDef status);
 
 USBH_ClassTypeDef  USBH_msc =
 {
@@ -320,15 +278,24 @@ static USBH_StatusTypeDef USBH_MSC_ClassRequest(USBH_HandleTypeDef *phost)
   {
     case MSC_REQ_IDLE:
     case MSC_REQ_GET_MAX_LUN:
+      BOOT_USB_ST_TRACE("[MSC] CLASS_REQ state=%u", MSC_Handle->req_state);
 
       /* Issue GetMaxLUN request */
       status = USBH_MSC_BOT_REQ_GetMaxLUN(phost, &MSC_Handle->max_lun);
+      BOOT_USB_ST_TRACE("[MSC] BOT_REQ_GetMaxLUN -> %s (raw max_lun=%u)",
+                        USBH_MSC_StatusString(status),
+                        MSC_Handle->max_lun);
 
-      /* When devices do not support the GetMaxLun request, this should
-         be considered as only one logical unit is supported */
-      if (status == USBH_NOT_SUPPORTED)
+      /* Some MSC devices do not support GetMaxLUN reliably.
+         For this bring-up phase, treat NOT_SUPPORTED or FAIL
+         as a single-LUN device and continue. */
+      if ((status == USBH_NOT_SUPPORTED) || (status == USBH_FAIL))
       {
         MSC_Handle->max_lun = 0U;
+        if (status == USBH_FAIL)
+        {
+          BOOT_USB_ST_TRACE("[MSC] BOT_REQ_GetMaxLUN failed, forcing single LUN");
+        }
         status = USBH_OK;
       }
 
@@ -346,6 +313,7 @@ static USBH_StatusTypeDef USBH_MSC_ClassRequest(USBH_HandleTypeDef *phost)
       break;
 
     case MSC_REQ_ERROR:
+      BOOT_USB_ST_TRACE("[MSC] CLASS_REQ ERROR state, clearing feature");
       /* a Clear Feature should be issued here */
       if (USBH_ClrFeature(phost, 0x00U) == USBH_OK)
       {
@@ -368,30 +336,22 @@ static USBH_StatusTypeDef USBH_MSC_ClassRequest(USBH_HandleTypeDef *phost)
   */
 static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
 {
-  MSC_HandleTypeDef *MSC_Handle = (MSC_HandleTypeDef *) phost->pActiveClass->pData;
+  MSC_HandleTypeDef *MSC_Handle;
   USBH_StatusTypeDef error = USBH_BUSY;
   USBH_StatusTypeDef scsi_status = USBH_BUSY;
   USBH_StatusTypeDef ready_status = USBH_BUSY;
-  static uint8_t last_msc_state = 0xFFU;
-  static uint8_t last_lun_state = 0xFFU;
-  static uint8_t last_lun_index = 0xFFU;
 
-  if (MSC_Handle->state != last_msc_state)
+  if (phost == NULL)
   {
-    last_msc_state = MSC_Handle->state;
-    USBH_UsrLog("[MSC] core state -> %s", USBH_MSC_StateName(MSC_Handle->state));
+    return USBH_FAIL;
   }
 
-  if ((MSC_Handle->current_lun < MSC_Handle->max_lun) &&
-      ((MSC_Handle->current_lun != last_lun_index) ||
-       (MSC_Handle->unit[MSC_Handle->current_lun].state != last_lun_state)))
+  if ((phost->device.PortEnabled == 0U) || (phost->pActiveClass == NULL))
   {
-    last_lun_index = MSC_Handle->current_lun;
-    last_lun_state = MSC_Handle->unit[MSC_Handle->current_lun].state;
-    USBH_UsrLog("[MSC] lun %u state -> %s",
-                (unsigned int)MSC_Handle->current_lun,
-                USBH_MSC_StateName(MSC_Handle->unit[MSC_Handle->current_lun].state));
+    return USBH_FAIL;
   }
+
+  MSC_Handle = (MSC_HandleTypeDef *)phost->pActiveClass->pData;
 
   switch (MSC_Handle->state)
   {
@@ -411,6 +371,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             break;
 
           case MSC_READ_INQUIRY:
+            BOOT_USB_ST_TRACE("[MSC] READ_INQUIRY");
             scsi_status = USBH_MSC_SCSI_Inquiry(phost, (uint8_t)MSC_Handle->current_lun, &MSC_Handle->unit[MSC_Handle->current_lun].inquiry);
 
             if (scsi_status == USBH_OK)
@@ -419,7 +380,6 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
               USBH_UsrLog("Inquiry Product : %s", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.product_id);
               USBH_UsrLog("Inquiry Version : %s", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.revision_id);
               MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_TEST_UNIT_READY;
-              MSC_Handle->timer = phost->Timer;
             }
             else if (scsi_status == USBH_FAIL)
             {
@@ -427,18 +387,9 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             }
             else
             {
-              if ((phost->Timer - MSC_Handle->timer) >= MSC_INQUIRY_TIMEOUT_MS)
-              {
-                USBH_UsrLog("[MSC] Inquiry timeout");
-                MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_REQUEST_SENSE;
-                if (phost->pUser != NULL)
-                {
-                  phost->pUser(phost, HOST_USER_UNRECOVERED_ERROR);
-                }
-              }
-
               if (scsi_status == USBH_UNRECOVERED_ERROR)
               {
+                BOOT_USB_ST_TRACE("[MSC] READ_INQUIRY -> %s", USBH_MSC_StatusString(scsi_status));
                 MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
                 MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_ERROR;
               }
@@ -446,6 +397,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             break;
 
           case MSC_TEST_UNIT_READY:
+            BOOT_USB_ST_TRACE("[MSC] TEST_UNIT_READY");
             ready_status = USBH_MSC_SCSI_TestUnitReady(phost, (uint8_t)MSC_Handle->current_lun);
 
             if (ready_status == USBH_OK)
@@ -462,7 +414,6 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
               MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_READ_CAPACITY10;
               MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_OK;
               MSC_Handle->unit[MSC_Handle->current_lun].prev_ready_state = USBH_OK;
-              MSC_Handle->timer = phost->Timer;
             }
             else if (ready_status == USBH_FAIL)
             {
@@ -484,6 +435,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             {
               if (ready_status == USBH_UNRECOVERED_ERROR)
               {
+                BOOT_USB_ST_TRACE("[MSC] TEST_UNIT_READY -> %s", USBH_MSC_StatusString(ready_status));
                 MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
                 MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_ERROR;
               }
@@ -491,6 +443,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             break;
 
           case MSC_READ_CAPACITY10:
+            BOOT_USB_ST_TRACE("[MSC] READ_CAPACITY10");
             scsi_status = USBH_MSC_SCSI_ReadCapacity(phost, (uint8_t)MSC_Handle->current_lun, &MSC_Handle->unit[MSC_Handle->current_lun].capacity);
 
             if (scsi_status == USBH_OK)
@@ -513,18 +466,9 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             }
             else
             {
-              if ((phost->Timer - MSC_Handle->timer) >= MSC_READ_CAPACITY_TIMEOUT_MS)
-              {
-                USBH_UsrLog("[MSC] ReadCapacity timeout");
-                MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_REQUEST_SENSE;
-                if (phost->pUser != NULL)
-                {
-                  phost->pUser(phost, HOST_USER_UNRECOVERED_ERROR);
-                }
-              }
-
               if (scsi_status == USBH_UNRECOVERED_ERROR)
               {
+                BOOT_USB_ST_TRACE("[MSC] READ_CAPACITY10 -> %s", USBH_MSC_StatusString(scsi_status));
                 MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
                 MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_ERROR;
               }
@@ -532,6 +476,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             break;
 
           case MSC_REQUEST_SENSE:
+            BOOT_USB_ST_TRACE("[MSC] REQUEST_SENSE");
             scsi_status = USBH_MSC_SCSI_RequestSense(phost, (uint8_t)MSC_Handle->current_lun, &MSC_Handle->unit[MSC_Handle->current_lun].sense);
 
             if (scsi_status == USBH_OK)
@@ -555,25 +500,16 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             }
             else if (scsi_status == USBH_FAIL)
             {
+              BOOT_USB_ST_TRACE("[MSC] REQUEST_SENSE -> %s", USBH_MSC_StatusString(scsi_status));
               USBH_UsrLog("MSC Device NOT ready");
               MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
               MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_ERROR;
             }
             else
             {
-              if ((phost->Timer - MSC_Handle->timer) >= MSC_REQUEST_SENSE_TIMEOUT_MS)
-              {
-                USBH_UsrLog("[MSC] RequestSense timeout");
-                MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
-                MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_ERROR;
-                if (phost->pUser != NULL)
-                {
-                  phost->pUser(phost, HOST_USER_UNRECOVERED_ERROR);
-                }
-              }
-
               if (scsi_status == USBH_UNRECOVERED_ERROR)
               {
+                BOOT_USB_ST_TRACE("[MSC] REQUEST_SENSE -> %s", USBH_MSC_StatusString(scsi_status));
                 MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR;
                 MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_ERROR;
               }
@@ -581,6 +517,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             break;
 
           case MSC_UNRECOVERED_ERROR:
+            BOOT_USB_ST_TRACE("[MSC] UNRECOVERED_ERROR at unit state %u", MSC_Handle->unit[MSC_Handle->current_lun].state);
             MSC_Handle->current_lun++;
             break;
 
@@ -636,32 +573,8 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
     default:
       break;
   }
-  return error;
-}
 
-static const char *USBH_MSC_StateName(uint8_t state)
-{
-  switch (state)
-  {
-    case MSC_INIT:
-      return "MSC_INIT";
-    case MSC_READ_INQUIRY:
-      return "MSC_READ_INQUIRY";
-    case MSC_TEST_UNIT_READY:
-      return "MSC_TEST_UNIT_READY";
-    case MSC_READ_CAPACITY10:
-      return "MSC_READ_CAPACITY10";
-    case MSC_REQUEST_SENSE:
-      return "MSC_REQUEST_SENSE";
-    case MSC_UNRECOVERED_ERROR:
-      return "MSC_UNRECOVERED_ERROR";
-    case MSC_USER_NOTIFY:
-      return "MSC_USER_NOTIFY";
-    case MSC_IDLE:
-      return "MSC_IDLE";
-    default:
-      return "MSC_UNKNOWN";
-  }
+  return error;
 }
 
 
@@ -678,6 +591,27 @@ static USBH_StatusTypeDef USBH_MSC_SOFProcess(USBH_HandleTypeDef *phost)
 
   return USBH_OK;
 }
+
+static const char *USBH_MSC_StatusString(USBH_StatusTypeDef status)
+{
+  switch (status)
+  {
+    case USBH_OK:
+      return "USBH_OK";
+    case USBH_BUSY:
+      return "USBH_BUSY";
+    case USBH_FAIL:
+      return "USBH_FAIL";
+    case USBH_NOT_SUPPORTED:
+      return "USBH_NOT_SUPPORTED";
+    case USBH_UNRECOVERED_ERROR:
+      return "USBH_UNRECOVERED_ERROR";
+    case USBH_ERROR_SPEED_UNKNOWN:
+      return "USBH_ERROR_SPEED_UNKNOWN";
+    default:
+      return "USBH_UNKNOWN";
+  }
+}
 /**
   * @brief  USBH_MSC_RdWrProcess
   *         The function is for managing state machine for MSC I/O Process
@@ -687,9 +621,21 @@ static USBH_StatusTypeDef USBH_MSC_SOFProcess(USBH_HandleTypeDef *phost)
   */
 static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_t lun)
 {
-  MSC_HandleTypeDef *MSC_Handle = (MSC_HandleTypeDef *) phost->pActiveClass->pData;
+  MSC_HandleTypeDef *MSC_Handle;
   USBH_StatusTypeDef error = USBH_BUSY;
   USBH_StatusTypeDef scsi_status = USBH_BUSY;
+
+  if (phost == NULL)
+  {
+    return USBH_FAIL;
+  }
+
+  if ((phost->device.PortEnabled == 0U) || (phost->pActiveClass == NULL))
+  {
+    return USBH_FAIL;
+  }
+
+  MSC_Handle = (MSC_HandleTypeDef *) phost->pActiveClass->pData;
 
   /* Switch MSC REQ state machine */
   switch (MSC_Handle->unit[lun].state)
@@ -894,6 +840,7 @@ USBH_StatusTypeDef USBH_MSC_Read(USBH_HandleTypeDef *phost,
                                  uint32_t length)
 {
   uint32_t timeout;
+  USBH_StatusTypeDef rw_status;
   MSC_HandleTypeDef *MSC_Handle = (MSC_HandleTypeDef *) phost->pActiveClass->pData;
 
   /* Store the current lun */
@@ -912,92 +859,23 @@ USBH_StatusTypeDef USBH_MSC_Read(USBH_HandleTypeDef *phost,
 
   timeout = phost->Timer;
 
-  while (USBH_MSC_RdWrProcess(phost, lun) == USBH_BUSY)
+  while ((rw_status = USBH_MSC_RdWrProcess(phost, lun)) == USBH_BUSY)
   {
-    if (((phost->Timer - timeout) > (10000U * length)) || (phost->device.PortEnabled == 0U))
+    /* phost->Timer increments every 125 µs (HS SOF), not every 1 ms.
+     * The intended timeout is 10 000 ms per sector; with 125 µs ticks that
+     * requires 80 000 ticks per sector (10 000 * 8). */
+    if (((phost->Timer - timeout) > (80000U * length)) || (phost->device.PortEnabled == 0U))
     {
-      HCD_HandleTypeDef *hhcd = (HCD_HandleTypeDef *)phost->pData;
-      uint32_t in_pipe = MSC_Handle->InPipe;
-      uint32_t out_pipe = MSC_Handle->OutPipe;
-      USB_OTG_HostChannelTypeDef *in_hc_regs = NULL;
-      USB_OTG_HostChannelTypeDef *out_hc_regs = NULL;
-
-      g_msc_read_timeout_snapshot.signature = 0x4D534354U; /* MSCT */
-      g_msc_read_timeout_snapshot.timer_now = phost->Timer;
-      g_msc_read_timeout_snapshot.timer_start = timeout;
-      g_msc_read_timeout_snapshot.address = address;
-      g_msc_read_timeout_snapshot.length = length;
-      g_msc_read_timeout_snapshot.host_gstate = phost->gState;
-      g_msc_read_timeout_snapshot.port_enabled = phost->device.PortEnabled;
-      g_msc_read_timeout_snapshot.current_lun = MSC_Handle->current_lun;
-      g_msc_read_timeout_snapshot.unit_state = MSC_Handle->unit[lun].state;
-      g_msc_read_timeout_snapshot.unit_error = MSC_Handle->unit[lun].error;
-      g_msc_read_timeout_snapshot.bot_state = MSC_Handle->hbot.state;
-      g_msc_read_timeout_snapshot.bot_cmd_state = MSC_Handle->hbot.cmd_state;
-      g_msc_read_timeout_snapshot.in_pipe = in_pipe;
-      g_msc_read_timeout_snapshot.out_pipe = out_pipe;
-
-      if (hhcd != NULL)
-      {
-        in_hc_regs = (USB_OTG_HostChannelTypeDef *)((uint32_t)hhcd->Instance +
-                                                    USB_OTG_HOST_CHANNEL_BASE +
-                                                    (in_pipe * USB_OTG_HOST_CHANNEL_SIZE));
-        out_hc_regs = (USB_OTG_HostChannelTypeDef *)((uint32_t)hhcd->Instance +
-                                                     USB_OTG_HOST_CHANNEL_BASE +
-                                                     (out_pipe * USB_OTG_HOST_CHANNEL_SIZE));
-        g_msc_read_timeout_snapshot.hhcd_state = hhcd->State;
-        g_msc_read_timeout_snapshot.hhcd_error_code = hhcd->ErrorCode;
-        g_msc_read_timeout_snapshot.in_urb_state = hhcd->hc[in_pipe].urb_state;
-        g_msc_read_timeout_snapshot.out_urb_state = hhcd->hc[out_pipe].urb_state;
-        g_msc_read_timeout_snapshot.in_hc_state = hhcd->hc[in_pipe].state;
-        g_msc_read_timeout_snapshot.out_hc_state = hhcd->hc[out_pipe].state;
-        g_msc_read_timeout_snapshot.in_err_cnt = hhcd->hc[in_pipe].ErrCnt;
-        g_msc_read_timeout_snapshot.out_err_cnt = hhcd->hc[out_pipe].ErrCnt;
-        g_msc_read_timeout_snapshot.in_hcchar = in_hc_regs->HCCHAR;
-        g_msc_read_timeout_snapshot.in_hcint = in_hc_regs->HCINT;
-        g_msc_read_timeout_snapshot.in_hcintmsk = in_hc_regs->HCINTMSK;
-        g_msc_read_timeout_snapshot.in_hctsiz = in_hc_regs->HCTSIZ;
-        g_msc_read_timeout_snapshot.out_hcchar = out_hc_regs->HCCHAR;
-        g_msc_read_timeout_snapshot.out_hcint = out_hc_regs->HCINT;
-        g_msc_read_timeout_snapshot.out_hcintmsk = out_hc_regs->HCINTMSK;
-        g_msc_read_timeout_snapshot.out_hctsiz = out_hc_regs->HCTSIZ;
-      }
-      else
-      {
-        g_msc_read_timeout_snapshot.hhcd_state = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.hhcd_error_code = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.in_urb_state = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.out_urb_state = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.in_hc_state = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.out_hc_state = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.in_err_cnt = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.out_err_cnt = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.in_hcchar = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.in_hcint = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.in_hcintmsk = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.in_hctsiz = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.out_hcchar = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.out_hcint = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.out_hcintmsk = 0xFFFFFFFFU;
-        g_msc_read_timeout_snapshot.out_hctsiz = 0xFFFFFFFFU;
-      }
-
-      printf("[MSC-READ] timeout/fail: lun=%u addr=%lu len=%lu timer=%lu start=%lu port=%u unit_state=%u unit_err=%u bot_state=%u bot_cmd=%u\n",
-             (unsigned)lun,
-             (unsigned long)address,
-             (unsigned long)length,
-             (unsigned long)phost->Timer,
-             (unsigned long)timeout,
-             (unsigned)phost->device.PortEnabled,
-             (unsigned)MSC_Handle->unit[lun].state,
-             (unsigned)MSC_Handle->unit[lun].error,
-             (unsigned)MSC_Handle->hbot.state,
-             (unsigned)MSC_Handle->hbot.cmd_state);
+      /* Reset local BOT state so diskio can retry without hitting the
+       * unit[lun].state != MSC_IDLE guard on the next call. */
+      MSC_Handle->unit[lun].state = MSC_IDLE;
+      MSC_Handle->hbot.state      = BOT_SEND_CBW;
+      MSC_Handle->hbot.cmd_state  = BOT_CMD_SEND;
       return USBH_FAIL;
     }
   }
 
-  return USBH_OK;
+  return (rw_status == USBH_OK) ? USBH_OK : USBH_FAIL;
 }
 
 /**

@@ -1,8 +1,0 @@
-C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_msc_service.c:7:6:UsbMscService_Init	1
-C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_msc_service.c:14:6:UsbMscService_Process	3
-C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_msc_service.c:30:6:UsbMscService_SetEnabled	4
-C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_msc_service.c:44:9:UsbMscService_IsEnabled	1
-C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_msc_service.c:49:9:UsbMscService_IsDeviceConnected	2
-C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_msc_service.c:54:9:UsbMscService_IsReady	2
-C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_msc_service.c:59:15:UsbMscService_GetState	1
-C:/Roberto/O3/O3_Bootloader/Boot/Src/usb_msc_service.c:64:10:UsbMscService_GetLastError	1

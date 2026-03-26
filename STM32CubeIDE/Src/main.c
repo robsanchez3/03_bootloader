@@ -18,6 +18,9 @@
 #include "stm32u5xx_hal.h"
 #include "main.h"
 #include "boot_jump.h"
+#include "usb_msc_service.h"
+#include "usb_fs_service.h"
+#include "usb_update.h"
 #include <stdio.h>
 
 
@@ -29,8 +32,13 @@ static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void Recovery_Loop(void);
 static void Boot_RunStartupPolicy(void);
+static void UsbMscLayerTestLoop(void);
+static void ReadBinTest(const char *bin_path, uint32_t expected_crc32);
+static void UsbFsMountTestLoop(void);
 
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
+#define BOOT_USB_MSC_LAYER_TEST           0U
+#define BOOT_USB_FS_MOUNT_TEST            1U
 
 int _write(int file, char *ptr, int len)
 {
@@ -64,6 +72,14 @@ int main(void)
 
 
     printf("BL start\n");
+
+#if BOOT_USB_MSC_LAYER_TEST
+    UsbMscLayerTestLoop();
+#endif
+
+#if BOOT_USB_FS_MOUNT_TEST
+    UsbFsMountTestLoop();
+#endif
 
     Boot_RunStartupPolicy();
 
@@ -108,6 +124,259 @@ static void Boot_RunStartupPolicy(void)
 
     printf("[BOOT] No valid app -> recovery loop\n");
     Recovery_Loop();
+}
+
+static void UsbMscLayerTestLoop(void)
+{
+    UsbMscState_t last_state;
+
+    printf("[TEST] USB MSC layer test enabled\n");
+
+    UsbMscService_Init();
+    UsbMscService_SetEnabled(1U);
+    last_state = UsbMscService_GetState();
+    printf("[TEST] USB state: %s\n", UsbMscService_GetStateName());
+
+    while (1)
+    {
+        UsbMscService_Process();
+
+        if (UsbMscService_GetState() != last_state)
+        {
+            last_state = UsbMscService_GetState();
+            printf("[TEST] USB state: %s\n", UsbMscService_GetStateName());
+
+            if (last_state == USB_MSC_STATE_ERROR)
+            {
+                printf("[TEST] USB error code: %lu\n",
+                       (unsigned long)UsbMscService_GetLastError());
+            }
+        }
+    }
+}
+
+/* CRC32 IEEE 802.3 por nibbles (tabla de 16 entradas, sin heap). */
+static uint32_t crc32_update(uint32_t crc, const uint8_t *buf, uint32_t len)
+{
+    static const uint32_t T[16] =
+    {
+        0x00000000U, 0x1DB71064U, 0x3B6E20C8U, 0x26D930ACU,
+        0x76DC4190U, 0x6B6B51F4U, 0x4DB26158U, 0x5005713CU,
+        0xEDB88320U, 0xF00F9344U, 0xD6D6A3E8U, 0xCB61B38CU,
+        0x9B64C2B0U, 0x86D3D2D4U, 0xA00AE278U, 0xBDBDF21CU
+    };
+    uint32_t i;
+
+    crc = ~crc;
+    for (i = 0U; i < len; i++)
+    {
+        crc = (crc >> 4) ^ T[(crc ^ (uint32_t)buf[i])        & 0x0FU];
+        crc = (crc >> 4) ^ T[(crc ^ ((uint32_t)buf[i] >> 4)) & 0x0FU];
+    }
+    return ~crc;
+}
+
+/* Lee un .bin completo por bloques de 512 B, calcula CRC32 y compara. */
+static void ReadBinTest(const char *bin_path, uint32_t expected_crc32)
+{
+    static uint8_t  chunk[512];
+    UsbFsResult_t   result;
+    uint32_t        bytes_read;
+    uint32_t        total     = 0U;
+    uint32_t        crc       = 0U;
+    uint8_t         first     = 1U;
+
+    result = UsbFsService_OpenStream(bin_path);
+    if (result != USB_FS_RESULT_OK)
+    {
+        printf("[TEST] open %s FAILED result=%u fatfs_err=%lu\n",
+               bin_path, (unsigned int)result,
+               (unsigned long)UsbFsService_GetLastError());
+        return;
+    }
+
+    printf("[TEST] reading %s ...\n", bin_path);
+
+    while (1)
+    {
+        result = UsbFsService_ReadStream(chunk, sizeof(chunk), &bytes_read);
+        if (result != USB_FS_RESULT_OK)
+        {
+            printf("[TEST] read error at offset=%lu result=%u fatfs_err=%lu\n",
+                   (unsigned long)total, (unsigned int)result,
+                   (unsigned long)UsbFsService_GetLastError());
+            (void)UsbFsService_CloseStream();
+            return;
+        }
+
+        if (bytes_read == 0U)
+        {
+            break;  /* EOF */
+        }
+
+        if (first != 0U)
+        {
+            first = 0U;
+            printf("[TEST] first 8 bytes: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+                   chunk[0], chunk[1], chunk[2], chunk[3],
+                   chunk[4], chunk[5], chunk[6], chunk[7]);
+        }
+
+        crc    = crc32_update(crc, chunk, bytes_read);
+        total += bytes_read;
+    }
+
+    (void)UsbFsService_CloseStream();
+
+    printf("[TEST] %s: %lu bytes  CRC32=%08lX  expected=%08lX  %s\n",
+           bin_path,
+           (unsigned long)total,
+           (unsigned long)crc,
+           (unsigned long)expected_crc32,
+           (crc == expected_crc32) ? "MATCH" : "MISMATCH");
+}
+
+static void UsbFsMountTestLoop(void)
+{
+    UsbMscState_t last_state;
+    UsbFsResult_t mount_result;
+
+    printf("[TEST] USB FS mount test enabled\n");
+
+    UsbMscService_Init();
+    UsbMscService_SetEnabled(1U);
+    UsbFsService_Init();
+
+    last_state = UsbMscService_GetState();
+    printf("[TEST] USB state: %s\n", UsbMscService_GetStateName());
+
+    while (1)
+    {
+        UsbMscService_Process();
+
+        if (UsbMscService_GetState() != last_state)
+        {
+            last_state = UsbMscService_GetState();
+            printf("[TEST] USB state: %s\n", UsbMscService_GetStateName());
+
+            if (last_state == USB_MSC_STATE_READY)
+            {
+                static const char * const probe_paths[4] =
+                {
+                    USB_UPDATE_APP_INT_BIN,
+                    USB_UPDATE_APP_OSPI_BIN,
+                    USB_UPDATE_APP_INT_CRC,
+                    USB_UPDATE_APP_OSPI_CRC
+                };
+                uint32_t i;
+                UsbFsResult_t stat_result;
+                uint8_t all_present;
+
+                printf("[TEST] MSC ready -> attempting f_mount\n");
+                mount_result = UsbFsService_Mount();
+
+                if (mount_result != USB_FS_RESULT_OK)
+                {
+                    printf("[TEST] f_mount FAILED result=%u fatfs_err=%lu\n",
+                           (unsigned int)mount_result,
+                           (unsigned long)UsbFsService_GetLastError());
+                }
+                else
+                {
+                    printf("[TEST] f_mount OK\n");
+
+                    stat_result = UsbFsService_FileExists(USB_UPDATE_DIR_PATH);
+                    printf("[TEST] f_stat dir %s -> %s (fatfs_err=%lu)\n",
+                           USB_UPDATE_DIR_PATH,
+                           (stat_result == USB_FS_RESULT_OK) ? "OK" : "NOT FOUND",
+                           (unsigned long)UsbFsService_GetLastError());
+
+                    all_present = 1U;
+                    for (i = 0U; i < 4U; i++)
+                    {
+                        stat_result = UsbFsService_FileExists(probe_paths[i]);
+                        printf("[TEST] f_stat %s -> %s (fatfs_err=%lu)\n",
+                               probe_paths[i],
+                               (stat_result == USB_FS_RESULT_OK) ? "OK" : "NOT FOUND",
+                               (unsigned long)UsbFsService_GetLastError());
+                        if (stat_result != USB_FS_RESULT_OK)
+                        {
+                            all_present = 0U;
+                        }
+                    }
+
+                    if (all_present != 0U)
+                    {
+                        static const char * const crc_paths[2] =
+                        {
+                            USB_UPDATE_APP_INT_CRC,
+                            USB_UPDATE_APP_OSPI_CRC
+                        };
+                        uint8_t  crc_buf[16];
+                        uint32_t bytes_read;
+                        uint32_t j;
+                        UsbFsResult_t read_result;
+
+                        uint32_t expected_crc[2] = { 0U, 0U };
+
+                        printf("[TEST] all 4 files present\n");
+
+                        /* Leer los dos .crc y parsear el valor hex ASCII */
+                        for (i = 0U; i < 2U; i++)
+                        {
+                            bytes_read  = 0U;
+                            read_result = UsbFsService_ReadFile(crc_paths[i],
+                                                                crc_buf,
+                                                                0U,
+                                                                sizeof(crc_buf),
+                                                                &bytes_read);
+                            if (read_result == USB_FS_RESULT_OK)
+                            {
+                                uint32_t val = 0U;
+                                uint32_t k;
+
+                                for (k = 0U; k < bytes_read; k++)
+                                {
+                                    uint8_t c = crc_buf[k];
+                                    if ((c >= '0') && (c <= '9'))
+                                        val = (val << 4) | (uint32_t)(c - '0');
+                                    else if ((c >= 'A') && (c <= 'F'))
+                                        val = (val << 4) | (uint32_t)(c - 'A' + 10);
+                                    else if ((c >= 'a') && (c <= 'f'))
+                                        val = (val << 4) | (uint32_t)(c - 'a' + 10);
+                                    else
+                                        break;
+                                }
+                                expected_crc[i] = val;
+                                printf("[TEST] %s -> 0x%08lX\n",
+                                       crc_paths[i], (unsigned long)val);
+                            }
+                            else
+                            {
+                                printf("[TEST] read %s FAILED result=%u fatfs_err=%lu\n",
+                                       crc_paths[i],
+                                       (unsigned int)read_result,
+                                       (unsigned long)UsbFsService_GetLastError());
+                            }
+                        }
+
+                        /* Leer los dos .bin por bloques y verificar CRC32 */
+                        ReadBinTest(USB_UPDATE_APP_INT_BIN,  expected_crc[0]);
+                        ReadBinTest(USB_UPDATE_APP_OSPI_BIN, expected_crc[1]);
+                    }
+                    else
+                    {
+                        printf("[TEST] one or more files missing\n");
+                    }
+                }
+            }
+            else if (last_state == USB_MSC_STATE_IDLE)
+            {
+                printf("[TEST] device disconnected -> unmounting\n");
+                UsbFsService_Unmount();
+            }
+        }
+    }
 }
 
 /* -----------------------------------------------------------------------

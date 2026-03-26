@@ -865,6 +865,7 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
       {
         if ((URB_Status == USBH_URB_ERROR) || (URB_Status == USBH_URB_NOTREADY))
         {
+          BOOT_USB_ST_TRACE("[CTL] CTRL_SETUP_WAIT -> URB %u", URB_Status);
           phost->Control.state = CTRL_ERROR;
 
 #if (USBH_USE_OS == 1U)
@@ -931,6 +932,7 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
       {
         if (URB_Status == USBH_URB_ERROR)
         {
+          BOOT_USB_ST_TRACE("[CTL] CTRL_DATA_IN_WAIT -> URB %u", URB_Status);
           /* Device error */
           phost->Control.state = CTRL_ERROR;
 
@@ -988,6 +990,7 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
       {
         if (URB_Status == USBH_URB_ERROR)
         {
+          BOOT_USB_ST_TRACE("[CTL] CTRL_DATA_OUT_WAIT -> URB %u", URB_Status);
           /* device error */
           phost->Control.state = CTRL_ERROR;
           status = USBH_FAIL;
@@ -1044,6 +1047,7 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
 #endif /* defined (USBH_IN_NAK_PROCESS) && (USBH_IN_NAK_PROCESS == 1U) */
       else if (URB_Status == USBH_URB_ERROR)
       {
+        BOOT_USB_ST_TRACE("[CTL] CTRL_STATUS_IN_WAIT -> URB %u", URB_Status);
         phost->Control.state = CTRL_ERROR;
 
 #if (USBH_USE_OS == 1U)
@@ -1094,6 +1098,7 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
       {
         if (URB_Status == USBH_URB_ERROR)
         {
+          BOOT_USB_ST_TRACE("[CTL] CTRL_STATUS_OUT_WAIT -> URB %u", URB_Status);
           phost->Control.state = CTRL_ERROR;
 
 #if (USBH_USE_OS == 1U)
@@ -1114,12 +1119,14 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
       */
       if (++phost->Control.errorcount <= USBH_MAX_ERROR_COUNT)
       {
+        BOOT_USB_ST_TRACE("[CTL] CTRL_ERROR retry %u", phost->Control.errorcount);
         /* Do the transmission again, starting from SETUP Packet */
         phost->Control.state = CTRL_SETUP;
         phost->RequestState = CMD_SEND;
       }
       else
       {
+        BOOT_USB_ST_TRACE("[CTL] CTRL_ERROR giving up");
         phost->pUser(phost, HOST_USER_UNRECOVERED_ERROR);
         phost->Control.errorcount = 0U;
         USBH_ErrLog("Control error: Device not responding");
@@ -1155,7 +1162,5 @@ static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost)
 /**
   * @}
   */
-
-
 
 

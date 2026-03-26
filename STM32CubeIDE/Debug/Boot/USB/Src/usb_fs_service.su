@@ -1,0 +1,12 @@
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:16:6:UsbFsService_Init	4	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:24:6:UsbFsService_Process	8	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:32:6:UsbFsService_Reset	8	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:44:9:UsbFsService_IsMounted	4	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:49:15:UsbFsService_Mount	16	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:79:15:UsbFsService_Unmount	8	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:96:15:UsbFsService_FileExists	48	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:128:15:UsbFsService_ReadFile	600	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:182:15:UsbFsService_OpenStream	24	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:214:15:UsbFsService_ReadStream	32	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:244:15:UsbFsService_CloseStream	8	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:255:10:UsbFsService_GetLastError	4	static

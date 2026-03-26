@@ -24,7 +24,7 @@ C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c
 C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c:1216:19:HAL_HCD_HC_SetHubInfo	5
 C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c:1246:19:HAL_HCD_HC_ClearHubInfo	1
 C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c:1263:19:HAL_HCD_HC_Activate	2
-C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c:1291:13:HCD_HC_IN_IRQHandler	56
+C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c:1291:13:HCD_HC_IN_IRQHandler	57
 C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c:1652:13:HCD_HC_OUT_IRQHandler	38
 C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c:1893:13:HCD_RXQLVL_IRQHandler	8
 C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.c:1959:13:HCD_Port_IRQHandler	9
