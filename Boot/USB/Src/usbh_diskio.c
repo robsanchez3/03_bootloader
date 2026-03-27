@@ -62,6 +62,14 @@ static DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
     USBH_StatusTypeDef status;
     MSC_HandleTypeDef *msc;
     uint8_t retry;
+    static DWORD last_progress_sector = 0xFFFFFFFFU;
+
+    /* Progress print every 256 sectors (~128 KB). */
+    if ((sector ^ last_progress_sector) >= 256U)
+    {
+        last_progress_sector = sector & ~255U;
+        printf("[DISKIO] sector=%lu\n", (unsigned long)sector);
+    }
 
     for (retry = 0U; retry < 3U; retry++)
     {

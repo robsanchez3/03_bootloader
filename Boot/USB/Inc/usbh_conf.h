@@ -17,7 +17,7 @@ extern "C" {
 #define USBH_MAX_NUM_SUPPORTED_CLASS   1U
 #define USBH_MAX_SIZE_CONFIGURATION    256U
 #define USBH_MAX_DATA_BUFFER           512U
-#define USBH_DEBUG_LEVEL               0U
+#define USBH_DEBUG_LEVEL               1U
 #define USBH_IN_NAK_PROCESS            1U
 #define USBH_NAK_SOF_COUNT             20U
 #define USBH_USE_OS                    0U
