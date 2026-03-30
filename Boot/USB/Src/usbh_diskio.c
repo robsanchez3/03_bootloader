@@ -62,7 +62,6 @@ static DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
     USBH_StatusTypeDef status;
     MSC_HandleTypeDef *msc;
     uint8_t retry;
-
     for (retry = 0U; retry < 3U; retry++)
     {
         if (hUsbHostHS.pActiveClass == NULL)

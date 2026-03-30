@@ -43,6 +43,8 @@ EndBSPDependencies */
 #include "usbh_msc.h"
 #include "usbh_msc_bot.h"
 #include "usbh_msc_scsi.h"
+#include <stdio.h>
+#include "stm32u5xx_hal.h"
 
 
 /** @addtogroup USBH_LIB
@@ -697,6 +699,10 @@ static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_
 
       if (scsi_status == USBH_OK)
       {
+        printf("[SCSI] SENSE key=%02X asc=%02X ascq=%02X\n",
+               (unsigned int)MSC_Handle->unit[lun].sense.key,
+               (unsigned int)MSC_Handle->unit[lun].sense.asc,
+               (unsigned int)MSC_Handle->unit[lun].sense.ascq);
         USBH_UsrLog("Sense Key  : %x", MSC_Handle->unit[lun].sense.key);
         USBH_UsrLog("Additional Sense Code : %x", MSC_Handle->unit[lun].sense.asc);
         USBH_UsrLog("Additional Sense Code Qualifier: %x", MSC_Handle->unit[lun].sense.ascq);
@@ -707,6 +713,7 @@ static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_
       }
       else if (scsi_status == USBH_FAIL)
       {
+        printf("[SCSI] SENSE FAIL (device not ready)\n");
         USBH_UsrLog("MSC Device NOT ready");
       }
       else
@@ -865,8 +872,6 @@ USBH_StatusTypeDef USBH_MSC_Read(USBH_HandleTypeDef *phost,
      * Fixed 10 s timeout (80 000 ticks). */
     if (((phost->Timer - timeout) > 80000U) || (phost->device.PortEnabled == 0U))
     {
-      /* Reset local BOT state so diskio can retry without hitting the
-       * unit[lun].state != MSC_IDLE guard on the next call. */
       MSC_Handle->unit[lun].state = MSC_IDLE;
       MSC_Handle->hbot.state      = BOT_SEND_CBW;
       MSC_Handle->hbot.cmd_state  = BOT_CMD_SEND;

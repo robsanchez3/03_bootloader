@@ -27,6 +27,7 @@ EndBSPDependencies */
 #include "usbh_msc_bot.h"
 #include "usbh_msc.h"
 
+
 /** @addtogroup USBH_LIB
   * @{
   */
@@ -628,25 +629,6 @@ static BOT_CSWStatusTypeDef USBH_MSC_DecodeCSW(USBH_HandleTypeDef *phost)
 
         if (MSC_Handle->hbot.csw.field.Status == 0U)
         {
-          /* Refer to USB Mass-Storage Class : BOT (www.usb.org)
-
-          Hn Host expects no data transfers
-          Hi Host expects to receive data from the device
-          Ho Host expects to send data to the device
-
-          Dn Device intends to transfer no data
-          Di Device intends to send data to the host
-          Do Device intends to receive data from the host
-
-          Section 6.7
-          (1) Hn = Dn (Host expects no data transfers,
-          Device intends to transfer no data)
-          (6) Hi = Di (Host expects to receive data from the device,
-          Device intends to send data to the host)
-          (12) Ho = Do (Host expects to send data to the device,
-          Device intends to receive data from the host)
-          */
-
           status = BOT_CSW_CMD_PASSED;
         }
         else if (MSC_Handle->hbot.csw.field.Status == 1U)
@@ -655,22 +637,6 @@ static BOT_CSWStatusTypeDef USBH_MSC_DecodeCSW(USBH_HandleTypeDef *phost)
         }
         else if (MSC_Handle->hbot.csw.field.Status == 2U)
         {
-          /* Refer to USB Mass-Storage Class : BOT (www.usb.org)
-          Section 6.7
-          (2) Hn < Di ( Host expects no data transfers,
-          Device intends to send data to the host)
-          (3) Hn < Do ( Host expects no data transfers,
-          Device intends to receive data from the host)
-          (7) Hi < Di ( Host expects to receive data from the device,
-          Device intends to send data to the host)
-          (8) Hi <> Do ( Host expects to receive data from the device,
-          Device intends to receive data from the host)
-          (10) Ho <> Di (Host expects to send data to the device,
-          Di Device intends to send data to the host)
-          (13) Ho < Do (Host expects to send data to the device,
-          Device intends to receive data from the host)
-          */
-
           status = BOT_CSW_PHASE_ERROR;
         }
         else
@@ -710,4 +676,3 @@ static BOT_CSWStatusTypeDef USBH_MSC_DecodeCSW(USBH_HandleTypeDef *phost)
 /**
   * @}
   */
-
