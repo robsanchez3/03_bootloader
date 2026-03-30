@@ -43,8 +43,6 @@ EndBSPDependencies */
 #include "usbh_msc.h"
 #include "usbh_msc_bot.h"
 #include "usbh_msc_scsi.h"
-#include <stdio.h>
-#include "stm32u5xx_hal.h"
 
 
 /** @addtogroup USBH_LIB
@@ -699,10 +697,6 @@ static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_
 
       if (scsi_status == USBH_OK)
       {
-        printf("[SCSI] SENSE key=%02X asc=%02X ascq=%02X\n",
-               (unsigned int)MSC_Handle->unit[lun].sense.key,
-               (unsigned int)MSC_Handle->unit[lun].sense.asc,
-               (unsigned int)MSC_Handle->unit[lun].sense.ascq);
         USBH_UsrLog("Sense Key  : %x", MSC_Handle->unit[lun].sense.key);
         USBH_UsrLog("Additional Sense Code : %x", MSC_Handle->unit[lun].sense.asc);
         USBH_UsrLog("Additional Sense Code Qualifier: %x", MSC_Handle->unit[lun].sense.ascq);
@@ -713,7 +707,6 @@ static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_
       }
       else if (scsi_status == USBH_FAIL)
       {
-        printf("[SCSI] SENSE FAIL (device not ready)\n");
         USBH_UsrLog("MSC Device NOT ready");
       }
       else
@@ -866,58 +859,30 @@ USBH_StatusTypeDef USBH_MSC_Read(USBH_HandleTypeDef *phost,
 
   timeout = phost->Timer;
 
+  while ((rw_status = USBH_MSC_RdWrProcess(phost, lun)) == USBH_BUSY)
   {
-    uint32_t entry_ms         = HAL_GetTick();
-    uint32_t last_progress_ms = entry_ms;
-
-    while ((rw_status = USBH_MSC_RdWrProcess(phost, lun)) == USBH_BUSY)
+    /* phost->Timer increments every 125 µs (HS SOF).
+     * Fixed 10 s timeout (80 000 ticks). */
+    if (((phost->Timer - timeout) > 80000U) || (phost->device.PortEnabled == 0U))
     {
-      if (phost->device.PortEnabled == 0U)
-      {
-        printf("[MSC] READ ABORT (disconnect) lba=%lu\n", (unsigned long)address);
-        MSC_Handle->unit[lun].state = MSC_IDLE;
-        MSC_Handle->hbot.state      = BOT_SEND_CBW;
-        MSC_Handle->hbot.cmd_state  = BOT_CMD_SEND;
-        return USBH_FAIL;
-      }
-
-      {
-        uint32_t now_ms = HAL_GetTick();
-
-        /* Last-resort timeout: 30 s.  Normally BOT_DATA_IN_WAIT has its
-         * own 5 s watchdog that transitions to BOT_ERROR_IN, which then
-         * drives the full Clear Feature + BOT Reset recovery sequence.
-         * This outer timeout only fires if that inner recovery also
-         * stalls completely.                                           */
-        if ((now_ms - entry_ms) >= 30000U)
-        {
-          printf("[MSC] READ TIMEOUT lba=%lu bot=%u cmd=%u tick=%lu -> FAIL\n",
-                 (unsigned long)address,
-                 (unsigned int)MSC_Handle->hbot.state,
-                 (unsigned int)MSC_Handle->hbot.cmd_state,
-                 (unsigned long)now_ms);
-          MSC_Handle->unit[lun].state = MSC_IDLE;
-          MSC_Handle->hbot.state      = BOT_SEND_CBW;
-          MSC_Handle->hbot.cmd_state  = BOT_CMD_SEND;
-          phost->RequestState         = CMD_SEND;
-          phost->Control.state        = CTRL_IDLE;
-          return USBH_FAIL;
-        }
-
-        /* Print progress every 2 s so the user can see we are alive. */
-        if ((now_ms - last_progress_ms) >= 2000U)
-        {
-          last_progress_ms = now_ms;
-          printf("[MSC] waiting lba=%lu bot=%u tick=%lu\n",
-                 (unsigned long)address,
-                 (unsigned int)MSC_Handle->hbot.state,
-                 (unsigned long)now_ms);
-        }
-      }
+      /* Reset local BOT state so diskio can retry without hitting the
+       * unit[lun].state != MSC_IDLE guard on the next call. */
+      MSC_Handle->unit[lun].state = MSC_IDLE;
+      MSC_Handle->hbot.state      = BOT_SEND_CBW;
+      MSC_Handle->hbot.cmd_state  = BOT_CMD_SEND;
+      return USBH_FAIL;
     }
   }
 
-  return (rw_status == USBH_OK) ? USBH_OK : USBH_FAIL;
+  if (rw_status != USBH_OK)
+  {
+    MSC_Handle->unit[lun].state = MSC_IDLE;
+    MSC_Handle->hbot.state      = BOT_SEND_CBW;
+    MSC_Handle->hbot.cmd_state  = BOT_CMD_SEND;
+    return USBH_FAIL;
+  }
+
+  return USBH_OK;
 }
 
 /**

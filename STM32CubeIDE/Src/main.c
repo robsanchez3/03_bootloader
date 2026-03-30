@@ -179,7 +179,7 @@ static uint32_t crc32_update(uint32_t crc, const uint8_t *buf, uint32_t len)
 /* Lee un .bin completo por bloques de 512 B, calcula CRC32 y compara. */
 static void ReadBinTest(const char *bin_path, uint32_t expected_crc32)
 {
-    static uint8_t  chunk[512];
+    static uint8_t  chunk[65536];
     UsbFsResult_t   result;
     uint32_t        bytes_read;
     uint32_t        total     = 0U;

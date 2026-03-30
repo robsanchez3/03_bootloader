@@ -205,7 +205,7 @@ vary depending on the variations in voltage and temperature.*/
 #define  USE_HAL_FMAC_REGISTER_CALLBACKS       0U /* FMAC register callback disabled      */
 #define  USE_HAL_HASH_REGISTER_CALLBACKS       0U /* HASH register callback disabled      */
 #define  USE_HAL_HCD_REGISTER_CALLBACKS        0U /* HCD register callback disabled       */
-#define  USE_HAL_HCD_IN_NAK_AUTO_ACTIVATE_DISABLE 1U /* Prevent BULK IN NAK storm */
+#define  USE_HAL_HCD_IN_NAK_AUTO_ACTIVATE_DISABLE 0U /* Let HW auto-retry NAKs for bulk transfers */
 #define  USE_HAL_GFXMMU_REGISTER_CALLBACKS     0U /* GFXMMU register callback disabled    */
 #define  USE_HAL_GFXTIM_REGISTER_CALLBACKS     0U /* GFXTIM register callback disabled    */
 #define  USE_HAL_GPU2D_REGISTER_CALLBACKS      0U /* GPU2D register callback disabled     */
