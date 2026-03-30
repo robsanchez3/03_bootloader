@@ -26,6 +26,7 @@ EndBSPDependencies */
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_msc_bot.h"
 #include "usbh_msc.h"
+#include "stm32u5xx_hal.h"   /* HAL_GetTick() */
 
 
 /** @addtogroup USBH_LIB
@@ -267,11 +268,17 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
       break;
 
     case BOT_DATA_IN_WAIT:
+    {
+      static uint32_t data_in_nodata_tick = 0U;
+      uint32_t now_ms_di = HAL_GetTick();
 
       URB_Status = USBH_LL_GetURBState(phost, MSC_Handle->InPipe);
 
       if (URB_Status == USBH_URB_DONE)
       {
+        /* Progress: reset the no-data watchdog. */
+        data_in_nodata_tick = 0U;
+
         /* Adjust Data pointer and data length */
         if (MSC_Handle->hbot.cbw.field.DataTransferLength > MSC_Handle->InEpSize)
         {
@@ -309,10 +316,17 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
       {
         MSC_Handle->hbot.state = BOT_DATA_IN_WAIT;
 
-        if ((phost->Timer - phost->NakTimer) > phost->NakTimeout)
+        /* Use HAL_GetTick() (SysTick-based, always alive) instead of
+         * phost->Timer (SOF-based).  If SOF interrupts stop firing,
+         * phost->Timer freezes and the NakTimer condition never fires,
+         * leaving the channel halted in NAK_WAIT forever. */
         {
-          phost->NakTimer = phost->Timer;
-          USBH_ActivatePipe(phost, MSC_Handle->InPipe);
+          static uint32_t data_in_nak_tick = 0U;
+          if ((now_ms_di - data_in_nak_tick) >= 3U)
+          {
+            data_in_nak_tick = now_ms_di;
+            USBH_LL_ActivatePipe(phost, MSC_Handle->InPipe);
+          }
         }
 
 #if (USBH_USE_OS == 1U)
@@ -323,6 +337,7 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
       else if (URB_Status == USBH_URB_STALL)
       {
         /* This is Data IN Stage STALL Condition */
+        data_in_nodata_tick = 0U;
         MSC_Handle->hbot.state  = BOT_ERROR_IN;
 
         /* Refer to USB Mass-Storage Class : BOT (www.usb.org)
@@ -338,7 +353,6 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
       }
       else if ((URB_Status == USBH_URB_IDLE) || (URB_Status == USBH_URB_ERROR))
       {
-        /* Re-submit the IN transfer only if the port is still up */
         if (phost->device.PortEnabled != 0U)
         {
           MSC_Handle->hbot.state = BOT_DATA_IN;
@@ -346,8 +360,28 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
       }
       else
       {
+        /* URB_NOTREADY or unknown: device has stopped sending data.
+         * Arm the watchdog on first occurrence, then after 5 s treat
+         * this exactly like a STALL: Clear Feature the bulk-IN endpoint
+         * so the next CBW starts from a clean channel state.           */
+        if (data_in_nodata_tick == 0U)
+        {
+          data_in_nodata_tick = (now_ms_di != 0U) ? now_ms_di : 1U;
+        }
+        else if ((now_ms_di - data_in_nodata_tick) >= 5000U)
+        {
+          printf("[BOT] DATA_IN_WAIT timeout urb=%u -> BOT_ERROR_IN\n",
+                 (unsigned int)URB_Status);
+          data_in_nodata_tick = 0U;
+          MSC_Handle->hbot.state = BOT_ERROR_IN;
+        }
+        else
+        {
+          /* Still within timeout window, keep waiting. */
+        }
       }
-      break;
+    }
+    break;
 
     case BOT_DATA_OUT:
 
@@ -461,10 +495,15 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
       {
         MSC_Handle->hbot.state = BOT_RECEIVE_CSW_WAIT;
 
-        if ((phost->Timer - phost->NakTimer) > phost->NakTimeout)
+        /* Same HAL_GetTick fix as BOT_DATA_IN_WAIT. */
         {
-          phost->NakTimer = phost->Timer;
-          USBH_ActivatePipe(phost, MSC_Handle->InPipe);
+          static uint32_t csw_nak_tick = 0U;
+          uint32_t now_ms = HAL_GetTick();
+          if ((now_ms - csw_nak_tick) >= 3U)
+          {
+            csw_nak_tick = now_ms;
+            USBH_LL_ActivatePipe(phost, MSC_Handle->InPipe);
+          }
         }
 
 #if (USBH_USE_OS == 1U)
@@ -482,7 +521,6 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
       }
       else if ((URB_Status == USBH_URB_IDLE) || (URB_Status == USBH_URB_ERROR))
       {
-        /* Re-submit CSW receive only if the port is still up */
         if (phost->device.PortEnabled != 0U)
         {
           MSC_Handle->hbot.state = BOT_RECEIVE_CSW;
@@ -494,21 +532,65 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
       break;
 
     case BOT_ERROR_IN:
+    {
+      static uint32_t error_in_tick = 0U;
+      uint32_t now_ms = HAL_GetTick();
+
+      if (error_in_tick == 0U)
+      {
+        error_in_tick = (now_ms != 0U) ? now_ms : 1U;
+        printf("[BOT] BOT_ERROR_IN entered lun=%u\n", (unsigned int)lun);
+      }
+
+      /* Diagnostics every 500 ms */
+      {
+        static uint32_t error_in_diag_tick = 0U;
+        if ((now_ms - error_in_diag_tick) >= 500U)
+        {
+          error_in_diag_tick = now_ms;
+          HCD_HandleTypeDef *hhcd = (HCD_HandleTypeDef *)phost->pData;
+          uint8_t p = phost->Control.pipe_in;
+          printf("[BOT] BOT_ERROR_IN ctrl=%u req=%u hc=%u urb=%u nak=%u\n",
+                 (unsigned int)phost->Control.state,
+                 (unsigned int)phost->RequestState,
+                 (unsigned int)hhcd->hc[p].state,
+                 (unsigned int)hhcd->hc[p].urb_state,
+                 (unsigned int)hhcd->hc[p].NakCnt);
+        }
+      }
+
+      /* 2-second timeout: Clear Feature is stuck, abandon and do BOT Reset */
+      if ((now_ms - error_in_tick) >= 2000U)
+      {
+        error_in_tick = 0U;
+        printf("[BOT] BOT_ERROR_IN timeout -> BOT_UNRECOVERED_ERROR\n");
+        /* Abort the stuck control transfer so it can restart cleanly */
+        phost->RequestState  = CMD_SEND;
+        phost->Control.state = CTRL_IDLE;
+        MSC_Handle->hbot.state = BOT_UNRECOVERED_ERROR;
+        break;
+      }
+
       error = USBH_MSC_BOT_Abort(phost, lun, BOT_DIR_IN);
 
       if (error == USBH_OK)
       {
+        error_in_tick = 0U;
         MSC_Handle->hbot.state = BOT_RECEIVE_CSW;
       }
-      else if (error == USBH_UNRECOVERED_ERROR)
+      else if ((error == USBH_UNRECOVERED_ERROR) ||
+               (error == USBH_FAIL)              ||
+               (error == USBH_NOT_SUPPORTED))
       {
-        /* This means that there is a STALL Error limit, Do Reset Recovery */
+        error_in_tick = 0U;
         MSC_Handle->hbot.state = BOT_UNRECOVERED_ERROR;
       }
       else
       {
+        /* USBH_BUSY: keep waiting */
       }
-      break;
+    }
+    break;
 
     case BOT_ERROR_OUT:
       error = USBH_MSC_BOT_Abort(phost, lun, BOT_DIR_OUT);
@@ -531,12 +613,44 @@ USBH_StatusTypeDef USBH_MSC_BOT_Process(USBH_HandleTypeDef *phost, uint8_t lun)
 
 
     case BOT_UNRECOVERED_ERROR:
+    {
+      static uint32_t unrec_tick = 0U;
+      uint32_t now_ms_u = HAL_GetTick();
+
+      if (unrec_tick == 0U)
+      {
+        unrec_tick = (now_ms_u != 0U) ? now_ms_u : 1U;
+        printf("[BOT] BOT_UNRECOVERED_ERROR entered\n");
+      }
+
+      /* 2-second timeout: BOT Reset control transfer is also stuck */
+      if ((now_ms_u - unrec_tick) >= 2000U)
+      {
+        unrec_tick = 0U;
+        printf("[BOT] BOT_UNRECOVERED_ERROR timeout -> FAIL\n");
+        phost->RequestState  = CMD_SEND;
+        phost->Control.state = CTRL_IDLE;
+        status = USBH_UNRECOVERED_ERROR;
+        break;
+      }
+
       status = USBH_MSC_BOT_REQ_Reset(phost);
       if (status == USBH_OK)
       {
+        unrec_tick = 0U;
         MSC_Handle->hbot.state = BOT_SEND_CBW;
+        /* Return BUSY so the caller keeps driving the state machine
+         * for the retry CBW, rather than falsely signalling success. */
+        status = USBH_BUSY;
       }
-      break;
+      else if (status == USBH_FAIL)
+      {
+        unrec_tick = 0U;
+        MSC_Handle->hbot.state = BOT_SEND_CBW;
+        status = USBH_UNRECOVERED_ERROR;
+      }
+    }
+    break;
 
     default:
       break;
