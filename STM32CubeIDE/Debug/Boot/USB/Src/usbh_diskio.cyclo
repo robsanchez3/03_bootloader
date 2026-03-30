@@ -1,5 +1,5 @@
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:34:16:USBH_initialize	1
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:39:16:USBH_status	3
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:60:16:USBH_read	7
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:136:16:USBH_write	1
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:147:16:USBH_ioctl	7
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:132:16:USBH_write	1
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:143:16:USBH_ioctl	7

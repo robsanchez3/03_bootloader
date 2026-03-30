@@ -62,6 +62,14 @@ static DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
     USBH_StatusTypeDef status;
     MSC_HandleTypeDef *msc;
     uint8_t retry;
+    static DWORD last_progress_sector = 0xFFFFFFFFU;
+
+    /* Progress print every 256 sectors (~128 KB). */
+    if ((sector ^ last_progress_sector) >= 256U)
+    {
+        last_progress_sector = sector & ~255U;
+        printf("[DISKIO] sector=%lu\n", (unsigned long)sector);
+    }
 
     for (retry = 0U; retry < 3U; retry++)
     {
@@ -87,30 +95,18 @@ static DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
            por el case BOT_CMD_WAIT en lugar de BOT_CMD_SEND y no prepara el CBW
            nuevo, fallando de inmediato.  Resetear los tres campos reinicia la
            cadena BOT desde cero, igual que hace USBH_MSC_BOT_Init. */
-        if (retry > 0U)
+        if (msc->unit[lun].state != MSC_IDLE)
         {
-            printf("[DISKIO] sector=%lu retry=%u: bot=%u cmd=%u -> pipe reset\n",
+            printf("[DISKIO] sector=%lu retry=%u: lun=%u bot=%u cmd=%u -> reset BOT\n",
                    (unsigned long)sector, (unsigned int)retry,
+                   (unsigned int)msc->unit[lun].state,
                    (unsigned int)msc->hbot.state,
                    (unsigned int)msc->hbot.cmd_state);
 
-            (void)USBH_ClosePipe(&hUsbHostHS, msc->InPipe);
-            (void)USBH_OpenPipe(&hUsbHostHS, msc->InPipe, msc->InEp,
-                                hUsbHostHS.device.address,
-                                hUsbHostHS.device.speed,
-                                USB_EP_TYPE_BULK, msc->InEpSize);
-            (void)USBH_LL_SetToggle(&hUsbHostHS, msc->InPipe, 0U);
-
             msc->unit[lun].state = MSC_IDLE;
             msc->hbot.state      = BOT_SEND_CBW;
             msc->hbot.cmd_state  = BOT_CMD_SEND;
-            HAL_Delay(50U);
-        }
-        else if (msc->unit[lun].state != MSC_IDLE)
-        {
-            msc->unit[lun].state = MSC_IDLE;
-            msc->hbot.state      = BOT_SEND_CBW;
-            msc->hbot.cmd_state  = BOT_CMD_SEND;
+            HAL_Delay(10U);
         }
 
         status = USBH_MSC_Read(&hUsbHostHS, lun, sector, buff, count);
