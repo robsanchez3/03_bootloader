@@ -87,18 +87,30 @@ static DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
            por el case BOT_CMD_WAIT en lugar de BOT_CMD_SEND y no prepara el CBW
            nuevo, fallando de inmediato.  Resetear los tres campos reinicia la
            cadena BOT desde cero, igual que hace USBH_MSC_BOT_Init. */
-        if (msc->unit[lun].state != MSC_IDLE)
+        if (retry > 0U)
         {
-            printf("[DISKIO] sector=%lu retry=%u: lun=%u bot=%u cmd=%u -> reset BOT\n",
+            printf("[DISKIO] sector=%lu retry=%u: bot=%u cmd=%u -> pipe reset\n",
                    (unsigned long)sector, (unsigned int)retry,
-                   (unsigned int)msc->unit[lun].state,
                    (unsigned int)msc->hbot.state,
                    (unsigned int)msc->hbot.cmd_state);
+
+            (void)USBH_ClosePipe(&hUsbHostHS, msc->InPipe);
+            (void)USBH_OpenPipe(&hUsbHostHS, msc->InPipe, msc->InEp,
+                                hUsbHostHS.device.address,
+                                hUsbHostHS.device.speed,
+                                USB_EP_TYPE_BULK, msc->InEpSize);
+            (void)USBH_LL_SetToggle(&hUsbHostHS, msc->InPipe, 0U);
 
             msc->unit[lun].state = MSC_IDLE;
             msc->hbot.state      = BOT_SEND_CBW;
             msc->hbot.cmd_state  = BOT_CMD_SEND;
-            HAL_Delay(10U);
+            HAL_Delay(50U);
+        }
+        else if (msc->unit[lun].state != MSC_IDLE)
+        {
+            msc->unit[lun].state = MSC_IDLE;
+            msc->hbot.state      = BOT_SEND_CBW;
+            msc->hbot.cmd_state  = BOT_CMD_SEND;
         }
 
         status = USBH_MSC_Read(&hUsbHostHS, lun, sector, buff, count);

@@ -875,7 +875,15 @@ USBH_StatusTypeDef USBH_MSC_Read(USBH_HandleTypeDef *phost,
     }
   }
 
-  return (rw_status == USBH_OK) ? USBH_OK : USBH_FAIL;
+  if (rw_status != USBH_OK)
+  {
+    MSC_Handle->unit[lun].state = MSC_IDLE;
+    MSC_Handle->hbot.state      = BOT_SEND_CBW;
+    MSC_Handle->hbot.cmd_state  = BOT_CMD_SEND;
+    return USBH_FAIL;
+  }
+
+  return USBH_OK;
 }
 
 /**

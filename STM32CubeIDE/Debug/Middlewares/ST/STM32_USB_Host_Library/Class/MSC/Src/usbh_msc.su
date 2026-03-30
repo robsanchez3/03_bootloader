@@ -10,4 +10,4 @@ C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/
 C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c:781:9:USBH_MSC_UnitIsReady	24	static
 C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c:808:20:USBH_MSC_GetLUNInfo	32	static
 C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c:836:20:USBH_MSC_Read	48	static
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c:891:20:USBH_MSC_Write	40	static
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c:899:20:USBH_MSC_Write	40	static
