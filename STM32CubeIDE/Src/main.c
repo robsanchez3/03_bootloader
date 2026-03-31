@@ -21,6 +21,8 @@
 #include "usb_msc_service.h"
 #include "usb_fs_service.h"
 #include "usb_update.h"
+#include "ff.h"
+#include "usbh_diskio.h"
 #include <stdio.h>
 
 
@@ -34,11 +36,16 @@ static void Recovery_Loop(void);
 static void Boot_RunStartupPolicy(void);
 static void UsbMscLayerTestLoop(void);
 static void ReadBinTest(const char *bin_path, uint32_t expected_crc32);
+static void ReadBinChunkedTest(const char *bin_path, uint32_t expected_crc32);
 static void UsbFsMountTestLoop(void);
 
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
 #define BOOT_USB_MSC_LAYER_TEST           0U
 #define BOOT_USB_FS_MOUNT_TEST            1U
+
+/* Chunked read configuration — tune these values during testing */
+#define CHUNKED_READ_BLOCK_SIZE           1048576U /* bytes per open/read/close cycle */
+#define CHUNKED_READ_MAX_RETRIES          10U      /* retries per block on failure    */
 
 int _write(int file, char *ptr, int len)
 {
@@ -236,6 +243,151 @@ static void ReadBinTest(const char *bin_path, uint32_t expected_crc32)
            (crc == expected_crc32) ? "MATCH" : "MISMATCH");
 }
 
+/* Lee un .bin completo mediante open/seek/read/close por cada bloque.
+ * El tamaño de bloque y reintentos se configuran con CHUNKED_READ_BLOCK_SIZE
+ * y CHUNKED_READ_MAX_RETRIES. */
+static void ReadBinChunkedTest(const char *bin_path, uint32_t expected_crc32)
+{
+    static uint8_t  chunk[CHUNKED_READ_BLOCK_SIZE];
+    UsbFsResult_t   result;
+    uint32_t        file_size   = 0U;
+    uint32_t        offset      = 0U;
+    uint32_t        bytes_read;
+    uint32_t        to_read;
+    uint32_t        crc         = 0U;
+    uint32_t        block_num   = 0U;
+    uint32_t        retry;
+    uint32_t        total_retries = 0U;
+    uint32_t        t_start;
+
+    result = UsbFsService_GetFileSize(bin_path, &file_size);
+    if (result != USB_FS_RESULT_OK)
+    {
+        printf("[CHUNK] %s GetFileSize FAILED result=%u\n",
+               bin_path, (unsigned int)result);
+        return;
+    }
+
+    printf("[CHUNK] %s size=%lu  block=%u  blocks=%lu\n",
+           bin_path,
+           (unsigned long)file_size,
+           (unsigned int)CHUNKED_READ_BLOCK_SIZE,
+           (unsigned long)((file_size + CHUNKED_READ_BLOCK_SIZE - 1U) / CHUNKED_READ_BLOCK_SIZE));
+
+    t_start = HAL_GetTick();
+
+    while (offset < file_size)
+    {
+        to_read = file_size - offset;
+        if (to_read > CHUNKED_READ_BLOCK_SIZE)
+        {
+            to_read = CHUNKED_READ_BLOCK_SIZE;
+        }
+
+        bytes_read = 0U;
+        for (retry = 0U; retry <= CHUNKED_READ_MAX_RETRIES; retry++)
+        {
+            result = UsbFsService_ReadFile(bin_path, chunk, offset, to_read, &bytes_read);
+            if (result == USB_FS_RESULT_OK)
+            {
+                break;
+            }
+            if (retry < CHUNKED_READ_MAX_RETRIES)
+            {
+                total_retries++;
+                printf("[CHUNK] block %lu offset=%lu RETRY %lu/%u err=%u fatfs=%lu -> recovery\n",
+                       (unsigned long)block_num,
+                       (unsigned long)offset,
+                       (unsigned long)(retry + 1U),
+                       (unsigned int)CHUNKED_READ_MAX_RETRIES,
+                       (unsigned int)result,
+                       (unsigned long)UsbFsService_GetLastError());
+
+                /* Full recovery: unmount + USB host restart + wait READY + remount */
+                UsbFsService_Unmount();
+                UsbMscService_ForceRestart();
+
+                {
+                    uint32_t t_wait = HAL_GetTick();
+                    while (UsbMscService_IsReady() == 0U)
+                    {
+                        UsbMscService_Process();
+                        if ((HAL_GetTick() - t_wait) > 10000U)
+                        {
+                            printf("[CHUNK] recovery timeout waiting for READY\n");
+                            break;
+                        }
+                    }
+                }
+
+                if (UsbMscService_IsReady() != 0U)
+                {
+                    if (UsbFsService_Mount() != USB_FS_RESULT_OK)
+                    {
+                        printf("[CHUNK] remount FAILED fatfs=%lu\n",
+                               (unsigned long)UsbFsService_GetLastError());
+                    }
+                    else
+                    {
+                        printf("[CHUNK] recovery OK -> remounted\n");
+                    }
+                }
+            }
+        }
+
+        if (result != USB_FS_RESULT_OK)
+        {
+            printf("[CHUNK] block %lu offset=%lu FAILED after %u retries  result=%u fatfs=%lu\n",
+                   (unsigned long)block_num,
+                   (unsigned long)offset,
+                   (unsigned int)CHUNKED_READ_MAX_RETRIES,
+                   (unsigned int)result,
+                   (unsigned long)UsbFsService_GetLastError());
+            return;
+        }
+
+        if (bytes_read != to_read)
+        {
+            printf("[CHUNK] block %lu offset=%lu short read: expected=%lu got=%lu\n",
+                   (unsigned long)block_num,
+                   (unsigned long)offset,
+                   (unsigned long)to_read,
+                   (unsigned long)bytes_read);
+            return;
+        }
+
+        crc     = crc32_update(crc, chunk, bytes_read);
+        offset += bytes_read;
+        block_num++;
+
+        /* Pausa entre bloques para estabilizar el controlador USB */
+        if (offset < file_size)
+        {
+            HAL_Delay(500U);
+        }
+
+        /* Progreso cada 32 bloques */
+        if ((block_num & 1U) == 0U)
+        {
+            printf("[CHUNK] %lu / %lu bytes (%lu%%)\n",
+                   (unsigned long)offset,
+                   (unsigned long)file_size,
+                   (unsigned long)((offset * 100U) / file_size));
+        }
+    }
+
+    uint32_t elapsed = HAL_GetTick() - t_start;
+
+    printf("[CHUNK] %s: %lu bytes  CRC32=%08lX  expected=%08lX  %s  %lu ms  retries=%lu\n",
+           bin_path,
+           (unsigned long)offset,
+           (unsigned long)crc,
+           (unsigned long)expected_crc32,
+           (crc == expected_crc32) ? "MATCH" : "MISMATCH",
+           (unsigned long)elapsed,
+           (unsigned long)total_retries);
+}
+
 static void UsbFsMountTestLoop(void)
 {
     UsbMscState_t last_state;
@@ -285,6 +437,18 @@ static void UsbFsMountTestLoop(void)
                 {
                     printf("[TEST] f_mount OK\n");
 
+                    {
+                        FATFS  *fs_ptr;
+                        DWORD   free_clust;
+                        if (f_getfree("0:", &free_clust, &fs_ptr) == FR_OK)
+                        {
+                            printf("[TEST] sector=%u bytes  cluster=%u sectors (%lu bytes)\n",
+                                   (unsigned int)FF_MAX_SS,
+                                   (unsigned int)fs_ptr->csize,
+                                   (unsigned long)((uint32_t)fs_ptr->csize * FF_MAX_SS));
+                        }
+                    }
+
                     stat_result = UsbFsService_FileExists(USB_UPDATE_DIR_PATH);
                     printf("[TEST] f_stat dir %s -> %s (fatfs_err=%lu)\n",
                            USB_UPDATE_DIR_PATH,
@@ -307,6 +471,12 @@ static void UsbFsMountTestLoop(void)
 
                     if (all_present != 0U)
                     {
+                        uint32_t fsize_tmp;
+                        if (UsbFsService_GetFileSize(USB_UPDATE_APP_INT_BIN, &fsize_tmp) == USB_FS_RESULT_OK)
+                            printf("[TEST] %s size=%lu bytes\n", USB_UPDATE_APP_INT_BIN, (unsigned long)fsize_tmp);
+                        if (UsbFsService_GetFileSize(USB_UPDATE_APP_OSPI_BIN, &fsize_tmp) == USB_FS_RESULT_OK)
+                            printf("[TEST] %s size=%lu bytes\n", USB_UPDATE_APP_OSPI_BIN, (unsigned long)fsize_tmp);
+
                         static const char * const crc_paths[2] =
                         {
                             USB_UPDATE_APP_INT_CRC,
@@ -360,9 +530,9 @@ static void UsbFsMountTestLoop(void)
                             }
                         }
 
-                        /* Leer los dos .bin por bloques y verificar CRC32 */
-                        ReadBinTest(USB_UPDATE_APP_INT_BIN,  expected_crc[0]);
-                        ReadBinTest(USB_UPDATE_APP_OSPI_BIN, expected_crc[1]);
+                        /* Leer los dos .bin con chunked reopen y verificar CRC32 */
+                        ReadBinChunkedTest(USB_UPDATE_APP_INT_BIN,  expected_crc[0]);
+                        ReadBinChunkedTest(USB_UPDATE_APP_OSPI_BIN, expected_crc[1]);
                     }
                     else
                     {

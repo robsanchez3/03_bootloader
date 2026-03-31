@@ -36,6 +36,8 @@ UsbFsResult_t UsbFsService_ReadStream (void *buffer,
                                        uint32_t *bytes_read);
 UsbFsResult_t UsbFsService_CloseStream(void);
 
+UsbFsResult_t UsbFsService_GetFileSize(const char *path, uint32_t *file_size);
+
 uint32_t UsbFsService_GetLastError(void);
 
 #endif /* USB_FS_SERVICE_H */

@@ -252,6 +252,35 @@ UsbFsResult_t UsbFsService_CloseStream(void)
     return USB_FS_RESULT_OK;
 }
 
+UsbFsResult_t UsbFsService_GetFileSize(const char *path, uint32_t *file_size)
+{
+    FILINFO finfo;
+    FRESULT fr;
+
+    if ((path == NULL) || (file_size == NULL))
+    {
+        return USB_FS_RESULT_INVALID_ARG;
+    }
+
+    *file_size = 0U;
+
+    if (usb_fs_mounted == 0U)
+    {
+        return USB_FS_RESULT_NOT_MOUNTED;
+    }
+
+    fr = f_stat(path, &finfo);
+    if (fr != FR_OK)
+    {
+        usb_fs_last_error = (uint32_t)fr;
+        return ((fr == FR_NO_FILE) || (fr == FR_NO_PATH)) ?
+               USB_FS_RESULT_NO_FILE : USB_FS_RESULT_IO_ERROR;
+    }
+
+    *file_size = (uint32_t)finfo.fsize;
+    return USB_FS_RESULT_OK;
+}
+
 uint32_t UsbFsService_GetLastError(void)
 {
     return usb_fs_last_error;

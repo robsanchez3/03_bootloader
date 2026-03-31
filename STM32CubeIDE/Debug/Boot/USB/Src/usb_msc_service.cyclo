@@ -10,4 +10,5 @@ C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_msc_service.c:188:10:UsbMscService_
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_msc_service.c:193:13:UsbMscService_UserProcess	13
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_msc_service.c:266:13:UsbMscService_SetState	2
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_msc_service.c:276:13:UsbMscService_RestartHost	2
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_msc_service.c:292:13:UsbMscService_TriggerRecovery	2
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_msc_service.c:292:6:UsbMscService_ForceRestart	1
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_msc_service.c:300:13:UsbMscService_TriggerRecovery	2

@@ -23,6 +23,7 @@ uint8_t UsbMscService_IsReady(void);
 UsbMscState_t UsbMscService_GetState(void);
 const char *UsbMscService_GetStateName(void);
 uint32_t UsbMscService_GetLastError(void);
+void UsbMscService_ForceRestart(void);
 
 extern USBH_HandleTypeDef hUsbHostHS;
 

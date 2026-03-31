@@ -9,4 +9,5 @@ C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:128:15:UsbFsService_Re
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:182:15:UsbFsService_OpenStream	24	static
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:214:15:UsbFsService_ReadStream	32	static
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:244:15:UsbFsService_CloseStream	8	static
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:255:10:UsbFsService_GetLastError	4	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:255:15:UsbFsService_GetFileSize	48	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:284:10:UsbFsService_GetLastError	4	static

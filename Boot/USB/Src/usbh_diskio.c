@@ -61,63 +61,56 @@ static DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
     USBH_StatusTypeDef status;
     MSC_HandleTypeDef *msc;
-    uint8_t retry;
-    for (retry = 0U; retry < 3U; retry++)
+
+    if (hUsbHostHS.pActiveClass == NULL)
     {
-        if (hUsbHostHS.pActiveClass == NULL)
-        {
-            return RES_NOTRDY;
-        }
-
-        /* No tiene sentido reintentar si el puerto sigue sin estar habilitado. */
-        if (hUsbHostHS.device.PortEnabled == 0U)
-        {
-            return RES_NOTRDY;
-        }
-
-        msc = (MSC_HandleTypeDef *)hUsbHostHS.pActiveClass->pData;
-
-        /* Cuando USBH_MSC_Read falla porque PortEnabled cae a 0 dentro de su
-           bucle interno, deja dos estados inconsistentes:
-             - unit[lun].state = MSC_READ (6)   — la lectura nunca terminó
-             - hbot.cmd_state  = BOT_CMD_WAIT    — el SCSI_Read ya emitió el CBW
-             - hbot.state      = estado intermedio del BOT
-           Si solo reseteamos unit.state y NO el BOT, USBH_MSC_SCSI_Read entra
-           por el case BOT_CMD_WAIT en lugar de BOT_CMD_SEND y no prepara el CBW
-           nuevo, fallando de inmediato.  Resetear los tres campos reinicia la
-           cadena BOT desde cero, igual que hace USBH_MSC_BOT_Init. */
-        if (msc->unit[lun].state != MSC_IDLE)
-        {
-            printf("[DISKIO] sector=%lu retry=%u: lun=%u bot=%u cmd=%u -> reset BOT\n",
-                   (unsigned long)sector, (unsigned int)retry,
-                   (unsigned int)msc->unit[lun].state,
-                   (unsigned int)msc->hbot.state,
-                   (unsigned int)msc->hbot.cmd_state);
-
-            msc->unit[lun].state = MSC_IDLE;
-            msc->hbot.state      = BOT_SEND_CBW;
-            msc->hbot.cmd_state  = BOT_CMD_SEND;
-            HAL_Delay(10U);
-        }
-
-        status = USBH_MSC_Read(&hUsbHostHS, lun, sector, buff, count);
-
-        if (status == USBH_OK)
-        {
-            return RES_OK;
-        }
-
-        printf("[DISKIO] FAIL sector=%lu retry=%u lun=%u bot=%u cmd=%u PortEnabled=%u\n",
-               (unsigned long)sector, (unsigned int)retry,
-               (unsigned int)msc->unit[lun].state,
-               (unsigned int)msc->hbot.state,
-               (unsigned int)msc->hbot.cmd_state,
-               (unsigned int)hUsbHostHS.device.PortEnabled);
-
-        HAL_Delay(50U);
+        return RES_NOTRDY;
     }
 
+    if (hUsbHostHS.device.PortEnabled == 0U)
+    {
+        return RES_NOTRDY;
+    }
+
+    msc = (MSC_HandleTypeDef *)hUsbHostHS.pActiveClass->pData;
+
+    if (msc->unit[lun].state != MSC_IDLE)
+    {
+        msc->unit[lun].state = MSC_IDLE;
+        msc->hbot.state      = BOT_SEND_CBW;
+        msc->hbot.cmd_state  = BOT_CMD_SEND;
+    }
+
+    status = USBH_MSC_Read(&hUsbHostHS, lun, sector, buff, count);
+
+    if (status == USBH_OK)
+    {
+        return RES_OK;
+    }
+
+    printf("[DISKIO] FAIL sector=%lu lun=%u bot=%u cmd=%u PortEnabled=%u\n",
+           (unsigned long)sector,
+           (unsigned int)msc->unit[lun].state,
+           (unsigned int)msc->hbot.state,
+           (unsigned int)msc->hbot.cmd_state,
+           (unsigned int)hUsbHostHS.device.PortEnabled);
+
     return RES_ERROR;
+}
+
+void USBH_DiskIO_ResetBotState(void)
+{
+    MSC_HandleTypeDef *msc;
+
+    if (hUsbHostHS.pActiveClass == NULL)
+    {
+        return;
+    }
+
+    msc = (MSC_HandleTypeDef *)hUsbHostHS.pActiveClass->pData;
+    msc->unit[0].state  = MSC_IDLE;
+    msc->hbot.state     = BOT_SEND_CBW;
+    msc->hbot.cmd_state = BOT_CMD_SEND;
 }
 
 static DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)

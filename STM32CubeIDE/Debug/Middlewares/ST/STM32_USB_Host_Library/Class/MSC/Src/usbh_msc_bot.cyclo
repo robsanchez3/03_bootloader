@@ -1,6 +1,6 @@
 C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c:108:20:USBH_MSC_BOT_REQ_Reset	1
 C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c:129:20:USBH_MSC_BOT_REQ_GetMaxLUN	1
 C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c:150:20:USBH_MSC_BOT_Init	1
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c:172:20:USBH_MSC_BOT_Process	60
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c:668:27:USBH_MSC_BOT_Abort	3
-C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c:710:29:USBH_MSC_DecodeCSW	7
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c:172:20:USBH_MSC_BOT_Process	47
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c:481:27:USBH_MSC_BOT_Abort	3
+C:/Roberto/O3/O3_Bootloader/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c:511:29:USBH_MSC_DecodeCSW	7

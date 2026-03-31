@@ -289,6 +289,14 @@ static void UsbMscService_RestartHost(void)
     usb_msc_timeout_reported = 0U;
 }
 
+void UsbMscService_ForceRestart(void)
+{
+    printf("[USB] ForceRestart: hard reset + VBUS recovery\n");
+    USBH_LL_SetVbusDelay(USB_MSC_VBUS_DELAY_RECOVERY_MS);
+    USBH_LL_HardResetHostController();
+    UsbMscService_RestartHost();
+}
+
 static void UsbMscService_TriggerRecovery(const char *reason)
 {
     if (usb_msc_recovery_restarts >= USB_MSC_MAX_RECOVERY_RESTARTS)
