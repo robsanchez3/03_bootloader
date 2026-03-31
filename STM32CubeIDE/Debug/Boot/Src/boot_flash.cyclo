@@ -1,0 +1,4 @@
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_flash.c:13:26:AddressToPage	3
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_flash.c:33:19:BootFlash_EraseAppArea	7
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_flash.c:113:19:BootFlash_Program	7
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_flash.c:163:19:BootFlash_Verify	4

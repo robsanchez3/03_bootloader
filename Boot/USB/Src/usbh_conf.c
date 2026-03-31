@@ -6,7 +6,9 @@
 HCD_HandleTypeDef hhcd_USB_OTG_HS;
 
 static USBH_StatusTypeDef USBH_Get_USB_Status(HAL_StatusTypeDef hal_status);
+#if (BOOT_USB_ST_TRACE_VERBOSE != 0U)
 static const char *USBH_LL_UrbStateName(HCD_URBStateTypeDef state);
+#endif
 static uint32_t usb_vbus_delay_ms = 750U;
 
 void USBH_LL_SetVbusDelay(uint32_t delay_ms)
@@ -399,6 +401,7 @@ static USBH_StatusTypeDef USBH_Get_USB_Status(HAL_StatusTypeDef hal_status)
     }
 }
 
+#if (BOOT_USB_ST_TRACE_VERBOSE != 0U)
 static const char *USBH_LL_UrbStateName(HCD_URBStateTypeDef state)
 {
     switch (state)
@@ -419,3 +422,4 @@ static const char *USBH_LL_UrbStateName(HCD_URBStateTypeDef state)
             return "UNKNOWN";
     }
 }
+#endif

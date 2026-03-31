@@ -1,6 +1,5 @@
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:34:16:USBH_initialize	16	static
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:39:16:USBH_status	72	static
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:60:16:USBH_read	40	static
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:101:6:USBH_DiskIO_ResetBotState	16	static
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:116:16:USBH_write	24	static
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:127:16:USBH_ioctl	72	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:56:16:USBH_read	40	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:97:16:USBH_write	24	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usbh_diskio.c:107:16:USBH_ioctl	72	static

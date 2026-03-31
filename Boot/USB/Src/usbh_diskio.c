@@ -4,9 +4,8 @@
  * FatFs diskio driver for USB MSC (bare-metal, polling, no DMA).
  *
  * Translates FatFs disk_xxx calls into USBH_MSC_xxx calls.
- * USBH_MSC_Read is internally blocking (loops on USBH_MSC_RdWrProcess
- * until the transfer completes or times out).  USBH_read retries up to
- * 3 times and resets the BOT state between attempts.
+ * Single-attempt read: on failure, recovery is handled at a higher level
+ * (chunked read with full USB host restart).
  *
  * Write is intentionally disabled (RES_WRPRT): the bootloader only
  * reads from the USB drive.
@@ -15,6 +14,7 @@
 #include "usbh_diskio.h"
 #include "usb_msc_service.h"
 #include "usbh_msc.h"
+#include <stdio.h>
 
 static DSTATUS USBH_initialize(BYTE lun);
 static DSTATUS USBH_status    (BYTE lun);
@@ -49,10 +49,6 @@ static DSTATUS USBH_status(BYTE lun)
     {
         return STA_NOINIT;
     }
-
-    /* Do not check info.error: a transient SCSI error sets MSC_ERROR
-       but the device remains physically operational. Blocking on that
-       flag would cause FR_DISK_ERR on all subsequent FatFs operations. */
 
     return 0;
 }
@@ -98,21 +94,6 @@ static DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
     return RES_ERROR;
 }
 
-void USBH_DiskIO_ResetBotState(void)
-{
-    MSC_HandleTypeDef *msc;
-
-    if (hUsbHostHS.pActiveClass == NULL)
-    {
-        return;
-    }
-
-    msc = (MSC_HandleTypeDef *)hUsbHostHS.pActiveClass->pData;
-    msc->unit[0].state  = MSC_IDLE;
-    msc->hbot.state     = BOT_SEND_CBW;
-    msc->hbot.cmd_state = BOT_CMD_SEND;
-}
-
 static DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 {
     (void)lun;
@@ -120,7 +101,6 @@ static DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
     (void)sector;
     (void)count;
 
-    /* Bootloader does not write to the USB drive. */
     return RES_WRPRT;
 }
 

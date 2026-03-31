@@ -27,15 +27,6 @@ UsbFsResult_t UsbFsService_ReadFile(const char *path,
                                     uint32_t offset,
                                     uint32_t bytes_to_read,
                                     uint32_t *bytes_read);
-
-/* Streaming API para lectura secuencial de ficheros grandes.
- * Solo un stream abierto a la vez. */
-UsbFsResult_t UsbFsService_OpenStream (const char *path);
-UsbFsResult_t UsbFsService_ReadStream (void *buffer,
-                                       uint32_t bytes_to_read,
-                                       uint32_t *bytes_read);
-UsbFsResult_t UsbFsService_CloseStream(void);
-
 UsbFsResult_t UsbFsService_GetFileSize(const char *path, uint32_t *file_size);
 
 uint32_t UsbFsService_GetLastError(void);

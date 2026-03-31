@@ -10,15 +10,11 @@ static uint8_t usb_fs_mounted;
 static uint8_t usb_fs_driver_linked;
 static uint32_t usb_fs_last_error;
 
-static FIL     usb_fs_stream;
-static uint8_t usb_fs_stream_open;
-
 void UsbFsService_Init(void)
 {
     usb_fs_mounted       = 0U;
     usb_fs_driver_linked = 0U;
     usb_fs_last_error    = 0U;
-    usb_fs_stream_open   = 0U;
 }
 
 void UsbFsService_Process(void)
@@ -31,11 +27,6 @@ void UsbFsService_Process(void)
 
 void UsbFsService_Reset(void)
 {
-    if (usb_fs_stream_open != 0U)
-    {
-        (void)f_close(&usb_fs_stream);
-        usb_fs_stream_open = 0U;
-    }
     usb_fs_mounted       = 0U;
     usb_fs_driver_linked = 0U;
     usb_fs_last_error    = 0U;
@@ -176,79 +167,6 @@ UsbFsResult_t UsbFsService_ReadFile(const char *path,
     }
 
     *bytes_read = (uint32_t)br;
-    return USB_FS_RESULT_OK;
-}
-
-UsbFsResult_t UsbFsService_OpenStream(const char *path)
-{
-    FRESULT fr;
-
-    if (path == NULL)
-    {
-        return USB_FS_RESULT_INVALID_ARG;
-    }
-
-    if (usb_fs_mounted == 0U)
-    {
-        return USB_FS_RESULT_NOT_MOUNTED;
-    }
-
-    if (usb_fs_stream_open != 0U)
-    {
-        (void)f_close(&usb_fs_stream);
-        usb_fs_stream_open = 0U;
-    }
-
-    fr = f_open(&usb_fs_stream, path, FA_READ);
-    if (fr != FR_OK)
-    {
-        usb_fs_last_error = (uint32_t)fr;
-        return ((fr == FR_NO_FILE) || (fr == FR_NO_PATH)) ?
-               USB_FS_RESULT_NO_FILE : USB_FS_RESULT_IO_ERROR;
-    }
-
-    usb_fs_stream_open = 1U;
-    return USB_FS_RESULT_OK;
-}
-
-UsbFsResult_t UsbFsService_ReadStream(void *buffer,
-                                      uint32_t bytes_to_read,
-                                      uint32_t *bytes_read)
-{
-    FRESULT fr;
-    UINT    br;
-
-    if ((buffer == NULL) || (bytes_read == NULL) || (bytes_to_read == 0U))
-    {
-        return USB_FS_RESULT_INVALID_ARG;
-    }
-
-    *bytes_read = 0U;
-
-    if (usb_fs_stream_open == 0U)
-    {
-        return USB_FS_RESULT_NOT_MOUNTED;
-    }
-
-    fr = f_read(&usb_fs_stream, buffer, (UINT)bytes_to_read, &br);
-    if (fr != FR_OK)
-    {
-        usb_fs_last_error = (uint32_t)fr;
-        return USB_FS_RESULT_IO_ERROR;
-    }
-
-    *bytes_read = (uint32_t)br;
-    return USB_FS_RESULT_OK;
-}
-
-UsbFsResult_t UsbFsService_CloseStream(void)
-{
-    if (usb_fs_stream_open != 0U)
-    {
-        (void)f_close(&usb_fs_stream);
-        usb_fs_stream_open = 0U;
-    }
-
     return USB_FS_RESULT_OK;
 }
 

@@ -1,28 +1,23 @@
 /**
   * @file   main.c
-  * @brief  O3 Bootloader — Phase 1
+  * @brief  O3 Bootloader
   *
   *  Behaviour:
   *    1. Minimal HW init (clocks, GPIO).
-  *    2. Check for a valid application at APP_BASE (0x08020000).
-  *    3. If valid  → jump to the application.
-  *    4. If invalid → blink LED and wait in recovery loop
-  *                    (USB update will be added in Phase 2).
-  *
-  *  NOTE: The application has NOT been moved yet at this stage.
-  *        APP_BASE (0x08020000) will be erased/blank until Phase 1b
-  *        (linker change in app project) is done.  The bootloader will
-  *        correctly land in recovery mode until then.
+  *    2. If BOOT_USB_FS_MOUNT_TEST is enabled, run USB file access test.
+  *    3. Check for a valid application at APP_BASE (0x08020000).
+  *    4. If valid  → jump to the application.
+  *    5. If invalid → blink LED and wait in recovery loop.
   */
 
 #include "stm32u5xx_hal.h"
 #include "main.h"
 #include "boot_jump.h"
+#include "boot_flash.h"
 #include "usb_msc_service.h"
 #include "usb_fs_service.h"
 #include "usb_update.h"
 #include "ff.h"
-#include "usbh_diskio.h"
 #include <stdio.h>
 
 
@@ -34,18 +29,18 @@ static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void Recovery_Loop(void);
 static void Boot_RunStartupPolicy(void);
-static void UsbMscLayerTestLoop(void);
-static void ReadBinTest(const char *bin_path, uint32_t expected_crc32);
 static void ReadBinChunkedTest(const char *bin_path, uint32_t expected_crc32);
+static void FlashAppIntTest(uint32_t expected_crc32);
 static void UsbFsMountTestLoop(void);
 
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
-#define BOOT_USB_MSC_LAYER_TEST           0U
 #define BOOT_USB_FS_MOUNT_TEST            1U
+#define BOOT_FLASH_JUMP_AFTER_PROGRAM     1U  /* Set to 1 to jump to app after flash test */
 
-/* Chunked read configuration — tune these values during testing */
+/* Chunked read configuration */
 #define CHUNKED_READ_BLOCK_SIZE           1048576U /* bytes per open/read/close cycle */
 #define CHUNKED_READ_MAX_RETRIES          10U      /* retries per block on failure    */
+#define CHUNKED_READ_INTER_BLOCK_DELAY_MS 500U     /* pause between blocks            */
 
 int _write(int file, char *ptr, int len)
 {
@@ -77,12 +72,7 @@ int main(void)
     SystemClock_Config();
     MX_GPIO_Init();
 
-
     printf("BL start\n");
-
-#if BOOT_USB_MSC_LAYER_TEST
-    UsbMscLayerTestLoop();
-#endif
 
 #if BOOT_USB_FS_MOUNT_TEST
     UsbFsMountTestLoop();
@@ -133,35 +123,6 @@ static void Boot_RunStartupPolicy(void)
     Recovery_Loop();
 }
 
-static void UsbMscLayerTestLoop(void)
-{
-    UsbMscState_t last_state;
-
-    printf("[TEST] USB MSC layer test enabled\n");
-
-    UsbMscService_Init();
-    UsbMscService_SetEnabled(1U);
-    last_state = UsbMscService_GetState();
-    printf("[TEST] USB state: %s\n", UsbMscService_GetStateName());
-
-    while (1)
-    {
-        UsbMscService_Process();
-
-        if (UsbMscService_GetState() != last_state)
-        {
-            last_state = UsbMscService_GetState();
-            printf("[TEST] USB state: %s\n", UsbMscService_GetStateName());
-
-            if (last_state == USB_MSC_STATE_ERROR)
-            {
-                printf("[TEST] USB error code: %lu\n",
-                       (unsigned long)UsbMscService_GetLastError());
-            }
-        }
-    }
-}
-
 /* CRC32 IEEE 802.3 por nibbles (tabla de 16 entradas, sin heap). */
 static uint32_t crc32_update(uint32_t crc, const uint8_t *buf, uint32_t len)
 {
@@ -183,69 +144,8 @@ static uint32_t crc32_update(uint32_t crc, const uint8_t *buf, uint32_t len)
     return ~crc;
 }
 
-/* Lee un .bin completo por bloques de 512 B, calcula CRC32 y compara. */
-static void ReadBinTest(const char *bin_path, uint32_t expected_crc32)
-{
-    static uint8_t  chunk[65536];
-    UsbFsResult_t   result;
-    uint32_t        bytes_read;
-    uint32_t        total     = 0U;
-    uint32_t        crc       = 0U;
-    uint8_t         first     = 1U;
-
-    result = UsbFsService_OpenStream(bin_path);
-    if (result != USB_FS_RESULT_OK)
-    {
-        printf("[TEST] open %s FAILED result=%u fatfs_err=%lu\n",
-               bin_path, (unsigned int)result,
-               (unsigned long)UsbFsService_GetLastError());
-        return;
-    }
-
-    printf("[TEST] reading %s ...\n", bin_path);
-
-    while (1)
-    {
-        result = UsbFsService_ReadStream(chunk, sizeof(chunk), &bytes_read);
-        if (result != USB_FS_RESULT_OK)
-        {
-            printf("[TEST] read error at offset=%lu result=%u fatfs_err=%lu\n",
-                   (unsigned long)total, (unsigned int)result,
-                   (unsigned long)UsbFsService_GetLastError());
-            (void)UsbFsService_CloseStream();
-            return;
-        }
-
-        if (bytes_read == 0U)
-        {
-            break;  /* EOF */
-        }
-
-        if (first != 0U)
-        {
-            first = 0U;
-            printf("[TEST] first 8 bytes: %02X %02X %02X %02X %02X %02X %02X %02X\n",
-                   chunk[0], chunk[1], chunk[2], chunk[3],
-                   chunk[4], chunk[5], chunk[6], chunk[7]);
-        }
-
-        crc    = crc32_update(crc, chunk, bytes_read);
-        total += bytes_read;
-    }
-
-    (void)UsbFsService_CloseStream();
-
-    printf("[TEST] %s: %lu bytes  CRC32=%08lX  expected=%08lX  %s\n",
-           bin_path,
-           (unsigned long)total,
-           (unsigned long)crc,
-           (unsigned long)expected_crc32,
-           (crc == expected_crc32) ? "MATCH" : "MISMATCH");
-}
-
 /* Lee un .bin completo mediante open/seek/read/close por cada bloque.
- * El tamaño de bloque y reintentos se configuran con CHUNKED_READ_BLOCK_SIZE
- * y CHUNKED_READ_MAX_RETRIES. */
+ * En caso de fallo, ejecuta un restart USB completo antes de reintentar. */
 static void ReadBinChunkedTest(const char *bin_path, uint32_t expected_crc32)
 {
     static uint8_t  chunk[CHUNKED_READ_BLOCK_SIZE];
@@ -363,10 +263,10 @@ static void ReadBinChunkedTest(const char *bin_path, uint32_t expected_crc32)
         /* Pausa entre bloques para estabilizar el controlador USB */
         if (offset < file_size)
         {
-            HAL_Delay(500U);
+            HAL_Delay(CHUNKED_READ_INTER_BLOCK_DELAY_MS);
         }
 
-        /* Progreso cada 32 bloques */
+        /* Progreso cada 2 bloques */
         if ((block_num & 1U) == 0U)
         {
             printf("[CHUNK] %lu / %lu bytes (%lu%%)\n",
@@ -386,6 +286,158 @@ static void ReadBinChunkedTest(const char *bin_path, uint32_t expected_crc32)
            (crc == expected_crc32) ? "MATCH" : "MISMATCH",
            (unsigned long)elapsed,
            (unsigned long)total_retries);
+}
+
+/* Lee app_int.bin por chunks desde USB, graba en flash interna y verifica.
+ * Usa el mismo buffer estático que ReadBinChunkedTest (no llamar en paralelo). */
+static void FlashAppIntTest(uint32_t expected_crc32)
+{
+    static uint8_t chunk[CHUNKED_READ_BLOCK_SIZE];
+    UsbFsResult_t  result;
+    BootFlashResult_t flash_result;
+    uint32_t       file_size = 0U;
+    uint32_t       offset    = 0U;
+    uint32_t       bytes_read;
+    uint32_t       to_read;
+    uint32_t       retry;
+    uint32_t       block_num = 0U;
+    uint32_t       t_start;
+
+    printf("[FTEST] === Flash app_int.bin test ===\n");
+
+    /* 1. Get file size */
+    result = UsbFsService_GetFileSize(USB_UPDATE_APP_INT_BIN, &file_size);
+    if (result != USB_FS_RESULT_OK)
+    {
+        printf("[FTEST] GetFileSize FAILED result=%u\n", (unsigned int)result);
+        return;
+    }
+    printf("[FTEST] file size=%lu bytes\n", (unsigned long)file_size);
+
+    /* 2. Erase app area */
+    printf("[FTEST] erasing flash...\n");
+    flash_result = BootFlash_EraseAppArea(file_size);
+    if (flash_result != BOOT_FLASH_OK)
+    {
+        printf("[FTEST] erase FAILED result=%u\n", (unsigned int)flash_result);
+        return;
+    }
+
+    /* 3. Read from USB and program chunk by chunk */
+    printf("[FTEST] programming flash...\n");
+    t_start = HAL_GetTick();
+
+    while (offset < file_size)
+    {
+        to_read = file_size - offset;
+        if (to_read > CHUNKED_READ_BLOCK_SIZE)
+        {
+            to_read = CHUNKED_READ_BLOCK_SIZE;
+        }
+
+        /* Read chunk from USB with retry + recovery */
+        bytes_read = 0U;
+        for (retry = 0U; retry <= CHUNKED_READ_MAX_RETRIES; retry++)
+        {
+            result = UsbFsService_ReadFile(USB_UPDATE_APP_INT_BIN, chunk, offset, to_read, &bytes_read);
+            if (result == USB_FS_RESULT_OK)
+            {
+                break;
+            }
+            if (retry < CHUNKED_READ_MAX_RETRIES)
+            {
+                printf("[FTEST] read offset=%lu RETRY %lu/%u -> recovery\n",
+                       (unsigned long)offset,
+                       (unsigned long)(retry + 1U),
+                       (unsigned int)CHUNKED_READ_MAX_RETRIES);
+
+                UsbFsService_Unmount();
+                UsbMscService_ForceRestart();
+                {
+                    uint32_t t_wait = HAL_GetTick();
+                    while (UsbMscService_IsReady() == 0U)
+                    {
+                        UsbMscService_Process();
+                        if ((HAL_GetTick() - t_wait) > 10000U)
+                        {
+                            printf("[FTEST] recovery timeout\n");
+                            break;
+                        }
+                    }
+                }
+                if (UsbMscService_IsReady() != 0U)
+                {
+                    (void)UsbFsService_Mount();
+                }
+            }
+        }
+
+        if (result != USB_FS_RESULT_OK)
+        {
+            printf("[FTEST] read FAILED at offset=%lu\n", (unsigned long)offset);
+            return;
+        }
+
+        /* Program chunk into flash */
+        flash_result = BootFlash_Program(APP_BASE + offset, chunk, bytes_read);
+        if (flash_result != BOOT_FLASH_OK)
+        {
+            printf("[FTEST] program FAILED at offset=%lu result=%u\n",
+                   (unsigned long)offset, (unsigned int)flash_result);
+            return;
+        }
+
+        /* Verify chunk immediately */
+        flash_result = BootFlash_Verify(APP_BASE + offset, chunk, bytes_read);
+        if (flash_result != BOOT_FLASH_OK)
+        {
+            printf("[FTEST] verify FAILED at offset=%lu\n", (unsigned long)offset);
+            return;
+        }
+
+        offset += bytes_read;
+        block_num++;
+
+        printf("[FTEST] %lu / %lu bytes (%lu%%)\n",
+               (unsigned long)offset,
+               (unsigned long)file_size,
+               (unsigned long)((offset * 100U) / file_size));
+
+        if (offset < file_size)
+        {
+            HAL_Delay(CHUNKED_READ_INTER_BLOCK_DELAY_MS);
+        }
+    }
+
+    uint32_t elapsed = HAL_GetTick() - t_start;
+
+    /* 4. CRC32 over flash */
+    {
+        uint32_t crc_flash = 0U;
+        crc_flash = crc32_update(crc_flash, (const uint8_t *)APP_BASE, file_size);
+
+        printf("[FTEST] flash CRC32=%08lX  expected=%08lX  %s\n",
+               (unsigned long)crc_flash,
+               (unsigned long)expected_crc32,
+               (crc_flash == expected_crc32) ? "MATCH" : "MISMATCH");
+    }
+
+    /* 5. Validate app image */
+    printf("[FTEST] Boot_IsApplicationValid: %s\n",
+           Boot_IsApplicationValid(APP_BASE) ? "VALID" : "INVALID");
+
+    printf("[FTEST] done in %lu ms\n", (unsigned long)elapsed);
+
+#if BOOT_FLASH_JUMP_AFTER_PROGRAM
+    if (Boot_IsApplicationValid(APP_BASE))
+    {
+        printf("[FTEST] jumping to app...\n");
+        UsbFsService_Unmount();
+        UsbMscService_SetEnabled(0U);
+        HAL_Delay(100U);
+        Boot_JumpToApplication(APP_BASE);
+    }
+#endif
 }
 
 static void UsbFsMountTestLoop(void)
@@ -484,7 +536,6 @@ static void UsbFsMountTestLoop(void)
                         };
                         uint8_t  crc_buf[16];
                         uint32_t bytes_read;
-                        uint32_t j;
                         UsbFsResult_t read_result;
 
                         uint32_t expected_crc[2] = { 0U, 0U };
@@ -532,7 +583,10 @@ static void UsbFsMountTestLoop(void)
 
                         /* Leer los dos .bin con chunked reopen y verificar CRC32 */
                         ReadBinChunkedTest(USB_UPDATE_APP_INT_BIN,  expected_crc[0]);
-                        ReadBinChunkedTest(USB_UPDATE_APP_OSPI_BIN, expected_crc[1]);
+                        /* ReadBinChunkedTest(USB_UPDATE_APP_OSPI_BIN, expected_crc[1]); */
+
+                        /* Test: grabar app_int.bin en flash interna y verificar */
+                        FlashAppIntTest(expected_crc[0]);
                     }
                     else
                     {
@@ -555,8 +609,6 @@ static void UsbFsMountTestLoop(void)
  * ----------------------------------------------------------------------- */
 static void SystemPower_Config(void)
 {
-//    HAL_PWREx_DisableUCPDDeadBattery();
-
     if (HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY) != HAL_OK)
     {
         Error_Handler();
@@ -643,69 +695,3 @@ void Error_Handler(void)
     __disable_irq();
     while (1) {}
 }
-
-
-#if 0
-/**
- ******************************************************************************
- * @file           : main.c
- * @author         : Auto-generated by STM32CubeIDE
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2026 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
-
-#include <stdint.h>
-
-#if !defined(__SOFT_FP__) && defined(__ARM_FP)
-  #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
-#endif
-
-int main(void)
-{
-    /* Loop forever */
-	for(;;);
-}
-#endif
-
-
-#if 0
-/**
- ******************************************************************************
- * @file           : main.c
- * @author         : Auto-generated by STM32CubeIDE
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2026 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
-
-#include <stdint.h>
-
-#if !defined(__SOFT_FP__) && defined(__ARM_FP)
-  #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
-#endif
-
-int main(void)
-{
-    /* Loop forever */
-	for(;;);
-}
-#endif

@@ -1,3 +1,4 @@
+"./Boot/Src/boot_flash.o"
 "./Boot/Src/boot_jump.o"
 "./Boot/USB/Src/usb_fs_service.o"
 "./Boot/USB/Src/usb_msc_service.o"
