@@ -62,6 +62,11 @@
 			<locationURI>PARENT-2-PROJECT_LOC/O3_Bootloader%20-%20copia%20(2)/Boot/Inc/boot_jump.h</locationURI>
 		</link>
 		<link>
+			<name>Boot/Inc/boot_ospi.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/boot_ospi.h</locationURI>
+		</link>
+		<link>
 			<name>Boot/Src/boot_flash.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/boot_flash.c</locationURI>
@@ -70,6 +75,11 @@
 			<name>Boot/Src/boot_jump.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/boot_jump.c</locationURI>
+		</link>
+		<link>
+			<name>Boot/Src/boot_ospi.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/boot_ospi.c</locationURI>
 		</link>
 		<link>
 			<name>FATFS/Target/ffconf.h</name>
@@ -587,6 +597,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_icache.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.c</locationURI>
+		</link>
+		<link>
 			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr.c</locationURI>
@@ -615,6 +630,16 @@
 			<name>Drivers/STM32U5xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.h</locationURI>
 		</link>
 		<link>
 			<name>Drivers/Vendor/FatFs/source/diskio.c</name>

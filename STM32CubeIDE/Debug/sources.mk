@@ -25,6 +25,7 @@ SUBDIRS := \
 Boot/Src \
 Boot/USB/Src \
 Drivers/STM32U5xx_HAL_Driver/Src \
+Drivers/Vendor/Device/mx25lm51245g \
 Drivers/Vendor/FatFs/source \
 Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src \
 Middlewares/ST/STM32_USB_Host_Library/Core/Src \

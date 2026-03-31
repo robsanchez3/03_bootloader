@@ -14,11 +14,13 @@
 #include "main.h"
 #include "boot_jump.h"
 #include "boot_flash.h"
+#include "boot_ospi.h"
 #include "usb_msc_service.h"
 #include "usb_fs_service.h"
 #include "usb_update.h"
 #include "ff.h"
 #include <stdio.h>
+#include <string.h>
 
 
 /* -----------------------------------------------------------------------
@@ -31,6 +33,7 @@ static void Recovery_Loop(void);
 static void Boot_RunStartupPolicy(void);
 static void ReadBinChunkedTest(const char *bin_path, uint32_t expected_crc32);
 static void FlashAppIntTest(uint32_t expected_crc32);
+static void FlashAppOspiTest(uint32_t expected_crc32);
 static void UsbFsMountTestLoop(void);
 
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
@@ -39,8 +42,12 @@ static void UsbFsMountTestLoop(void);
 
 /* Chunked read configuration */
 #define CHUNKED_READ_BLOCK_SIZE           1048576U /* bytes per open/read/close cycle */
-#define CHUNKED_READ_MAX_RETRIES          10U      /* retries per block on failure    */
+#define CHUNKED_READ_MAX_RETRIES          20U      /* retries per block on failure    */
 #define CHUNKED_READ_INTER_BLOCK_DELAY_MS 500U     /* pause between blocks            */
+
+/* Single shared IO buffer — used by ReadBinChunkedTest, FlashAppIntTest and FlashAppOspiTest.
+ * These functions never run concurrently so one buffer is sufficient. */
+static uint8_t io_buf[CHUNKED_READ_BLOCK_SIZE];
 
 int _write(int file, char *ptr, int len)
 {
@@ -148,7 +155,7 @@ static uint32_t crc32_update(uint32_t crc, const uint8_t *buf, uint32_t len)
  * En caso de fallo, ejecuta un restart USB completo antes de reintentar. */
 static void ReadBinChunkedTest(const char *bin_path, uint32_t expected_crc32)
 {
-    static uint8_t  chunk[CHUNKED_READ_BLOCK_SIZE];
+    uint8_t * const chunk = io_buf;
     UsbFsResult_t   result;
     uint32_t        file_size   = 0U;
     uint32_t        offset      = 0U;
@@ -292,7 +299,7 @@ static void ReadBinChunkedTest(const char *bin_path, uint32_t expected_crc32)
  * Usa el mismo buffer estático que ReadBinChunkedTest (no llamar en paralelo). */
 static void FlashAppIntTest(uint32_t expected_crc32)
 {
-    static uint8_t chunk[CHUNKED_READ_BLOCK_SIZE];
+    uint8_t * const chunk = io_buf;
     UsbFsResult_t  result;
     BootFlashResult_t flash_result;
     uint32_t       file_size = 0U;
@@ -440,6 +447,191 @@ static void FlashAppIntTest(uint32_t expected_crc32)
 #endif
 }
 
+/* Lee app_ospi.bin por chunks desde USB, graba en OSPI flash y verifica con CRC32. */
+static void FlashAppOspiTest(uint32_t expected_crc32)
+{
+    uint8_t * const chunk = io_buf;
+    UsbFsResult_t  result;
+    BootOspiResult_t ospi_result;
+    uint32_t       file_size = 0U;
+    uint32_t       offset    = 0U;
+    uint32_t       bytes_read;
+    uint32_t       to_read;
+    uint32_t       retry;
+    uint32_t       block_num = 0U;
+    uint32_t       t_start;
+
+    printf("[OTEST] === Flash app_ospi.bin test ===\n");
+
+    /* 1. Init OSPI */
+    ospi_result = BootOspi_Init();
+    if (ospi_result != BOOT_OSPI_OK)
+    {
+        printf("[OTEST] OSPI init FAILED result=%u\n", (unsigned int)ospi_result);
+        return;
+    }
+
+    /* 2. Get file size */
+    result = UsbFsService_GetFileSize(USB_UPDATE_APP_OSPI_BIN, &file_size);
+    if (result != USB_FS_RESULT_OK)
+    {
+        printf("[OTEST] GetFileSize FAILED result=%u\n", (unsigned int)result);
+        return;
+    }
+    printf("[OTEST] file size=%lu bytes\n", (unsigned long)file_size);
+
+    /* TEMPORARY: skip erase+program, only verify CRC */
+    goto skip_program_crc_only;
+
+    /* 3. Erase OSPI sectors */
+    printf("[OTEST] erasing OSPI flash...\n");
+    ospi_result = BootOspi_Erase(file_size);
+    if (ospi_result != BOOT_OSPI_OK)
+    {
+        printf("[OTEST] erase FAILED result=%u\n", (unsigned int)ospi_result);
+        return;
+    }
+
+    /* 4. Read from USB and program chunk by chunk */
+    printf("[OTEST] programming OSPI flash...\n");
+    t_start = HAL_GetTick();
+
+    while (offset < file_size)
+    {
+        to_read = file_size - offset;
+        if (to_read > CHUNKED_READ_BLOCK_SIZE)
+        {
+            to_read = CHUNKED_READ_BLOCK_SIZE;
+        }
+
+        /* Read chunk from USB with retry + recovery */
+        bytes_read = 0U;
+        for (retry = 0U; retry <= CHUNKED_READ_MAX_RETRIES; retry++)
+        {
+            result = UsbFsService_ReadFile(USB_UPDATE_APP_OSPI_BIN, chunk, offset, to_read, &bytes_read);
+            if (result == USB_FS_RESULT_OK)
+            {
+                break;
+            }
+            if (retry < CHUNKED_READ_MAX_RETRIES)
+            {
+                printf("[OTEST] read offset=%lu RETRY %lu/%u -> recovery\n",
+                       (unsigned long)offset,
+                       (unsigned long)(retry + 1U),
+                       (unsigned int)CHUNKED_READ_MAX_RETRIES);
+
+                UsbFsService_Unmount();
+                UsbMscService_ForceRestart();
+                {
+                    uint32_t t_wait = HAL_GetTick();
+                    while (UsbMscService_IsReady() == 0U)
+                    {
+                        UsbMscService_Process();
+                        if ((HAL_GetTick() - t_wait) > 10000U)
+                        {
+                            printf("[OTEST] recovery timeout\n");
+                            break;
+                        }
+                    }
+                }
+                if (UsbMscService_IsReady() != 0U)
+                {
+                    (void)UsbFsService_Mount();
+                }
+            }
+        }
+
+        if (result != USB_FS_RESULT_OK)
+        {
+            printf("[OTEST] read FAILED at offset=%lu\n", (unsigned long)offset);
+            return;
+        }
+
+        /* Program chunk into OSPI flash */
+        ospi_result = BootOspi_Program(offset, chunk, bytes_read);
+        if (ospi_result != BOOT_OSPI_OK)
+        {
+            printf("[OTEST] program FAILED at offset=%lu result=%u\n",
+                   (unsigned long)offset, (unsigned int)ospi_result);
+            return;
+        }
+
+        offset += bytes_read;
+        block_num++;
+
+        printf("[OTEST] %lu / %lu bytes (%lu%%)\n",
+               (unsigned long)offset,
+               (unsigned long)file_size,
+               (unsigned long)((offset * 100U) / file_size));
+
+        if (offset < file_size)
+        {
+            HAL_Delay(CHUNKED_READ_INTER_BLOCK_DELAY_MS);
+        }
+    }
+
+    uint32_t elapsed = HAL_GetTick() - t_start;
+
+skip_program_crc_only:
+    t_start = HAL_GetTick();
+    /* 5. CRC32 over OSPI flash */
+#if 1
+    {
+        uint32_t crc_flash = 0U;
+        uint32_t pos = 0U;
+
+        printf("[OTEST] verifying CRC32 over OSPI flash...\n");
+        while (pos < file_size)
+        {
+            uint32_t rd = file_size - pos;
+            if (rd > CHUNKED_READ_BLOCK_SIZE)
+            {
+                rd = CHUNKED_READ_BLOCK_SIZE;
+            }
+            if (BootOspi_Read(pos, io_buf, rd) != BOOT_OSPI_OK)
+            {
+                printf("[OTEST] CRC readback FAILED at 0x%08lX\n", (unsigned long)pos);
+                return;
+            }
+            crc_flash = crc32_update(crc_flash, io_buf, rd);
+            pos += rd;
+            printf("[OTEST] CRC read %lu / %lu bytes (%lu%%)\n",
+                   (unsigned long)pos,
+                   (unsigned long)file_size,
+                   (unsigned long)((pos * 100U) / file_size));
+        }
+
+        printf("[OTEST] OSPI CRC32=%08lX  expected=%08lX  %s\n",
+               (unsigned long)crc_flash,
+               (unsigned long)expected_crc32,
+               (crc_flash == expected_crc32) ? "MATCH" : "MISMATCH");
+    }
+#endif
+
+    printf("[OTEST] done in %lu ms\n", (unsigned long)elapsed);
+
+    /* Switch OSPI to memory-mapped mode before jumping */
+    if (BootOspi_EnableMemoryMapped() != BOOT_OSPI_OK)
+    {
+        printf("[OTEST] memory-mapped FAILED, not jumping\n");
+        return;
+    }
+
+    /* Jump to app if valid */
+    if (Boot_IsApplicationValid(APP_BASE))
+    {
+        printf("[OTEST] app valid -> jumping...\n");
+        UsbFsService_Unmount();
+        UsbMscService_SetEnabled(0U);
+        HAL_Delay(100U);
+        Boot_JumpToApplication(APP_BASE);
+    }
+    else
+    {
+        printf("[OTEST] app NOT valid, staying in bootloader\n");
+    }
+}
+
 static void UsbFsMountTestLoop(void)
 {
     UsbMscState_t last_state;
@@ -582,11 +774,14 @@ static void UsbFsMountTestLoop(void)
                         }
 
                         /* Leer los dos .bin con chunked reopen y verificar CRC32 */
-                        ReadBinChunkedTest(USB_UPDATE_APP_INT_BIN,  expected_crc[0]);
+                        /* ReadBinChunkedTest(USB_UPDATE_APP_INT_BIN,  expected_crc[0]); */
                         /* ReadBinChunkedTest(USB_UPDATE_APP_OSPI_BIN, expected_crc[1]); */
 
                         /* Test: grabar app_int.bin en flash interna y verificar */
-                        FlashAppIntTest(expected_crc[0]);
+                        /* FlashAppIntTest(expected_crc[0]); */
+
+                        /* Test: grabar app_ospi.bin en OSPI flash y verificar */
+                        FlashAppOspiTest(expected_crc[1]);
                     }
                     else
                     {

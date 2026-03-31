@@ -1,4 +1,7 @@
-Src/main.o: ../Src/main.c \
+Boot/Src/boot_ospi.o: C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c \
+ ../../Boot/Inc/boot_ospi.h \
+ ../../Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.h \
+ ../../Core/Inc/mx25lm51245g_conf.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_conf.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_rcc.h \
@@ -51,19 +54,10 @@ Src/main.o: ../Src/main.c \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_cordic.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_exti.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_fdcan.h \
- ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h \
- ../Inc/main.h ../../Boot/Inc/boot_jump.h ../../Boot/Inc/boot_flash.h \
- ../../Boot/Inc/boot_ospi.h ../../Boot/USB/Inc/usb_msc_service.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h \
- ../../Boot/USB/Inc/usbh_conf.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_def.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ioreq.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_pipes.h \
- ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ctlreq.h \
- ../../Boot/USB/Inc/usb_fs_service.h ../../Boot/USB/Inc/usb_update.h \
- ../../Boot/USB/Inc/usb_fs_service.h \
- ../../Drivers/Vendor/FatFs/source/ff.h ../../FATFS/Target/ffconf.h
+ ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h
+../../Boot/Inc/boot_ospi.h:
+../../Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.h:
+../../Core/Inc/mx25lm51245g_conf.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_conf.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_rcc.h:
@@ -117,20 +111,3 @@ Src/main.o: ../Src/main.c \
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_exti.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_fdcan.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h:
-../Inc/main.h:
-../../Boot/Inc/boot_jump.h:
-../../Boot/Inc/boot_flash.h:
-../../Boot/Inc/boot_ospi.h:
-../../Boot/USB/Inc/usb_msc_service.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h:
-../../Boot/USB/Inc/usbh_conf.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_def.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ioreq.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_pipes.h:
-../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ctlreq.h:
-../../Boot/USB/Inc/usb_fs_service.h:
-../../Boot/USB/Inc/usb_update.h:
-../../Boot/USB/Inc/usb_fs_service.h:
-../../Drivers/Vendor/FatFs/source/ff.h:
-../../FATFS/Target/ffconf.h:
