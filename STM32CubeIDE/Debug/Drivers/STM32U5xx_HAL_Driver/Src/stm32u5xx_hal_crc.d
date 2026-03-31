@@ -1,5 +1,5 @@
-Boot/Src/boot_ospi.o: C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c \
- ../../Boot/Inc/boot_ospi.h \
+Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc.o: \
+ C:/Roberto/O3/O3_Bootloader/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc.c \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_conf.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_rcc.h \
@@ -52,10 +52,7 @@ Boot/Src/boot_ospi.o: C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_cordic.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_exti.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_fdcan.h \
- ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h \
- ../../Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.h \
- ../../Core/Inc/mx25lm51245g_conf.h
-../../Boot/Inc/boot_ospi.h:
+ ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_conf.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_rcc.h:
@@ -109,5 +106,3 @@ Boot/Src/boot_ospi.o: C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c \
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_exti.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_fdcan.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h:
-../../Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.h:
-../../Core/Inc/mx25lm51245g_conf.h:

@@ -266,6 +266,11 @@ BootOspiResult_t BootOspi_Program(uint32_t address, const uint8_t *data, uint32_
     return BOOT_OSPI_OK;
 }
 
+OSPI_HandleTypeDef *BootOspi_GetHandle(void)
+{
+    return &hospi1;
+}
+
 BootOspiResult_t BootOspi_EnableMemoryMapped(void)
 {
     if (MX25LM51245G_EnableMemoryMappedModeSTR(&hospi1, MX25LM51245G_OPI_MODE,

@@ -8,6 +8,8 @@
 "./Boot/USB/Src/usbh_diskio.o"
 "./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal.o"
 "./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_cortex.o"
+"./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc.o"
+"./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc_ex.o"
 "./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_dcache.o"
 "./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_dma.o"
 "./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_dma_ex.o"

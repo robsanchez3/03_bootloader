@@ -2,6 +2,7 @@
 #define BOOT_OSPI_H
 
 #include <stdint.h>
+#include "stm32u5xx_hal.h"
 
 typedef enum
 {
@@ -34,5 +35,8 @@ BootOspiResult_t BootOspi_Read(uint32_t address, uint8_t *buffer, uint32_t len);
 
 /* Switch OSPI to memory-mapped mode (required before jumping to app). */
 BootOspiResult_t BootOspi_EnableMemoryMapped(void);
+
+/* Get OSPI HAL handle (for abort/re-init operations). */
+OSPI_HandleTypeDef *BootOspi_GetHandle(void);
 
 #endif /* BOOT_OSPI_H */

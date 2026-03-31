@@ -38,7 +38,7 @@ static void UsbFsMountTestLoop(void);
 
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
 #define BOOT_USB_FS_MOUNT_TEST            1U
-#define BOOT_FLASH_JUMP_AFTER_PROGRAM     1U  /* Set to 1 to jump to app after flash test */
+#define BOOT_FLASH_JUMP_AFTER_PROGRAM     0U  /* Set to 1 to jump to app after flash test */
 
 /* Chunked read configuration */
 #define CHUNKED_READ_BLOCK_SIZE           1048576U /* bytes per open/read/close cycle */
@@ -130,25 +130,50 @@ static void Boot_RunStartupPolicy(void)
     Recovery_Loop();
 }
 
-/* CRC32 IEEE 802.3 por nibbles (tabla de 16 entradas, sin heap). */
+/* CRC32 IEEE 802.3 using STM32 hardware CRC peripheral.
+ * crc32_update(0, buf, len) calculates from scratch.
+ * crc32_update(prev, buf, len) accumulates (prev must come from a previous call). */
+static CRC_HandleTypeDef hcrc;
+static uint8_t hcrc_initialized = 0U;
+
+static void crc32_hw_init(void)
+{
+    if (hcrc_initialized != 0U)
+    {
+        return;
+    }
+
+    __HAL_RCC_CRC_CLK_ENABLE();
+
+    hcrc.Instance                     = CRC;
+    hcrc.Init.DefaultPolynomialUse    = DEFAULT_POLYNOMIAL_ENABLE;
+    hcrc.Init.DefaultInitValueUse     = DEFAULT_INIT_VALUE_ENABLE;
+    hcrc.Init.InputDataInversionMode  = CRC_INPUTDATA_INVERSION_BYTE;
+    hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_ENABLE;
+    hcrc.InputDataFormat              = CRC_INPUTDATA_FORMAT_BYTES;
+
+    if (HAL_CRC_Init(&hcrc) == HAL_OK)
+    {
+        hcrc_initialized = 1U;
+    }
+}
+
 static uint32_t crc32_update(uint32_t crc, const uint8_t *buf, uint32_t len)
 {
-    static const uint32_t T[16] =
-    {
-        0x00000000U, 0x1DB71064U, 0x3B6E20C8U, 0x26D930ACU,
-        0x76DC4190U, 0x6B6B51F4U, 0x4DB26158U, 0x5005713CU,
-        0xEDB88320U, 0xF00F9344U, 0xD6D6A3E8U, 0xCB61B38CU,
-        0x9B64C2B0U, 0x86D3D2D4U, 0xA00AE278U, 0xBDBDF21CU
-    };
-    uint32_t i;
+    uint32_t raw;
 
-    crc = ~crc;
-    for (i = 0U; i < len; i++)
+    crc32_hw_init();
+
+    if (crc == 0U)
     {
-        crc = (crc >> 4) ^ T[(crc ^ (uint32_t)buf[i])        & 0x0FU];
-        crc = (crc >> 4) ^ T[(crc ^ ((uint32_t)buf[i] >> 4)) & 0x0FU];
+        raw = HAL_CRC_Calculate(&hcrc, (uint32_t *)buf, len);
     }
-    return ~crc;
+    else
+    {
+        raw = HAL_CRC_Accumulate(&hcrc, (uint32_t *)buf, len);
+    }
+
+    return raw ^ 0xFFFFFFFFU;
 }
 
 /* Lee un .bin completo mediante open/seek/read/close por cada bloque.
@@ -480,9 +505,6 @@ static void FlashAppOspiTest(uint32_t expected_crc32)
     }
     printf("[OTEST] file size=%lu bytes\n", (unsigned long)file_size);
 
-    /* TEMPORARY: skip erase+program, only verify CRC */
-    goto skip_program_crc_only;
-
     /* 3. Erase OSPI sectors */
     printf("[OTEST] erasing OSPI flash...\n");
     ospi_result = BootOspi_Erase(file_size);
@@ -572,50 +594,42 @@ static void FlashAppOspiTest(uint32_t expected_crc32)
 
     uint32_t elapsed = HAL_GetTick() - t_start;
 
-skip_program_crc_only:
-    t_start = HAL_GetTick();
-    /* 5. CRC32 over OSPI flash */
-#if 1
-    {
-        uint32_t crc_flash = 0U;
-        uint32_t pos = 0U;
-
-        printf("[OTEST] verifying CRC32 over OSPI flash...\n");
-        while (pos < file_size)
-        {
-            uint32_t rd = file_size - pos;
-            if (rd > CHUNKED_READ_BLOCK_SIZE)
-            {
-                rd = CHUNKED_READ_BLOCK_SIZE;
-            }
-            if (BootOspi_Read(pos, io_buf, rd) != BOOT_OSPI_OK)
-            {
-                printf("[OTEST] CRC readback FAILED at 0x%08lX\n", (unsigned long)pos);
-                return;
-            }
-            crc_flash = crc32_update(crc_flash, io_buf, rd);
-            pos += rd;
-            printf("[OTEST] CRC read %lu / %lu bytes (%lu%%)\n",
-                   (unsigned long)pos,
-                   (unsigned long)file_size,
-                   (unsigned long)((pos * 100U) / file_size));
-        }
-
-        printf("[OTEST] OSPI CRC32=%08lX  expected=%08lX  %s\n",
-               (unsigned long)crc_flash,
-               (unsigned long)expected_crc32,
-               (crc_flash == expected_crc32) ? "MATCH" : "MISMATCH");
-    }
-#endif
-
-    printf("[OTEST] done in %lu ms\n", (unsigned long)elapsed);
-
-    /* Switch OSPI to memory-mapped mode before jumping */
+    /* 5. Switch to memory-mapped mode and verify CRC32 directly from mapped address */
     if (BootOspi_EnableMemoryMapped() != BOOT_OSPI_OK)
     {
-        printf("[OTEST] memory-mapped FAILED, not jumping\n");
+        printf("[OTEST] memory-mapped FAILED, cannot verify\n");
         return;
     }
+
+    {
+        uint32_t crc_flash;
+        uint32_t t_crc = HAL_GetTick();
+
+        printf("[OTEST] verifying CRC32 over memory-mapped OSPI (0x%08lX, %lu bytes)...\n",
+               (unsigned long)OCTOSPI1_BASE, (unsigned long)file_size);
+
+        crc_flash = crc32_update(0U, (const uint8_t *)OCTOSPI1_BASE, file_size);
+
+        /* Deinit CRC peripheral and re-enable memory-mapped before jumping */
+        HAL_CRC_DeInit(&hcrc);
+        __HAL_RCC_CRC_CLK_DISABLE();
+        hcrc_initialized = 0U;
+
+        /* Re-establish memory-mapped mode after bulk read */
+        HAL_OSPI_Abort(BootOspi_GetHandle());
+        if (BootOspi_EnableMemoryMapped() != BOOT_OSPI_OK)
+        {
+            printf("[OTEST] re-enable memory-mapped FAILED\n");
+        }
+
+        printf("[OTEST] OSPI CRC32=%08lX  expected=%08lX  %s  (%lu ms)\n",
+               (unsigned long)crc_flash,
+               (unsigned long)expected_crc32,
+               (crc_flash == expected_crc32) ? "MATCH" : "MISMATCH",
+               (unsigned long)(HAL_GetTick() - t_crc));
+    }
+
+    printf("[OTEST] done in %lu ms\n", (unsigned long)elapsed);
 
     /* Jump to app if valid */
     if (Boot_IsApplicationValid(APP_BASE))
@@ -778,7 +792,7 @@ static void UsbFsMountTestLoop(void)
                         /* ReadBinChunkedTest(USB_UPDATE_APP_OSPI_BIN, expected_crc[1]); */
 
                         /* Test: grabar app_int.bin en flash interna y verificar */
-                        /* FlashAppIntTest(expected_crc[0]); */
+                        FlashAppIntTest(expected_crc[0]);
 
                         /* Test: grabar app_ospi.bin en OSPI flash y verificar */
                         FlashAppOspiTest(expected_crc[1]);
