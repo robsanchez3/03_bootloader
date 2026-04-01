@@ -112,11 +112,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/USB/Inc/usb_msc_service.h</locationURI>
 		</link>
 		<link>
-			<name>Boot/USB/Inc/usb_update.h</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Boot/USB/Inc/usb_update.h</locationURI>
-		</link>
-		<link>
 			<name>Boot/USB/Inc/usbh_conf.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/USB/Inc/usbh_conf.h</locationURI>
@@ -135,11 +130,6 @@
 			<name>Boot/USB/Src/usb_msc_service.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/USB/Src/usb_msc_service.c</locationURI>
-		</link>
-		<link>
-			<name>Boot/USB/Src/usb_update.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Boot/USB/Src/usb_update.c</locationURI>
 		</link>
 		<link>
 			<name>Boot/USB/Src/usbh_conf.c</name>

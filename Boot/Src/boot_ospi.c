@@ -9,10 +9,20 @@
 
 static OSPI_HandleTypeDef hospi1;
 
+/* Bootloader OSPI programming model:
+ *   1. Bring up OCTOSPI1 pins/clocks and initialize the HAL handle.
+ *   2. Force the external flash into a known state with resets in all likely
+ *      bus modes.
+ *   3. Enter Macronix OPI STR mode.
+ *   4. Erase and program the image.
+ *   5. Switch to memory-mapped mode for CRC verification and final app use. */
+
 /* -----------------------------------------------------------------------
  * Internal helpers
  * ----------------------------------------------------------------------- */
 
+/* Configure clocks and pins required by OCTOSPI1 for the external Macronix
+ * flash used by the application image. */
 static void BootOspi_MspInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -61,6 +71,8 @@ static void BootOspi_MspInit(void)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
+/* Reset the external flash in every likely protocol mode so the bootloader can
+ * recover from any previous app or failed-transfer state. */
 static int32_t BootOspi_MemoryReset(void)
 {
     /* Reset in all possible modes to ensure clean state */
@@ -81,6 +93,7 @@ static int32_t BootOspi_MemoryReset(void)
     return 0;
 }
 
+/* Move the device from plain SPI STR into OPI STR and verify the mode switch. */
 static int32_t BootOspi_EnterOpiMode(void)
 {
     uint8_t reg[2];
@@ -117,6 +130,8 @@ static int32_t BootOspi_EnterOpiMode(void)
  * Public API
  * ----------------------------------------------------------------------- */
 
+/* Initialize the OCTOSPI peripheral and leave the external flash in OPI STR
+ * mode, ready for erase/program commands. */
 BootOspiResult_t BootOspi_Init(void)
 {
     OSPIM_CfgTypeDef sOspiManagerCfg = {0};
@@ -182,6 +197,7 @@ BootOspiResult_t BootOspi_Init(void)
     return BOOT_OSPI_OK;
 }
 
+/* Erase the external flash area needed by the OSPI image, sector by sector. */
 BootOspiResult_t BootOspi_Erase(uint32_t size, BootOspi_ProgressCb_t progress_cb)
 {
     uint32_t address = 0U;
@@ -232,6 +248,7 @@ BootOspiResult_t BootOspi_Erase(uint32_t size, BootOspi_ProgressCb_t progress_cb
     return BOOT_OSPI_OK;
 }
 
+/* Program the external flash page by page in OPI STR mode. */
 BootOspiResult_t BootOspi_Program(uint32_t address, const uint8_t *data, uint32_t len)
 {
     uint32_t offset = 0U;
@@ -276,6 +293,8 @@ OSPI_HandleTypeDef *BootOspi_GetHandle(void)
     return &hospi1;
 }
 
+/* Re-enter memory-mapped mode after programming or verification-side aborts so
+ * the image is readable directly from the OSPI address space. */
 BootOspiResult_t BootOspi_EnableMemoryMapped(void)
 {
     if (MX25LM51245G_EnableMemoryMappedModeSTR(&hospi1, MX25LM51245G_OPI_MODE,
@@ -291,6 +310,7 @@ BootOspiResult_t BootOspi_EnableMemoryMapped(void)
 
 #define OSPI_READ_CHUNK  4096U
 
+/* Read back arbitrary OSPI contents through command mode. */
 BootOspiResult_t BootOspi_Read(uint32_t address, uint8_t *buffer, uint32_t len)
 {
     uint32_t offset = 0U;

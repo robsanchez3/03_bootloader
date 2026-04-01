@@ -9,6 +9,11 @@
 #define FLASH_BANK1_BASE    0x08000000U
 #define FLASH_BANK2_BASE    0x08100000U
 
+/* Bootloader internal flash programming model:
+ *   1. Erase the application area page by page.
+ *   2. Program quadwords from the staged USB buffer.
+ *   3. Verify each programmed chunk and later verify the full image by CRC. */
+
 /* Convert an absolute flash address to bank + page number. */
 static BootFlashResult_t AddressToPage(uint32_t address, uint32_t *bank, uint32_t *page)
 {
@@ -30,6 +35,7 @@ static BootFlashResult_t AddressToPage(uint32_t address, uint32_t *bank, uint32_
     return BOOT_FLASH_OK;
 }
 
+/* Erase the internal flash pages that cover the application image. */
 BootFlashResult_t BootFlash_EraseAppArea(uint32_t size, BootFlash_ProgressCb_t progress_cb)
 {
     FLASH_EraseInitTypeDef erase_init;
@@ -96,6 +102,8 @@ BootFlashResult_t BootFlash_EraseAppArea(uint32_t size, BootFlash_ProgressCb_t p
     return BOOT_FLASH_OK;
 }
 
+/* Program internal flash in 16-byte quadwords, padding the last one with 0xFF
+ * if the input length is not aligned to the native programming width. */
 BootFlashResult_t BootFlash_Program(uint32_t address, const uint8_t *data, uint32_t len)
 {
     uint32_t offset = 0U;
@@ -146,6 +154,7 @@ BootFlashResult_t BootFlash_Program(uint32_t address, const uint8_t *data, uint3
     return BOOT_FLASH_OK;
 }
 
+/* Bytewise verification helper used immediately after each programmed chunk. */
 BootFlashResult_t BootFlash_Verify(uint32_t address, const uint8_t *data, uint32_t len)
 {
     const uint8_t *flash_ptr = (const uint8_t *)address;

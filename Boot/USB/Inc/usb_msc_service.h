@@ -14,6 +14,9 @@ typedef enum
     USB_MSC_STATE_ERROR
 } UsbMscState_t;
 
+/* Poll-driven USB MSC host service used by the bootloader.
+ * Call Init(), then SetEnabled(1), then poll Process() until the state reaches
+ * READY or a higher-level timeout/policy decides otherwise. */
 void UsbMscService_Init(void);
 void UsbMscService_Process(void);
 void UsbMscService_SetEnabled(uint8_t enabled);

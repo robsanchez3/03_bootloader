@@ -14,7 +14,8 @@ typedef enum
     BOOT_OSPI_ERR_READ
 } BootOspiResult_t;
 
-/* Initialize OSPI peripheral and MX25LM51245G flash (enters OPI STR mode). */
+/* Initialize OCTOSPI1 and leave the external MX25LM51245G in OPI STR mode,
+ * ready for erase/program operations. */
 BootOspiResult_t BootOspi_Init(void);
 
 /* Progress callback: called with (current_sector, total_sectors). */
@@ -37,7 +38,8 @@ BootOspiResult_t BootOspi_Program(uint32_t address, const uint8_t *data, uint32_
  * len: number of bytes to read. */
 BootOspiResult_t BootOspi_Read(uint32_t address, uint8_t *buffer, uint32_t len);
 
-/* Switch OSPI to memory-mapped mode (required before jumping to app). */
+/* Switch OSPI back to memory-mapped mode so the image can be verified through
+ * the OSPI address space and later used by the application. */
 BootOspiResult_t BootOspi_EnableMemoryMapped(void);
 
 /* Get OSPI HAL handle (for abort/re-init operations). */

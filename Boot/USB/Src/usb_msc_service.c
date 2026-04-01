@@ -3,6 +3,17 @@
 #include "usbh_msc.h"
 #include <stdio.h>
 
+/* USB MSC host service.
+ * Lifecycle:
+ *   1. Init() resets the service state.
+ *   2. SetEnabled(1) arms the service.
+ *   3. Process() performs host bring-up, tracks USB MSC state and applies
+ *      bounded automatic recovery for early connect/enumeration failures.
+ *   4. SetEnabled(0) is the supported way to stop and deinit the host.
+ *
+ * The service is intentionally stateful because the bootloader polls it from
+ * the main control flow instead of running it from an RTOS task. */
+
 #define USB_MSC_ENUM_START_TIMEOUT_MS   3000U
 #define USB_MSC_READY_TIMEOUT_MS        8000U
 #define USB_MSC_MAX_RECOVERY_RESTARTS   3U
@@ -44,12 +55,14 @@ void UsbMscService_Init(void)
 
 void UsbMscService_Process(void)
 {
+    /* Disabled means fully off: no host processing and no retained ready state. */
     if (usb_msc_enabled == 0U)
     {
         usb_msc_state = USB_MSC_STATE_OFF;
         return;
     }
 
+    /* Lazy host bring-up: the caller only needs Init + SetEnabled + polling. */
     if (usb_msc_host_initialized == 0U)
     {
         USBH_LL_SetVbusDelay((usb_msc_recovery_restarts != 0U) ?
@@ -83,6 +96,9 @@ void UsbMscService_Process(void)
 
     (void)USBH_Process(&hUsbHostHS);
 
+    /* Promote the service to READY only when the MSC class is active and the
+     * class-specific readiness check succeeds. If that condition drops after
+     * READY, fall back to ENUMERATING instead of pretending the device is gone. */
     if ((hUsbHostHS.pActiveClass == USBH_MSC_CLASS) && (USBH_MSC_IsReady(&hUsbHostHS) != 0U))
     {
         if (usb_msc_state != USB_MSC_STATE_READY)
@@ -98,6 +114,9 @@ void UsbMscService_Process(void)
         UsbMscService_SetState(USB_MSC_STATE_ENUMERATING);
     }
 
+    /* Early bring-up watchdog: if a device connects but never advances to the
+     * class-active phase, perform a bounded host restart with a longer VBUS
+     * stabilization delay. */
     if ((usb_msc_state == USB_MSC_STATE_DEVICE_CONNECTED) && (usb_msc_timeout_reported == 0U))
     {
         if ((HAL_GetTick() - usb_msc_attempt_start_tick) >= USB_MSC_ENUM_START_TIMEOUT_MS)
@@ -111,6 +130,9 @@ void UsbMscService_Process(void)
         }
     }
 
+    /* Enumeration watchdog: report devices that become class-active but do not
+     * reach MSC ready within the configured window. This is reported but not
+     * force-restarted here. */
     if ((usb_msc_state == USB_MSC_STATE_ENUMERATING) && (usb_msc_timeout_reported == 0U))
     {
         if ((HAL_GetTick() - usb_msc_enum_start_tick) >= USB_MSC_READY_TIMEOUT_MS)
@@ -190,6 +212,8 @@ uint32_t UsbMscService_GetLastError(void)
     return usb_msc_last_error;
 }
 
+/* USB host callback: translates low-level host events into the bootloader's
+ * simplified MSC state machine. */
 static void UsbMscService_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
 {
     (void)phost;
@@ -242,7 +266,7 @@ static void UsbMscService_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
 
             if ((was_connected || was_enum) && !was_ready)
             {
-                UsbMscService_TriggerRecovery("disconnected before ENUMERATING");
+                UsbMscService_TriggerRecovery("disconnected before READY");
             }
             break;
 
@@ -263,6 +287,7 @@ static void UsbMscService_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
     }
 }
 
+/* Centralized state setter so READY can also reset recovery backoff. */
 static void UsbMscService_SetState(UsbMscState_t state)
 {
     usb_msc_state = state;
@@ -273,6 +298,7 @@ static void UsbMscService_SetState(UsbMscState_t state)
     }
 }
 
+/* Drop and rebuild the USB host instance while keeping the service enabled. */
 static void UsbMscService_RestartHost(void)
 {
     if (usb_msc_host_initialized != 0U)
@@ -289,6 +315,7 @@ static void UsbMscService_RestartHost(void)
     usb_msc_timeout_reported = 0U;
 }
 
+/* Explicit hard recovery path used by chunked file reads after I/O failures. */
 void UsbMscService_ForceRestart(void)
 {
     printf("[USB] ForceRestart: hard reset + VBUS recovery\n");
@@ -297,6 +324,7 @@ void UsbMscService_ForceRestart(void)
     UsbMscService_RestartHost();
 }
 
+/* Bounded automatic recovery for early USB host bring-up failures. */
 static void UsbMscService_TriggerRecovery(const char *reason)
 {
     if (usb_msc_recovery_restarts >= USB_MSC_MAX_RECOVERY_RESTARTS)

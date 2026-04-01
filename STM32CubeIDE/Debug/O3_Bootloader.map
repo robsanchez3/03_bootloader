@@ -1133,235 +1133,6 @@ Discarded input sections
  .debug_macro   0x00000000       0x2e ./Boot/USB/Src/usb_msc_service.o
  .debug_macro   0x00000000       0x2e ./Boot/USB/Src/usb_msc_service.o
  .debug_macro   0x00000000       0x28 ./Boot/USB/Src/usb_msc_service.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .group         0x00000000        0xc ./Boot/USB/Src/usb_update.o
- .text          0x00000000        0x0 ./Boot/USB/Src/usb_update.o
- .data          0x00000000        0x0 ./Boot/USB/Src/usb_update.o
- .bss           0x00000000        0x0 ./Boot/USB/Src/usb_update.o
- .rodata        0x00000000       0x5f ./Boot/USB/Src/usb_update.o
- .data.usb_update_files
-                0x00000000       0x20 ./Boot/USB/Src/usb_update.o
- .text.UsbUpdate_Init
-                0x00000000       0x3c ./Boot/USB/Src/usb_update.o
- .text.UsbUpdate_Process
-                0x00000000       0x10 ./Boot/USB/Src/usb_update.o
- .text.UsbUpdate_Reset
-                0x00000000       0x3c ./Boot/USB/Src/usb_update.o
- .text.UsbUpdate_DeviceConnected
-                0x00000000        0xe ./Boot/USB/Src/usb_update.o
- .text.UsbUpdate_DeviceReady
-                0x00000000        0xe ./Boot/USB/Src/usb_update.o
- .text.UsbUpdate_FilesPresent
-                0x00000000       0x3c ./Boot/USB/Src/usb_update.o
- .text.UsbUpdate_ProbeFiles
-                0x00000000       0x5c ./Boot/USB/Src/usb_update.o
- .text.UsbUpdate_ReadFile
-                0x00000000       0x40 ./Boot/USB/Src/usb_update.o
- .text.UsbUpdate_GetFileInfo
-                0x00000000       0x2c ./Boot/USB/Src/usb_update.o
- .debug_info    0x00000000      0x396 ./Boot/USB/Src/usb_update.o
- .debug_abbrev  0x00000000      0x1d0 ./Boot/USB/Src/usb_update.o
- .debug_aranges
-                0x00000000       0x60 ./Boot/USB/Src/usb_update.o
- .debug_rnglists
-                0x00000000       0x43 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x4a1 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0xaf0 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x22 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x8e ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x51 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x103 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x6a ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x1df ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x190 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x22 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x256 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x28 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x42 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x1c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x29 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0xfb ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000     0x1685 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x5e ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000    0x2b3ca ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x6d ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000     0x393e ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x61 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x2a ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x43 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x34 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x364 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x16 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x4a ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x34 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x10 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x58 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x8e ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x1c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x17e ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x19b ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x5d ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000     0x1d15 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x925 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x166 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x2f4 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0xc9 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0xb6 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x5eb ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x494 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0xd6 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x26a ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x1cd ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000     0x1503 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x957 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x3c9 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0xc7 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x4c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x432 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x95 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x11c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x23a ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x123 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0xa5 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x198 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x7d5 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0xd6 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x52c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x5d5 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x1c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x520 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0xa0c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x1ce ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x28 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0xbcc ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x5b3 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x677 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x1a1 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x2b6 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x82 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0xab ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x1f4 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x1d3 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x6bd ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x6a ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x448 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x40 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x1c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x3c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x10 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x1c ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x16 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x146 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x16 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x16 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x29 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x16 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x20 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x82 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000      0x233 ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x2e ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x2e ./Boot/USB/Src/usb_update.o
- .debug_macro   0x00000000       0x28 ./Boot/USB/Src/usb_update.o
- .debug_line    0x00000000      0xda9 ./Boot/USB/Src/usb_update.o
- .debug_str     0x00000000   0x1a0bce ./Boot/USB/Src/usb_update.o
- .comment       0x00000000       0x44 ./Boot/USB/Src/usb_update.o
- .debug_frame   0x00000000      0x13c ./Boot/USB/Src/usb_update.o
- .ARM.attributes
-                0x00000000       0x3a ./Boot/USB/Src/usb_update.o
  .group         0x00000000        0xc ./Boot/USB/Src/usbh_conf.o
  .group         0x00000000        0xc ./Boot/USB/Src/usbh_conf.o
  .group         0x00000000        0xc ./Boot/USB/Src/usbh_conf.o
@@ -9923,7 +9694,6 @@ LOAD ./Boot/Src/boot_jump.o
 LOAD ./Boot/Src/boot_ospi.o
 LOAD ./Boot/USB/Src/usb_fs_service.o
 LOAD ./Boot/USB/Src/usb_msc_service.o
-LOAD ./Boot/USB/Src/usb_update.o
 LOAD ./Boot/USB/Src/usbh_conf.o
 LOAD ./Boot/USB/Src/usbh_diskio.o
 LOAD ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal.o
@@ -11313,7 +11083,7 @@ LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
 .iplt           0x0801556c        0x0
  .iplt          0x0801556c        0x0 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v8-m.main+fp/hard/crtbegin.o
 
-.rodata         0x0801556c     0x1847
+.rodata         0x0801556c     0x1843
  *(.rodata)
  .rodata        0x0801556c        0xc ./Boot/Src/boot_display.o
  .rodata        0x08015578       0xf1 ./Boot/Src/boot_flash.o
@@ -11322,158 +11092,158 @@ LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
  *fill*         0x08015891        0x3 
  .rodata        0x08015894      0x29b ./Boot/Src/boot_ospi.o
  *fill*         0x08015b2f        0x1 
- .rodata        0x08015b30      0x272 ./Boot/USB/Src/usb_msc_service.o
- *fill*         0x08015da2        0x2 
- .rodata        0x08015da4       0x3e ./Boot/USB/Src/usbh_diskio.o
- *fill*         0x08015de2        0x2 
- .rodata        0x08015de4       0x5b ./Drivers/Vendor/FatFs/source/ff.o
- *fill*         0x08015e3f        0x1 
- .rodata        0x08015e40       0xcd ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o
- *fill*         0x08015f0d        0x3 
- .rodata        0x08015f10      0xac3 ./Src/main.o
+ .rodata        0x08015b30      0x26e ./Boot/USB/Src/usb_msc_service.o
+ *fill*         0x08015d9e        0x2 
+ .rodata        0x08015da0       0x3e ./Boot/USB/Src/usbh_diskio.o
+ *fill*         0x08015dde        0x2 
+ .rodata        0x08015de0       0x5b ./Drivers/Vendor/FatFs/source/ff.o
+ *fill*         0x08015e3b        0x1 
+ .rodata        0x08015e3c       0xcd ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o
+ *fill*         0x08015f09        0x3 
+ .rodata        0x08015f0c      0xac3 ./Src/main.o
  *(.rodata*)
- *fill*         0x080169d3        0x1 
+ *fill*         0x080169cf        0x1 
  .rodata.font_space
-                0x080169d4       0x10 ./Boot/Src/boot_display.o
+                0x080169d0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_percent
-                0x080169e4       0x10 ./Boot/Src/boot_display.o
+                0x080169e0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_hash
-                0x080169f4       0x10 ./Boot/Src/boot_display.o
+                0x080169f0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_dot
-                0x08016a04       0x10 ./Boot/Src/boot_display.o
+                0x08016a00       0x10 ./Boot/Src/boot_display.o
  .rodata.font_colon
-                0x08016a14       0x10 ./Boot/Src/boot_display.o
+                0x08016a10       0x10 ./Boot/Src/boot_display.o
  .rodata.font_dash
-                0x08016a24       0x10 ./Boot/Src/boot_display.o
+                0x08016a20       0x10 ./Boot/Src/boot_display.o
  .rodata.font_lbracket
-                0x08016a34       0x10 ./Boot/Src/boot_display.o
+                0x08016a30       0x10 ./Boot/Src/boot_display.o
  .rodata.font_rbracket
-                0x08016a44       0x10 ./Boot/Src/boot_display.o
+                0x08016a40       0x10 ./Boot/Src/boot_display.o
  .rodata.font_0
-                0x08016a54       0x10 ./Boot/Src/boot_display.o
+                0x08016a50       0x10 ./Boot/Src/boot_display.o
  .rodata.font_1
-                0x08016a64       0x10 ./Boot/Src/boot_display.o
+                0x08016a60       0x10 ./Boot/Src/boot_display.o
  .rodata.font_2
-                0x08016a74       0x10 ./Boot/Src/boot_display.o
+                0x08016a70       0x10 ./Boot/Src/boot_display.o
  .rodata.font_3
-                0x08016a84       0x10 ./Boot/Src/boot_display.o
+                0x08016a80       0x10 ./Boot/Src/boot_display.o
  .rodata.font_4
-                0x08016a94       0x10 ./Boot/Src/boot_display.o
+                0x08016a90       0x10 ./Boot/Src/boot_display.o
  .rodata.font_5
-                0x08016aa4       0x10 ./Boot/Src/boot_display.o
+                0x08016aa0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_6
-                0x08016ab4       0x10 ./Boot/Src/boot_display.o
+                0x08016ab0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_7
-                0x08016ac4       0x10 ./Boot/Src/boot_display.o
+                0x08016ac0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_8
-                0x08016ad4       0x10 ./Boot/Src/boot_display.o
+                0x08016ad0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_9
-                0x08016ae4       0x10 ./Boot/Src/boot_display.o
+                0x08016ae0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_A
-                0x08016af4       0x10 ./Boot/Src/boot_display.o
+                0x08016af0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_B
-                0x08016b04       0x10 ./Boot/Src/boot_display.o
+                0x08016b00       0x10 ./Boot/Src/boot_display.o
  .rodata.font_C
-                0x08016b14       0x10 ./Boot/Src/boot_display.o
+                0x08016b10       0x10 ./Boot/Src/boot_display.o
  .rodata.font_D
-                0x08016b24       0x10 ./Boot/Src/boot_display.o
+                0x08016b20       0x10 ./Boot/Src/boot_display.o
  .rodata.font_E
-                0x08016b34       0x10 ./Boot/Src/boot_display.o
+                0x08016b30       0x10 ./Boot/Src/boot_display.o
  .rodata.font_F
-                0x08016b44       0x10 ./Boot/Src/boot_display.o
+                0x08016b40       0x10 ./Boot/Src/boot_display.o
  .rodata.font_G
-                0x08016b54       0x10 ./Boot/Src/boot_display.o
+                0x08016b50       0x10 ./Boot/Src/boot_display.o
  .rodata.font_H
-                0x08016b64       0x10 ./Boot/Src/boot_display.o
+                0x08016b60       0x10 ./Boot/Src/boot_display.o
  .rodata.font_I
-                0x08016b74       0x10 ./Boot/Src/boot_display.o
+                0x08016b70       0x10 ./Boot/Src/boot_display.o
  .rodata.font_J
-                0x08016b84       0x10 ./Boot/Src/boot_display.o
+                0x08016b80       0x10 ./Boot/Src/boot_display.o
  .rodata.font_K
-                0x08016b94       0x10 ./Boot/Src/boot_display.o
+                0x08016b90       0x10 ./Boot/Src/boot_display.o
  .rodata.font_L
-                0x08016ba4       0x10 ./Boot/Src/boot_display.o
+                0x08016ba0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_M
-                0x08016bb4       0x10 ./Boot/Src/boot_display.o
+                0x08016bb0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_N
-                0x08016bc4       0x10 ./Boot/Src/boot_display.o
+                0x08016bc0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_O
-                0x08016bd4       0x10 ./Boot/Src/boot_display.o
+                0x08016bd0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_P
-                0x08016be4       0x10 ./Boot/Src/boot_display.o
+                0x08016be0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_R
-                0x08016bf4       0x10 ./Boot/Src/boot_display.o
+                0x08016bf0       0x10 ./Boot/Src/boot_display.o
  .rodata.font_S
-                0x08016c04       0x10 ./Boot/Src/boot_display.o
+                0x08016c00       0x10 ./Boot/Src/boot_display.o
  .rodata.font_T
-                0x08016c14       0x10 ./Boot/Src/boot_display.o
+                0x08016c10       0x10 ./Boot/Src/boot_display.o
  .rodata.font_U
-                0x08016c24       0x10 ./Boot/Src/boot_display.o
+                0x08016c20       0x10 ./Boot/Src/boot_display.o
  .rodata.font_V
-                0x08016c34       0x10 ./Boot/Src/boot_display.o
+                0x08016c30       0x10 ./Boot/Src/boot_display.o
  .rodata.font_W
-                0x08016c44       0x10 ./Boot/Src/boot_display.o
+                0x08016c40       0x10 ./Boot/Src/boot_display.o
  .rodata.font_X
-                0x08016c54       0x10 ./Boot/Src/boot_display.o
+                0x08016c50       0x10 ./Boot/Src/boot_display.o
  .rodata.font_Y
-                0x08016c64       0x10 ./Boot/Src/boot_display.o
+                0x08016c60       0x10 ./Boot/Src/boot_display.o
  .rodata.font_Z
-                0x08016c74       0x10 ./Boot/Src/boot_display.o
+                0x08016c70       0x10 ./Boot/Src/boot_display.o
  .rodata.USBH_Driver
-                0x08016c84       0x14 ./Boot/USB/Src/usbh_diskio.o
-                0x08016c84                USBH_Driver
+                0x08016c80       0x14 ./Boot/USB/Src/usbh_diskio.o
+                0x08016c80                USBH_Driver
  .rodata.LPGPIO_Map
-                0x08016c98       0x80 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_gpio.o
+                0x08016c94       0x80 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_gpio.o
  .rodata.update_paths.1
-                0x08016d18       0x10 ./Src/main.o
+                0x08016d14       0x10 ./Src/main.o
  .rodata.crc_paths.0
-                0x08016d28        0x8 ./Src/main.o
+                0x08016d24        0x8 ./Src/main.o
  .rodata.AHBPrescTable
-                0x08016d30       0x10 ./Src/system_stm32u5xx.o
-                0x08016d30                AHBPrescTable
+                0x08016d2c       0x10 ./Src/system_stm32u5xx.o
+                0x08016d2c                AHBPrescTable
  .rodata.MSIRangeTable
-                0x08016d40       0x40 ./Src/system_stm32u5xx.o
-                0x08016d40                MSIRangeTable
+                0x08016d3c       0x40 ./Src/system_stm32u5xx.o
+                0x08016d3c                MSIRangeTable
  .rodata._svfprintf_r.str1.1
-                0x08016d80       0x33 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main+fp/hard\libc_nano.a(libc_a-nano-svfprintf.o)
+                0x08016d7c       0x33 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main+fp/hard\libc_nano.a(libc_a-nano-svfprintf.o)
                                  0x11 (size before relaxing)
  .rodata._vfprintf_r.str1.1
-                0x08016db3       0x11 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main+fp/hard\libc_nano.a(libc_a-nano-vfprintf.o)
+                0x08016daf       0x11 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main+fp/hard\libc_nano.a(libc_a-nano-vfprintf.o)
  .rodata._printf_i.str1.1
-                0x08016db3       0x22 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main+fp/hard\libc_nano.a(libc_a-nano-vfprintf_i.o)
+                0x08016daf       0x22 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main+fp/hard\libc_nano.a(libc_a-nano-vfprintf_i.o)
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM            0x08016db3        0x0
-                0x08016db3                        __exidx_start = .
+.ARM            0x08016daf        0x0
+                0x08016daf                        __exidx_start = .
  *(.ARM.exidx*)
-                0x08016db3                        __exidx_end = .
+                0x08016daf                        __exidx_end = .
 
-.preinit_array  0x08016db3        0x0
-                0x08016db3                        PROVIDE (__preinit_array_start = .)
+.preinit_array  0x08016daf        0x0
+                0x08016daf                        PROVIDE (__preinit_array_start = .)
  *(.preinit_array*)
-                0x08016db3                        PROVIDE (__preinit_array_end = .)
+                0x08016daf                        PROVIDE (__preinit_array_end = .)
 
-.init_array     0x08016db4        0x4
-                0x08016db4                        PROVIDE (__init_array_start = .)
+.init_array     0x08016db0        0x4
+                0x08016db0                        PROVIDE (__init_array_start = .)
  *(SORT_BY_NAME(.init_array.*))
  *(.init_array*)
- .init_array    0x08016db4        0x4 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v8-m.main+fp/hard/crtbegin.o
-                0x08016db8                        PROVIDE (__init_array_end = .)
+ .init_array    0x08016db0        0x4 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v8-m.main+fp/hard/crtbegin.o
+                0x08016db4                        PROVIDE (__init_array_end = .)
 
-.fini_array     0x08016db8        0x4
+.fini_array     0x08016db4        0x4
                 [!provide]                        PROVIDE (__fini_array_start = .)
  *(SORT_BY_NAME(.fini_array.*))
  *(.fini_array*)
- .fini_array    0x08016db8        0x4 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v8-m.main+fp/hard/crtbegin.o
+ .fini_array    0x08016db4        0x4 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v8-m.main+fp/hard/crtbegin.o
                 [!provide]                        PROVIDE (__fini_array_end = .)
-                0x08016dbc                        _sidata = LOADADDR (.data)
+                0x08016db8                        _sidata = LOADADDR (.data)
 
-.rel.dyn        0x08016dbc        0x0
- .rel.iplt      0x08016dbc        0x0 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v8-m.main+fp/hard/crtbegin.o
+.rel.dyn        0x08016db8        0x0
+ .rel.iplt      0x08016db8        0x0 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v8-m.main+fp/hard/crtbegin.o
 
-.data           0x20000000       0xb0 load address 0x08016dbc
+.data           0x20000000       0xb0 load address 0x08016db8
                 0x20000000                        _sdata = .
  *(.data)
  *(.data*)
@@ -11517,10 +11287,10 @@ LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
  *(.RamFunc*)
                 0x200000b0                        _edata = .
 
-.igot.plt       0x200000b0        0x0 load address 0x08016e6c
+.igot.plt       0x200000b0        0x0 load address 0x08016e68
  .igot.plt      0x200000b0        0x0 C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v8-m.main+fp/hard/crtbegin.o
 
-.bss            0x200000b0   0x13faa2 load address 0x08016e6c
+.bss            0x200000b0   0x13faa2 load address 0x08016e68
                 0x200000b0                        _sbss = .
                 0x200000b0                        __bss_start__ = _sbss
  *(.bss)
@@ -11624,7 +11394,7 @@ LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
                 0x2013fb52                        __bss_end__ = _ebss
 
 ._user_heap_stack
-                0x2013fb52     0x2206 load address 0x08016e6c
+                0x2013fb52     0x2206 load address 0x08016e68
                 0x2013fb58                        . = ALIGN (0x8)
  *fill*         0x2013fb52        0x6 
                 [!provide]                        PROVIDE (end = .)
@@ -11813,91 +11583,91 @@ LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
 LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main+fp/hard\libm.a
 LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v8-m.main+fp/hard\libgcc.a
 
-.debug_info     0x00000000    0x2a7df
+.debug_info     0x00000000    0x2a7d3
  .debug_info    0x00000000     0x207b ./Boot/Src/boot_display.o
- .debug_info    0x0000207b      0x494 ./Boot/Src/boot_flash.o
- .debug_info    0x0000250f      0x76f ./Boot/Src/boot_jump.o
- .debug_info    0x00002c7e     0x1895 ./Boot/Src/boot_ospi.o
- .debug_info    0x00004513      0x8f3 ./Boot/USB/Src/usb_fs_service.o
- .debug_info    0x00004e06      0xcb0 ./Boot/USB/Src/usb_msc_service.o
- .debug_info    0x00005ab6     0x2bbd ./Boot/USB/Src/usbh_conf.o
- .debug_info    0x00008673     0x121f ./Boot/USB/Src/usbh_diskio.o
- .debug_info    0x00009892     0x1488 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal.o
- .debug_info    0x0000ad1a     0x1687 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_cortex.o
- .debug_info    0x0000c3a1      0x528 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc.o
- .debug_info    0x0000c8c9      0x33b ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc_ex.o
- .debug_info    0x0000cc04      0xadc ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_dma.o
- .debug_info    0x0000d6e0      0x92f ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash.o
- .debug_info    0x0000e00f      0xc1a ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash_ex.o
- .debug_info    0x0000ec29      0x859 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_gpio.o
- .debug_info    0x0000f482     0x127f ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.o
- .debug_info    0x00010701     0x1047 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ltdc.o
- .debug_info    0x00011748     0x1cbb ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.o
- .debug_info    0x00013403      0xf0c ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr_ex.o
- .debug_info    0x0001430f     0x12b0 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc.o
- .debug_info    0x000155bf     0x1620 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc_ex.o
- .debug_info    0x00016bdf     0x2e54 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim.o
- .debug_info    0x00019a33     0x1b48 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_usb.o
- .debug_info    0x0001b57b     0x18ad ./Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.o
- .debug_info    0x0001ce28      0x411 ./Drivers/Vendor/FatFs/source/diskio.o
- .debug_info    0x0001d239     0x258d ./Drivers/Vendor/FatFs/source/ff.o
- .debug_info    0x0001f7c6      0x3a5 ./Drivers/Vendor/FatFs/source/ff_gen_drv.o
- .debug_info    0x0001fb6b     0x1590 ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o
- .debug_info    0x000210fb     0x11fd ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.o
- .debug_info    0x000222f8     0x1187 ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.o
- .debug_info    0x0002347f      0xfd3 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.o
- .debug_info    0x00024452      0xff4 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.o
- .debug_info    0x00025446      0xc58 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.o
- .debug_info    0x0002609e      0xb0a ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.o
- .debug_info    0x00026ba8     0x23f2 ./Src/main.o
- .debug_info    0x00028f9a      0x75f ./Src/stm32u5xx_it.o
- .debug_info    0x000296f9      0x6a3 ./Src/syscalls.o
- .debug_info    0x00029d9c      0x168 ./Src/sysmem.o
- .debug_info    0x00029f04      0x8ab ./Src/system_stm32u5xx.o
- .debug_info    0x0002a7af       0x30 ./Startup/startup_stm32u599nihxq.o
+ .debug_info    0x0000207b      0x48e ./Boot/Src/boot_flash.o
+ .debug_info    0x00002509      0x76f ./Boot/Src/boot_jump.o
+ .debug_info    0x00002c78     0x1895 ./Boot/Src/boot_ospi.o
+ .debug_info    0x0000450d      0x8f3 ./Boot/USB/Src/usb_fs_service.o
+ .debug_info    0x00004e00      0xcb0 ./Boot/USB/Src/usb_msc_service.o
+ .debug_info    0x00005ab0     0x2bbd ./Boot/USB/Src/usbh_conf.o
+ .debug_info    0x0000866d     0x121f ./Boot/USB/Src/usbh_diskio.o
+ .debug_info    0x0000988c     0x1488 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal.o
+ .debug_info    0x0000ad14     0x1687 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_cortex.o
+ .debug_info    0x0000c39b      0x528 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc.o
+ .debug_info    0x0000c8c3      0x33b ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc_ex.o
+ .debug_info    0x0000cbfe      0xadc ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_dma.o
+ .debug_info    0x0000d6da      0x92f ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash.o
+ .debug_info    0x0000e009      0xc1a ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash_ex.o
+ .debug_info    0x0000ec23      0x859 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_gpio.o
+ .debug_info    0x0000f47c     0x127f ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.o
+ .debug_info    0x000106fb     0x1047 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ltdc.o
+ .debug_info    0x00011742     0x1cbb ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.o
+ .debug_info    0x000133fd      0xf0c ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr_ex.o
+ .debug_info    0x00014309     0x12b0 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc.o
+ .debug_info    0x000155b9     0x1620 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc_ex.o
+ .debug_info    0x00016bd9     0x2e54 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim.o
+ .debug_info    0x00019a2d     0x1b48 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_usb.o
+ .debug_info    0x0001b575     0x18ad ./Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.o
+ .debug_info    0x0001ce22      0x411 ./Drivers/Vendor/FatFs/source/diskio.o
+ .debug_info    0x0001d233     0x258d ./Drivers/Vendor/FatFs/source/ff.o
+ .debug_info    0x0001f7c0      0x3a5 ./Drivers/Vendor/FatFs/source/ff_gen_drv.o
+ .debug_info    0x0001fb65     0x1590 ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o
+ .debug_info    0x000210f5     0x11fd ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.o
+ .debug_info    0x000222f2     0x1187 ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.o
+ .debug_info    0x00023479      0xfd3 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.o
+ .debug_info    0x0002444c      0xff4 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.o
+ .debug_info    0x00025440      0xc58 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.o
+ .debug_info    0x00026098      0xb0a ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.o
+ .debug_info    0x00026ba2     0x23ec ./Src/main.o
+ .debug_info    0x00028f8e      0x75f ./Src/stm32u5xx_it.o
+ .debug_info    0x000296ed      0x6a3 ./Src/syscalls.o
+ .debug_info    0x00029d90      0x168 ./Src/sysmem.o
+ .debug_info    0x00029ef8      0x8ab ./Src/system_stm32u5xx.o
+ .debug_info    0x0002a7a3       0x30 ./Startup/startup_stm32u599nihxq.o
 
-.debug_abbrev   0x00000000     0x637d
+.debug_abbrev   0x00000000     0x6390
  .debug_abbrev  0x00000000      0x326 ./Boot/Src/boot_display.o
  .debug_abbrev  0x00000326      0x18c ./Boot/Src/boot_flash.o
  .debug_abbrev  0x000004b2      0x20e ./Boot/Src/boot_jump.o
  .debug_abbrev  0x000006c0      0x307 ./Boot/Src/boot_ospi.o
  .debug_abbrev  0x000009c7      0x231 ./Boot/USB/Src/usb_fs_service.o
- .debug_abbrev  0x00000bf8      0x346 ./Boot/USB/Src/usb_msc_service.o
- .debug_abbrev  0x00000f3e      0x435 ./Boot/USB/Src/usbh_conf.o
- .debug_abbrev  0x00001373      0x2db ./Boot/USB/Src/usbh_diskio.o
- .debug_abbrev  0x0000164e      0x2a4 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal.o
- .debug_abbrev  0x000018f2      0x327 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_cortex.o
- .debug_abbrev  0x00001c19      0x1ee ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc.o
- .debug_abbrev  0x00001e07      0x151 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc_ex.o
- .debug_abbrev  0x00001f58      0x1ff ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_dma.o
- .debug_abbrev  0x00002157      0x2fe ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash.o
- .debug_abbrev  0x00002455      0x29e ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash_ex.o
- .debug_abbrev  0x000026f3      0x25a ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_gpio.o
- .debug_abbrev  0x0000294d      0x293 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.o
- .debug_abbrev  0x00002be0      0x23a ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ltdc.o
- .debug_abbrev  0x00002e1a      0x314 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.o
- .debug_abbrev  0x0000312e      0x243 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr_ex.o
- .debug_abbrev  0x00003371      0x2cb ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc.o
- .debug_abbrev  0x0000363c      0x23d ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc_ex.o
- .debug_abbrev  0x00003879      0x2bd ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim.o
- .debug_abbrev  0x00003b36      0x2b0 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_usb.o
- .debug_abbrev  0x00003de6      0x248 ./Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.o
- .debug_abbrev  0x0000402e      0x181 ./Drivers/Vendor/FatFs/source/diskio.o
- .debug_abbrev  0x000041af      0x28d ./Drivers/Vendor/FatFs/source/ff.o
- .debug_abbrev  0x0000443c      0x19f ./Drivers/Vendor/FatFs/source/ff_gen_drv.o
- .debug_abbrev  0x000045db      0x376 ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o
- .debug_abbrev  0x00004951      0x2fd ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.o
- .debug_abbrev  0x00004c4e      0x2e8 ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.o
- .debug_abbrev  0x00004f36      0x32a ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.o
- .debug_abbrev  0x00005260      0x2ff ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.o
- .debug_abbrev  0x0000555f      0x245 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.o
- .debug_abbrev  0x000057a4      0x281 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.o
- .debug_abbrev  0x00005a25      0x406 ./Src/main.o
- .debug_abbrev  0x00005e2b      0x1a3 ./Src/stm32u5xx_it.o
- .debug_abbrev  0x00005fce      0x1b6 ./Src/syscalls.o
- .debug_abbrev  0x00006184       0xbc ./Src/sysmem.o
- .debug_abbrev  0x00006240      0x119 ./Src/system_stm32u5xx.o
- .debug_abbrev  0x00006359       0x24 ./Startup/startup_stm32u599nihxq.o
+ .debug_abbrev  0x00000bf8      0x359 ./Boot/USB/Src/usb_msc_service.o
+ .debug_abbrev  0x00000f51      0x435 ./Boot/USB/Src/usbh_conf.o
+ .debug_abbrev  0x00001386      0x2db ./Boot/USB/Src/usbh_diskio.o
+ .debug_abbrev  0x00001661      0x2a4 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal.o
+ .debug_abbrev  0x00001905      0x327 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_cortex.o
+ .debug_abbrev  0x00001c2c      0x1ee ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc.o
+ .debug_abbrev  0x00001e1a      0x151 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc_ex.o
+ .debug_abbrev  0x00001f6b      0x1ff ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_dma.o
+ .debug_abbrev  0x0000216a      0x2fe ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash.o
+ .debug_abbrev  0x00002468      0x29e ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash_ex.o
+ .debug_abbrev  0x00002706      0x25a ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_gpio.o
+ .debug_abbrev  0x00002960      0x293 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.o
+ .debug_abbrev  0x00002bf3      0x23a ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ltdc.o
+ .debug_abbrev  0x00002e2d      0x314 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.o
+ .debug_abbrev  0x00003141      0x243 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr_ex.o
+ .debug_abbrev  0x00003384      0x2cb ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc.o
+ .debug_abbrev  0x0000364f      0x23d ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc_ex.o
+ .debug_abbrev  0x0000388c      0x2bd ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim.o
+ .debug_abbrev  0x00003b49      0x2b0 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_usb.o
+ .debug_abbrev  0x00003df9      0x248 ./Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.o
+ .debug_abbrev  0x00004041      0x181 ./Drivers/Vendor/FatFs/source/diskio.o
+ .debug_abbrev  0x000041c2      0x28d ./Drivers/Vendor/FatFs/source/ff.o
+ .debug_abbrev  0x0000444f      0x19f ./Drivers/Vendor/FatFs/source/ff_gen_drv.o
+ .debug_abbrev  0x000045ee      0x376 ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o
+ .debug_abbrev  0x00004964      0x2fd ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.o
+ .debug_abbrev  0x00004c61      0x2e8 ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.o
+ .debug_abbrev  0x00004f49      0x32a ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.o
+ .debug_abbrev  0x00005273      0x2ff ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.o
+ .debug_abbrev  0x00005572      0x245 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.o
+ .debug_abbrev  0x000057b7      0x281 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.o
+ .debug_abbrev  0x00005a38      0x406 ./Src/main.o
+ .debug_abbrev  0x00005e3e      0x1a3 ./Src/stm32u5xx_it.o
+ .debug_abbrev  0x00005fe1      0x1b6 ./Src/syscalls.o
+ .debug_abbrev  0x00006197       0xbc ./Src/sysmem.o
+ .debug_abbrev  0x00006253      0x119 ./Src/system_stm32u5xx.o
+ .debug_abbrev  0x0000636c       0x24 ./Startup/startup_stm32u599nihxq.o
 
 .debug_aranges  0x00000000     0x2038
  .debug_aranges
@@ -12290,49 +12060,49 @@ LOAD C:/ST/STM32CubeIDE_1.18.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
  .debug_line    0x00032665      0xb48 ./Src/system_stm32u5xx.o
  .debug_line    0x000331ad       0x7d ./Startup/startup_stm32u599nihxq.o
 
-.debug_str      0x00000000   0x1b6582
- .debug_str     0x00000000   0x1b6582 ./Boot/Src/boot_display.o
+.debug_str      0x00000000   0x1b656e
+ .debug_str     0x00000000   0x1b656e ./Boot/Src/boot_display.o
                              0x1a0bc6 (size before relaxing)
- .debug_str     0x001b6582   0x19f78e ./Boot/Src/boot_flash.o
- .debug_str     0x001b6582   0x19f7e2 ./Boot/Src/boot_jump.o
- .debug_str     0x001b6582   0x1a1b95 ./Boot/Src/boot_ospi.o
- .debug_str     0x001b6582   0x1a13c6 ./Boot/USB/Src/usb_fs_service.o
- .debug_str     0x001b6582   0x1a1aa6 ./Boot/USB/Src/usb_msc_service.o
- .debug_str     0x001b6582   0x1a3462 ./Boot/USB/Src/usbh_conf.o
- .debug_str     0x001b6582   0x1a22b2 ./Boot/USB/Src/usbh_diskio.o
- .debug_str     0x001b6582   0x1a0310 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal.o
- .debug_str     0x001b6582   0x19fe04 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_cortex.o
- .debug_str     0x001b6582   0x19f001 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc.o
- .debug_str     0x001b6582   0x19efa7 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc_ex.o
- .debug_str     0x001b6582   0x19f4a4 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_dma.o
- .debug_str     0x001b6582   0x19f273 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash.o
- .debug_str     0x001b6582   0x19f4be ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash_ex.o
- .debug_str     0x001b6582   0x19f145 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_gpio.o
- .debug_str     0x001b6582   0x19f84e ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.o
- .debug_str     0x001b6582   0x19f56b ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ltdc.o
- .debug_str     0x001b6582   0x19fe7c ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.o
- .debug_str     0x001b6582   0x19f964 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr_ex.o
- .debug_str     0x001b6582   0x1a08b9 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc.o
- .debug_str     0x001b6582   0x1a202a ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc_ex.o
- .debug_str     0x001b6582   0x1a0563 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim.o
- .debug_str     0x001b6582   0x19f935 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_usb.o
- .debug_str     0x001b6582   0x1a113e ./Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.o
- .debug_str     0x001b6582   0x19f5e7 ./Drivers/Vendor/FatFs/source/diskio.o
- .debug_str     0x001b6582   0x1a3765 ./Drivers/Vendor/FatFs/source/ff.o
- .debug_str     0x001b6582   0x19f632 ./Drivers/Vendor/FatFs/source/ff_gen_drv.o
- .debug_str     0x001b6582   0x1a1d7f ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o
- .debug_str     0x001b6582   0x1a1cfe ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.o
- .debug_str     0x001b6582   0x1a1b8e ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.o
- .debug_str     0x001b6582   0x1a1302 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.o
- .debug_str     0x001b6582   0x1a12c3 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.o
- .debug_str     0x001b6582   0x1a10a4 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.o
- .debug_str     0x001b6582   0x1a1061 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.o
- .debug_str     0x001b6582   0x1a270c ./Src/main.o
- .debug_str     0x001b6582   0x19f3d0 ./Src/stm32u5xx_it.o
- .debug_str     0x001b6582     0x9991 ./Src/syscalls.o
- .debug_str     0x001b6582     0x773b ./Src/sysmem.o
- .debug_str     0x001b6582   0x19f0f7 ./Src/system_stm32u5xx.o
- .debug_str     0x001b6582       0x6f ./Startup/startup_stm32u599nihxq.o
+ .debug_str     0x001b656e   0x19f77a ./Boot/Src/boot_flash.o
+ .debug_str     0x001b656e   0x19f7e2 ./Boot/Src/boot_jump.o
+ .debug_str     0x001b656e   0x1a1b95 ./Boot/Src/boot_ospi.o
+ .debug_str     0x001b656e   0x1a13c6 ./Boot/USB/Src/usb_fs_service.o
+ .debug_str     0x001b656e   0x1a1aa6 ./Boot/USB/Src/usb_msc_service.o
+ .debug_str     0x001b656e   0x1a3462 ./Boot/USB/Src/usbh_conf.o
+ .debug_str     0x001b656e   0x1a22b2 ./Boot/USB/Src/usbh_diskio.o
+ .debug_str     0x001b656e   0x1a0310 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal.o
+ .debug_str     0x001b656e   0x19fe04 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_cortex.o
+ .debug_str     0x001b656e   0x19f001 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc.o
+ .debug_str     0x001b656e   0x19efa7 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_crc_ex.o
+ .debug_str     0x001b656e   0x19f4a4 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_dma.o
+ .debug_str     0x001b656e   0x19f273 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash.o
+ .debug_str     0x001b656e   0x19f4be ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_flash_ex.o
+ .debug_str     0x001b656e   0x19f145 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_gpio.o
+ .debug_str     0x001b656e   0x19f84e ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_hcd.o
+ .debug_str     0x001b656e   0x19f56b ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ltdc.o
+ .debug_str     0x001b656e   0x19fe7c ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.o
+ .debug_str     0x001b656e   0x19f964 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_pwr_ex.o
+ .debug_str     0x001b656e   0x1a08b9 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc.o
+ .debug_str     0x001b656e   0x1a202a ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc_ex.o
+ .debug_str     0x001b656e   0x1a0563 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim.o
+ .debug_str     0x001b656e   0x19f935 ./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_usb.o
+ .debug_str     0x001b656e   0x1a113e ./Drivers/Vendor/Device/mx25lm51245g/mx25lm51245g.o
+ .debug_str     0x001b656e   0x19f5e7 ./Drivers/Vendor/FatFs/source/diskio.o
+ .debug_str     0x001b656e   0x1a3765 ./Drivers/Vendor/FatFs/source/ff.o
+ .debug_str     0x001b656e   0x19f632 ./Drivers/Vendor/FatFs/source/ff_gen_drv.o
+ .debug_str     0x001b656e   0x1a1d7f ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o
+ .debug_str     0x001b656e   0x1a1cfe ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.o
+ .debug_str     0x001b656e   0x1a1b8e ./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.o
+ .debug_str     0x001b656e   0x1a1302 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.o
+ .debug_str     0x001b656e   0x1a12c3 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.o
+ .debug_str     0x001b656e   0x1a10a4 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.o
+ .debug_str     0x001b656e   0x1a1061 ./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.o
+ .debug_str     0x001b656e   0x1a26f8 ./Src/main.o
+ .debug_str     0x001b656e   0x19f3d0 ./Src/stm32u5xx_it.o
+ .debug_str     0x001b656e     0x9991 ./Src/syscalls.o
+ .debug_str     0x001b656e     0x773b ./Src/sysmem.o
+ .debug_str     0x001b656e   0x19f0f7 ./Src/system_stm32u5xx.o
+ .debug_str     0x001b656e       0x6f ./Startup/startup_stm32u599nihxq.o
 
 .comment        0x00000000       0x43
  .comment       0x00000000       0x43 ./Boot/Src/boot_display.o
