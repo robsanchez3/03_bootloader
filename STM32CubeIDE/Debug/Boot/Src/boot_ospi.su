@@ -3,7 +3,7 @@ C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:64:16:BootOspi_MemoryReset	8	st
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:84:16:BootOspi_EnterOpiMode	24	static
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:120:18:BootOspi_Init	32	static
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:185:18:BootOspi_Erase	40	static
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:230:18:BootOspi_Program	40	static
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:269:21:BootOspi_GetHandle	4	static
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:274:18:BootOspi_EnableMemoryMapped	8	static
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:289:18:BootOspi_Read	40	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:235:18:BootOspi_Program	40	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:274:21:BootOspi_GetHandle	4	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:279:18:BootOspi_EnableMemoryMapped	8	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_ospi.c:294:18:BootOspi_Read	40	static

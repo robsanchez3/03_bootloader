@@ -182,7 +182,7 @@ BootOspiResult_t BootOspi_Init(void)
     return BOOT_OSPI_OK;
 }
 
-BootOspiResult_t BootOspi_Erase(uint32_t size)
+BootOspiResult_t BootOspi_Erase(uint32_t size, BootOspi_ProgressCb_t progress_cb)
 {
     uint32_t address = 0U;
     uint32_t sector  = 0U;
@@ -215,6 +215,11 @@ BootOspiResult_t BootOspi_Erase(uint32_t size)
 
         address += OSPI_SECTOR_SIZE;
         sector++;
+
+        if (progress_cb != NULL)
+        {
+            progress_cb(sector, total_sectors);
+        }
 
         if ((sector & 15U) == 0U)
         {

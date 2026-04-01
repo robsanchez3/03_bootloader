@@ -52,6 +52,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/system_stm32u5xx.c</locationURI>
 		</link>
 		<link>
+			<name>Boot/Inc/boot_display.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/boot_display.h</locationURI>
+		</link>
+		<link>
 			<name>Boot/Inc/boot_flash.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/boot_flash.h</locationURI>
@@ -65,6 +70,11 @@
 			<name>Boot/Inc/boot_ospi.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/boot_ospi.h</locationURI>
+		</link>
+		<link>
+			<name>Boot/Src/boot_display.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/boot_display.c</locationURI>
 		</link>
 		<link>
 			<name>Boot/Src/boot_flash.c</name>
@@ -607,6 +617,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_icache.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ltdc.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ltdc.c</locationURI>
+		</link>
+		<link>
 			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_ospi.c</locationURI>
@@ -630,6 +645,16 @@
 			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc_ex.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_rcc_ex.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim_ex.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_tim_ex.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_usb.c</name>

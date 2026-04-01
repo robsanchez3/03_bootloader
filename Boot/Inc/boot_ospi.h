@@ -17,9 +17,13 @@ typedef enum
 /* Initialize OSPI peripheral and MX25LM51245G flash (enters OPI STR mode). */
 BootOspiResult_t BootOspi_Init(void);
 
+/* Progress callback: called with (current_sector, total_sectors). */
+typedef void (*BootOspi_ProgressCb_t)(uint32_t current, uint32_t total);
+
 /* Erase the required number of 64KB sectors starting at address 0.
- * size: bytes to erase (rounded up to 64KB sectors). */
-BootOspiResult_t BootOspi_Erase(uint32_t size);
+ * size: bytes to erase (rounded up to 64KB sectors).
+ * progress_cb: optional callback called after each sector (NULL to disable). */
+BootOspiResult_t BootOspi_Erase(uint32_t size, BootOspi_ProgressCb_t progress_cb);
 
 /* Program data into OSPI flash.
  * address: offset within OSPI flash (0-based).

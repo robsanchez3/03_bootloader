@@ -15,6 +15,7 @@
 #include "boot_jump.h"
 #include "boot_flash.h"
 #include "boot_ospi.h"
+#include "boot_display.h"
 #include "usb_msc_service.h"
 #include "usb_fs_service.h"
 #include "usb_update.h"
@@ -34,9 +35,16 @@ static void Boot_RunStartupPolicy(void);
 static void FlashAppInt(uint32_t expected_crc32);
 static void FlashAppOspi(uint32_t expected_crc32);
 static void UsbUpdateLoop(void);
+static uint8_t UsbBootProbe(uint32_t detect_timeout_ms, uint32_t ready_timeout_ms);
+static void BootDisplay_EnsureInit(void);
+static void BootDisplay_UpdateProgress(const char *label, uint32_t offset, uint32_t total, uint32_t step_bytes);
+static void BootDisplay_FlashEraseProgress(uint32_t current, uint32_t total);
+static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total);
 
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
 #define BOOT_USB_UPDATE_ENABLED           1U
+#define BOOT_USB_DETECT_TIMEOUT_MS        1800U
+#define BOOT_USB_READY_TIMEOUT_MS         2500U
 
 /* Chunked read configuration */
 #define CHUNKED_READ_BLOCK_SIZE           1048576U /* bytes per open/read/close cycle */
@@ -46,6 +54,7 @@ static void UsbUpdateLoop(void);
 /* Single shared IO buffer — used by FlashAppInt and FlashAppOspi.
  * These functions never run concurrently so one buffer is sufficient. */
 static uint8_t io_buf[CHUNKED_READ_BLOCK_SIZE];
+static uint8_t boot_display_initialized;
 
 int _write(int file, char *ptr, int len)
 {
@@ -117,6 +126,95 @@ static void crc32_deinit(void)
     }
 }
 
+static void BootDisplay_EnsureInit(void)
+{
+    if (boot_display_initialized == 0U)
+    {
+        BootDisplay_Init();
+        boot_display_initialized = 1U;
+    }
+}
+
+static uint8_t UsbBootProbe(uint32_t detect_timeout_ms, uint32_t ready_timeout_ms)
+{
+    uint32_t start = HAL_GetTick();
+    UsbMscState_t state;
+
+    UsbMscService_Init();
+    UsbMscService_SetEnabled(1U);
+    UsbFsService_Init();
+
+    while ((HAL_GetTick() - start) < detect_timeout_ms)
+    {
+        UsbMscService_Process();
+        state = UsbMscService_GetState();
+
+        if (state == USB_MSC_STATE_READY)
+        {
+            return 1U;
+        }
+
+        if ((state == USB_MSC_STATE_DEVICE_CONNECTED) ||
+            (state == USB_MSC_STATE_ENUMERATING))
+        {
+            uint32_t connected_start = HAL_GetTick();
+
+            while ((HAL_GetTick() - connected_start) < ready_timeout_ms)
+            {
+                UsbMscService_Process();
+                state = UsbMscService_GetState();
+
+                if (state == USB_MSC_STATE_READY)
+                {
+                    return 1U;
+                }
+
+                if ((state == USB_MSC_STATE_IDLE) || (state == USB_MSC_STATE_OFF))
+                {
+                    break;
+                }
+            }
+
+            break;
+        }
+    }
+
+    UsbFsService_Unmount();
+    UsbMscService_SetEnabled(0U);
+    return 0U;
+}
+
+static void BootDisplay_UpdateProgress(const char *label, uint32_t offset, uint32_t total, uint32_t step_bytes)
+{
+    uint32_t shown;
+
+    (void)step_bytes;
+
+    if (total == 0U)
+    {
+        BootDisplay_ShowProgress(label, 0U, 1U);
+        return;
+    }
+
+    shown = offset;
+    if (shown > total)
+    {
+        shown = total;
+    }
+
+    BootDisplay_ShowProgress(label, shown, total);
+}
+
+static void BootDisplay_FlashEraseProgress(uint32_t current, uint32_t total)
+{
+    BootDisplay_ShowProgress("ERASING INT FLASH...", current, total);
+}
+
+static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total)
+{
+    BootDisplay_ShowProgress("ERASING OSPI FLASH...", current, total);
+}
+
 /* -----------------------------------------------------------------------
  * USB read helper: read a chunk with full USB restart recovery on failure.
  * ----------------------------------------------------------------------- */
@@ -175,6 +273,8 @@ static UsbFsResult_t UsbReadChunkWithRecovery(const char *path,
  * ----------------------------------------------------------------------- */
 int main(void)
 {
+    uint8_t usb_boot = 0U;
+
     HAL_Init();
     __HAL_RCC_PWR_CLK_ENABLE();
     SystemPower_Config();
@@ -188,7 +288,14 @@ int main(void)
     printf("BL start\n");
 
 #if BOOT_USB_UPDATE_ENABLED
-    UsbUpdateLoop();
+    usb_boot = UsbBootProbe(BOOT_USB_DETECT_TIMEOUT_MS, BOOT_USB_READY_TIMEOUT_MS);
+    if (usb_boot != 0U)
+    {
+        BootDisplay_EnsureInit();
+        BootDisplay_Log("");
+        BootDisplay_LogColor("BOOT START", BOOT_DISPLAY_COLOR_BLUE);
+        UsbUpdateLoop();
+    }
 #endif
 
     Boot_RunStartupPolicy();
@@ -202,6 +309,10 @@ int main(void)
 static void Recovery_Loop(void)
 {
     uint32_t last_blink = HAL_GetTick();
+
+    BootDisplay_EnsureInit();
+    BootDisplay_Log("RECOVERY MODE");
+    BootDisplay_Log("NO VALID APP");
 
     while (1)
     {
@@ -226,10 +337,16 @@ static void Boot_RunStartupPolicy(void)
 
     if (app_valid != 0U)
     {
+        UsbFsService_Unmount();
+        UsbMscService_SetEnabled(0U);
+        HAL_Delay(50U);
         printf("[BOOT] Valid app found -> jump\n");
         Boot_JumpToApplication(APP_BASE);
     }
 
+    BootDisplay_EnsureInit();
+    BootDisplay_Log("APP INVALID");
+    BootDisplay_Log("ENTER RECOVERY");
     printf("[BOOT] No valid app -> recovery loop\n");
     Recovery_Loop();
 }
@@ -249,24 +366,34 @@ static void FlashAppInt(uint32_t expected_crc32)
     uint32_t       t_start;
 
     printf("[FLASH] === app_int.bin -> internal flash ===\n");
+    BootDisplay_LogColor("INT FLASH UPDATE", BOOT_DISPLAY_COLOR_BLUE);
 
     result = UsbFsService_GetFileSize(USB_UPDATE_APP_INT_BIN, &file_size);
     if (result != USB_FS_RESULT_OK)
     {
+        BootDisplay_LogColor("INT FLASH FILE ERROR", BOOT_DISPLAY_COLOR_RED);
         printf("[FLASH] GetFileSize FAILED result=%u\n", (unsigned int)result);
         return;
     }
     printf("[FLASH] file size=%lu bytes\n", (unsigned long)file_size);
 
     printf("[FLASH] erasing...\n");
-    flash_result = BootFlash_EraseAppArea(file_size);
+    BootDisplay_Log("ERASING INT FLASH...");
+    BootDisplay_ShowProgress("ERASING INT FLASH...", 0U, 1U);
+    flash_result = BootFlash_EraseAppArea(file_size, BootDisplay_FlashEraseProgress);
     if (flash_result != BOOT_FLASH_OK)
     {
+        BootDisplay_LogColor("INT FLASH ERASE FAILED", BOOT_DISPLAY_COLOR_RED);
+        BootDisplay_ClearProgress();
         printf("[FLASH] erase FAILED result=%u\n", (unsigned int)flash_result);
         return;
     }
 
     printf("[FLASH] programming...\n");
+    BootDisplay_Log("INT FLASH ERASE DONE");
+    BootDisplay_Log("WRITING INT FLASH...");
+    BootDisplay_ClearProgress();
+    BootDisplay_ShowProgress("WRITING INT FLASH...", 0U, file_size);
     t_start = HAL_GetTick();
 
     while (offset < file_size)
@@ -281,6 +408,8 @@ static void FlashAppInt(uint32_t expected_crc32)
                                           offset, to_read, &bytes_read, "FLASH");
         if (result != USB_FS_RESULT_OK)
         {
+            BootDisplay_LogColor("INT FLASH READ FAILED", BOOT_DISPLAY_COLOR_RED);
+            BootDisplay_ClearProgress();
             printf("[FLASH] read FAILED at offset=%lu\n", (unsigned long)offset);
             return;
         }
@@ -288,6 +417,8 @@ static void FlashAppInt(uint32_t expected_crc32)
         flash_result = BootFlash_Program(APP_BASE + offset, chunk, bytes_read);
         if (flash_result != BOOT_FLASH_OK)
         {
+            BootDisplay_LogColor("INT FLASH WRITE FAILED", BOOT_DISPLAY_COLOR_RED);
+            BootDisplay_ClearProgress();
             printf("[FLASH] program FAILED at offset=%lu result=%u\n",
                    (unsigned long)offset, (unsigned int)flash_result);
             return;
@@ -296,11 +427,14 @@ static void FlashAppInt(uint32_t expected_crc32)
         flash_result = BootFlash_Verify(APP_BASE + offset, chunk, bytes_read);
         if (flash_result != BOOT_FLASH_OK)
         {
+            BootDisplay_LogColor("INT FLASH VERIFY FAILED", BOOT_DISPLAY_COLOR_RED);
+            BootDisplay_ClearProgress();
             printf("[FLASH] verify FAILED at offset=%lu\n", (unsigned long)offset);
             return;
         }
 
         offset += bytes_read;
+        BootDisplay_UpdateProgress("WRITING INT FLASH...", offset, file_size, CHUNKED_READ_BLOCK_SIZE);
 
         printf("[FLASH] %lu / %lu bytes (%lu%%)\n",
                (unsigned long)offset,
@@ -314,8 +448,13 @@ static void FlashAppInt(uint32_t expected_crc32)
     }
 
     /* CRC32 over programmed flash */
+    BootDisplay_Log("INT FLASH WRITE DONE");
+    BootDisplay_Log("VERIFYING INT FLASH...");
+    BootDisplay_ClearProgress();
     {
         uint32_t crc_flash = crc32_update(0U, (const uint8_t *)APP_BASE, file_size);
+        BootDisplay_LogColor((crc_flash == expected_crc32) ? "INT FLASH CRC OK" : "INT FLASH CRC FAIL",
+                             (crc_flash == expected_crc32) ? BOOT_DISPLAY_COLOR_NORMAL : BOOT_DISPLAY_COLOR_RED);
 
         printf("[FLASH] CRC32=%08lX  expected=%08lX  %s\n",
                (unsigned long)crc_flash,
@@ -345,10 +484,13 @@ static void FlashAppOspi(uint32_t expected_crc32)
     uint32_t       t_start;
 
     printf("[OSPI] === app_ospi.bin -> OSPI flash ===\n");
+    BootDisplay_LogColor("OSPI FLASH UPDATE", BOOT_DISPLAY_COLOR_BLUE);
+    BootDisplay_Log("INITIALIZING OSPI...");
 
     ospi_result = BootOspi_Init();
     if (ospi_result != BOOT_OSPI_OK)
     {
+        BootDisplay_LogColor("OSPI INIT FAILED", BOOT_DISPLAY_COLOR_RED);
         printf("[OSPI] init FAILED result=%u\n", (unsigned int)ospi_result);
         return;
     }
@@ -356,20 +498,29 @@ static void FlashAppOspi(uint32_t expected_crc32)
     result = UsbFsService_GetFileSize(USB_UPDATE_APP_OSPI_BIN, &file_size);
     if (result != USB_FS_RESULT_OK)
     {
+        BootDisplay_LogColor("OSPI FILE ERROR", BOOT_DISPLAY_COLOR_RED);
         printf("[OSPI] GetFileSize FAILED result=%u\n", (unsigned int)result);
         return;
     }
     printf("[OSPI] file size=%lu bytes\n", (unsigned long)file_size);
 
     printf("[OSPI] erasing...\n");
-    ospi_result = BootOspi_Erase(file_size);
+    BootDisplay_Log("ERASING OSPI FLASH...");
+    BootDisplay_ShowProgress("ERASING OSPI FLASH...", 0U, 1U);
+    ospi_result = BootOspi_Erase(file_size, BootDisplay_OspiEraseProgress);
     if (ospi_result != BOOT_OSPI_OK)
     {
+        BootDisplay_LogColor("OSPI FLASH ERASE FAILED", BOOT_DISPLAY_COLOR_RED);
+        BootDisplay_ClearProgress();
         printf("[OSPI] erase FAILED result=%u\n", (unsigned int)ospi_result);
         return;
     }
 
     printf("[OSPI] programming...\n");
+    BootDisplay_Log("OSPI FLASH ERASE DONE");
+    BootDisplay_Log("WRITING OSPI FLASH...");
+    BootDisplay_ClearProgress();
+    BootDisplay_ShowProgress("WRITING OSPI FLASH...", 0U, file_size);
     t_start = HAL_GetTick();
 
     while (offset < file_size)
@@ -384,6 +535,8 @@ static void FlashAppOspi(uint32_t expected_crc32)
                                           offset, to_read, &bytes_read, "OSPI");
         if (result != USB_FS_RESULT_OK)
         {
+            BootDisplay_LogColor("OSPI READ FAILED", BOOT_DISPLAY_COLOR_RED);
+            BootDisplay_ClearProgress();
             printf("[OSPI] read FAILED at offset=%lu\n", (unsigned long)offset);
             return;
         }
@@ -391,12 +544,15 @@ static void FlashAppOspi(uint32_t expected_crc32)
         ospi_result = BootOspi_Program(offset, chunk, bytes_read);
         if (ospi_result != BOOT_OSPI_OK)
         {
+            BootDisplay_LogColor("OSPI FLASH WRITE FAILED", BOOT_DISPLAY_COLOR_RED);
+            BootDisplay_ClearProgress();
             printf("[OSPI] program FAILED at offset=%lu result=%u\n",
                    (unsigned long)offset, (unsigned int)ospi_result);
             return;
         }
 
         offset += bytes_read;
+        BootDisplay_UpdateProgress("WRITING OSPI FLASH...", offset, file_size, CHUNKED_READ_BLOCK_SIZE);
 
         printf("[OSPI] %lu / %lu bytes (%lu%%)\n",
                (unsigned long)offset,
@@ -414,6 +570,8 @@ static void FlashAppOspi(uint32_t expected_crc32)
     /* Switch to memory-mapped mode and verify CRC32 */
     if (BootOspi_EnableMemoryMapped() != BOOT_OSPI_OK)
     {
+        BootDisplay_LogColor("OSPI VERIFY FAILED", BOOT_DISPLAY_COLOR_RED);
+        BootDisplay_ClearProgress();
         printf("[OSPI] memory-mapped FAILED, cannot verify\n");
         return;
     }
@@ -423,6 +581,10 @@ static void FlashAppOspi(uint32_t expected_crc32)
         uint32_t t_crc = HAL_GetTick();
 
         printf("[OSPI] verifying CRC32 over memory-mapped OSPI...\n");
+        BootDisplay_Log("OSPI FLASH WRITE DONE");
+        BootDisplay_Log("VERIFYING OSPI FLASH...");
+        BootDisplay_ClearProgress();
+        BootDisplay_ShowProgress("VERIFYING OSPI FLASH...", 0U, 1U);
 
         crc_flash = crc32_update(0U, (const uint8_t *)OCTOSPI1_BASE, file_size);
 
@@ -430,6 +592,7 @@ static void FlashAppOspi(uint32_t expected_crc32)
         HAL_OSPI_Abort(BootOspi_GetHandle());
         if (BootOspi_EnableMemoryMapped() != BOOT_OSPI_OK)
         {
+            BootDisplay_LogColor("OSPI VERIFY FAILED", BOOT_DISPLAY_COLOR_RED);
             printf("[OSPI] re-enable memory-mapped FAILED\n");
         }
         crc32_deinit();
@@ -439,6 +602,9 @@ static void FlashAppOspi(uint32_t expected_crc32)
                (unsigned long)expected_crc32,
                (crc_flash == expected_crc32) ? "MATCH" : "MISMATCH",
                (unsigned long)(HAL_GetTick() - t_crc));
+        BootDisplay_ShowProgress("VERIFYING OSPI FLASH...", 1U, 1U);
+        BootDisplay_LogColor((crc_flash == expected_crc32) ? "OSPI FLASH CRC OK" : "OSPI FLASH CRC FAIL",
+                             (crc_flash == expected_crc32) ? BOOT_DISPLAY_COLOR_NORMAL : BOOT_DISPLAY_COLOR_RED);
     }
 
     printf("[OSPI] done in %lu ms\n", (unsigned long)elapsed);
@@ -446,6 +612,9 @@ static void FlashAppOspi(uint32_t expected_crc32)
     /* Jump to app if valid */
     if (Boot_IsApplicationValid(APP_BASE))
     {
+        BootDisplay_LogColor("UPDATE COMPLETE", BOOT_DISPLAY_COLOR_GREEN);
+        BootDisplay_LogColor("STARTING APPLICATION...", BOOT_DISPLAY_COLOR_GREEN);
+        while (1) {} /* TEMPORARY: freeze to capture final screen */
         printf("[BOOT] app valid -> jumping...\n");
         UsbFsService_Unmount();
         UsbMscService_SetEnabled(0U);
@@ -454,6 +623,8 @@ static void FlashAppOspi(uint32_t expected_crc32)
     }
     else
     {
+        BootDisplay_LogColor("UPDATE COMPLETE", BOOT_DISPLAY_COLOR_GREEN);
+        BootDisplay_LogColor("APP INVALID", BOOT_DISPLAY_COLOR_RED);
         printf("[BOOT] app NOT valid, staying in bootloader\n");
     }
 }
@@ -467,12 +638,17 @@ static void UsbUpdateLoop(void)
     UsbFsResult_t mount_result;
 
     printf("[UPDATE] waiting for USB pendrive...\n");
+    BootDisplay_Log("WAITING FOR USB DRIVE...");
 
-    UsbMscService_Init();
-    UsbMscService_SetEnabled(1U);
-    UsbFsService_Init();
-
-    last_state = UsbMscService_GetState();
+    if (UsbMscService_IsDeviceConnected() != 0U)
+    {
+        BootDisplay_Log("USB DRIVE DETECTED");
+        last_state = USB_MSC_STATE_DEVICE_CONNECTED;
+    }
+    else
+    {
+        last_state = UsbMscService_GetState();
+    }
     printf("[UPDATE] USB state: %s\n", UsbMscService_GetStateName());
 
     while (1)
@@ -483,6 +659,11 @@ static void UsbUpdateLoop(void)
         {
             last_state = UsbMscService_GetState();
             printf("[UPDATE] USB state: %s\n", UsbMscService_GetStateName());
+
+            if (last_state == USB_MSC_STATE_DEVICE_CONNECTED)
+            {
+                BootDisplay_Log("USB DRIVE DETECTED");
+            }
 
             if (last_state == USB_MSC_STATE_READY)
             {
@@ -502,6 +683,7 @@ static void UsbUpdateLoop(void)
 
                 if (mount_result != USB_FS_RESULT_OK)
                 {
+                    BootDisplay_LogColor("USB MOUNT FAILED", BOOT_DISPLAY_COLOR_RED);
                     printf("[UPDATE] f_mount FAILED result=%u fatfs_err=%lu\n",
                            (unsigned int)mount_result,
                            (unsigned long)UsbFsService_GetLastError());
@@ -509,6 +691,8 @@ static void UsbUpdateLoop(void)
                 else
                 {
                     printf("[UPDATE] f_mount OK\n");
+                    BootDisplay_Log("USB DRIVE MOUNTED");
+                    BootDisplay_Log("CHECKING UPDATE FILES...");
 
                     {
                         FATFS  *fs_ptr;
@@ -554,6 +738,8 @@ static void UsbUpdateLoop(void)
                         uint32_t expected_crc[2] = { 0U, 0U };
 
                         printf("[UPDATE] all 4 files present\n");
+                        BootDisplay_Log("ALL FILES FOUND");
+                        BootDisplay_Log("READING CRC FILES...");
 
                         for (i = 0U; i < 2U; i++)
                         {
@@ -586,6 +772,7 @@ static void UsbUpdateLoop(void)
                             }
                             else
                             {
+                                BootDisplay_LogColor("CRC FILE READ FAILED", BOOT_DISPLAY_COLOR_RED);
                                 printf("[UPDATE] read %s FAILED result=%u fatfs_err=%lu\n",
                                        crc_paths[i],
                                        (unsigned int)read_result,
@@ -599,6 +786,7 @@ static void UsbUpdateLoop(void)
                     }
                     else
                     {
+                        BootDisplay_LogColor("UPDATE FILES MISSING", BOOT_DISPLAY_COLOR_RED);
                         printf("[UPDATE] one or more files missing\n");
                     }
                 }

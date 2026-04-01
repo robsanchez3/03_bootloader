@@ -30,15 +30,16 @@ static BootFlashResult_t AddressToPage(uint32_t address, uint32_t *bank, uint32_
     return BOOT_FLASH_OK;
 }
 
-BootFlashResult_t BootFlash_EraseAppArea(uint32_t size)
+BootFlashResult_t BootFlash_EraseAppArea(uint32_t size, BootFlash_ProgressCb_t progress_cb)
 {
     FLASH_EraseInitTypeDef erase_init;
     uint32_t page_error = 0U;
-    uint32_t start_addr = APP_BASE;
-    uint32_t end_addr   = start_addr + size;
+    uint32_t addr = APP_BASE;
+    uint32_t end_addr = APP_BASE + size;
     uint32_t bank;
-    uint32_t first_page;
-    uint32_t nb_pages;
+    uint32_t page;
+    uint32_t total_pages;
+    uint32_t page_count = 0U;
     HAL_StatusTypeDef hal_status;
 
     /* Clamp to app area */
@@ -47,66 +48,51 @@ BootFlashResult_t BootFlash_EraseAppArea(uint32_t size)
         end_addr = APP_END + 1U;
     }
 
+    total_pages = (end_addr - APP_BASE + FLASH_PAGE_SZ - 1U) / FLASH_PAGE_SZ;
+
+    printf("[FLASH] erase %lu pages (%lu KB)\n",
+           (unsigned long)total_pages,
+           (unsigned long)(total_pages * (FLASH_PAGE_SZ / 1024U)));
+
     if (HAL_FLASH_Unlock() != HAL_OK)
     {
         return BOOT_FLASH_ERR_UNLOCK;
     }
 
-    /* Erase Bank 1 portion (APP_BASE to end of Bank 1) */
-    if (start_addr < FLASH_BANK2_BASE)
+    while (addr < end_addr)
     {
-        uint32_t bank1_end = (end_addr < FLASH_BANK2_BASE) ? end_addr : FLASH_BANK2_BASE;
-
-        (void)AddressToPage(start_addr, &bank, &first_page);
-        nb_pages = (bank1_end - start_addr + FLASH_PAGE_SZ - 1U) / FLASH_PAGE_SZ;
-
-        printf("[FLASH] erase bank1 page %lu count %lu\n",
-               (unsigned long)first_page, (unsigned long)nb_pages);
+        if (AddressToPage(addr, &bank, &page) != BOOT_FLASH_OK)
+        {
+            (void)HAL_FLASH_Lock();
+            return BOOT_FLASH_ERR_RANGE;
+        }
 
         erase_init.TypeErase = FLASH_TYPEERASE_PAGES;
-        erase_init.Banks     = FLASH_BANK_1;
-        erase_init.Page      = first_page;
-        erase_init.NbPages   = nb_pages;
+        erase_init.Banks     = bank;
+        erase_init.Page      = page;
+        erase_init.NbPages   = 1U;
 
         hal_status = HAL_FLASHEx_Erase(&erase_init, &page_error);
         if (hal_status != HAL_OK)
         {
-            printf("[FLASH] erase bank1 FAILED page_error=%lu HAL=%u\n",
-                   (unsigned long)page_error, (unsigned int)hal_status);
+            printf("[FLASH] erase FAILED at page %lu bank %lu HAL=%u\n",
+                   (unsigned long)page, (unsigned long)bank, (unsigned int)hal_status);
             (void)HAL_FLASH_Lock();
             return BOOT_FLASH_ERR_ERASE;
         }
-    }
 
-    /* Erase Bank 2 portion if needed */
-    if (end_addr > FLASH_BANK2_BASE)
-    {
-        uint32_t bank2_start = (start_addr > FLASH_BANK2_BASE) ? start_addr : FLASH_BANK2_BASE;
+        addr += FLASH_PAGE_SZ;
+        page_count++;
 
-        (void)AddressToPage(bank2_start, &bank, &first_page);
-        nb_pages = (end_addr - bank2_start + FLASH_PAGE_SZ - 1U) / FLASH_PAGE_SZ;
-
-        printf("[FLASH] erase bank2 page %lu count %lu\n",
-               (unsigned long)first_page, (unsigned long)nb_pages);
-
-        erase_init.TypeErase = FLASH_TYPEERASE_PAGES;
-        erase_init.Banks     = FLASH_BANK_2;
-        erase_init.Page      = first_page;
-        erase_init.NbPages   = nb_pages;
-
-        hal_status = HAL_FLASHEx_Erase(&erase_init, &page_error);
-        if (hal_status != HAL_OK)
+        if (progress_cb != NULL)
         {
-            printf("[FLASH] erase bank2 FAILED page_error=%lu HAL=%u\n",
-                   (unsigned long)page_error, (unsigned int)hal_status);
-            (void)HAL_FLASH_Lock();
-            return BOOT_FLASH_ERR_ERASE;
+            progress_cb(page_count, total_pages);
         }
     }
 
     (void)HAL_FLASH_Lock();
 
-    printf("[FLASH] erase OK %lu bytes\n", (unsigned long)(end_addr - start_addr));
+    printf("[FLASH] erase OK %lu pages\n", (unsigned long)page_count);
     return BOOT_FLASH_OK;
 }
 
