@@ -3,21 +3,24 @@
 #include <stdio.h>
 #include <string.h>
 
-#define LCD_WIDTH   267U
-#define LCD_HEIGHT  480U
+/* Display geometry: only the left section of the physical panel is used. */
+#define LCD_WIDTH      267U
+#define LCD_HEIGHT     480U
 
-#define CHAR_W      8U
-#define CHAR_H      16U
+/* Text layout. */
+#define CHAR_W         8U
+#define CHAR_H         16U
 #define TEXT_X_OFFSET  16U
-#define TEXT_COLS   ((LCD_WIDTH - TEXT_X_OFFSET) / CHAR_W)
-#define TEXT_ROWS   (LCD_HEIGHT / CHAR_H)
-#define LOG_ROWS    (TEXT_ROWS - 2U)
+#define TEXT_COLS      ((LCD_WIDTH - TEXT_X_OFFSET) / CHAR_W)
+#define TEXT_ROWS      (LCD_HEIGHT / CHAR_H)
+#define LOG_ROWS       (TEXT_ROWS - 2U)
 
-#define COLOR_BG    0x0000U
-#define COLOR_FG    0xA534U
-#define COLOR_BLUE  0x051FU
-#define COLOR_GREEN 0x7F2FU
-#define COLOR_RED   0xD104U
+/* RGB565 palette tuned for the bootloader text UI. */
+#define COLOR_BG       0x0000U
+#define COLOR_FG       0xA534U
+#define COLOR_BLUE     0x051FU
+#define COLOR_GREEN    0x7F2FU
+#define COLOR_RED      0xD104U
 
 static LTDC_HandleTypeDef hltdc;
 static TIM_HandleTypeDef htim3;
@@ -30,13 +33,19 @@ static char progress_label_cache[TEXT_COLS + 1U];
 static uint32_t progress_percent_cache;
 static uint8_t progress_cache_valid;
 
+typedef enum
+{
+    BOOT_DISPLAY_LINE_DRAW = 0,
+    BOOT_DISPLAY_LINE_CLEAR_AND_DRAW
+} BootDisplayLineMode_t;
+
 static void BootDisplay_GPIO_Init(void);
 static void BootDisplay_TIM3_Init(void);
 static void BootDisplay_LTDC_Init(void);
 static void BootDisplay_PutChar(uint32_t x, uint32_t y, char c, uint16_t fg_color);
 static void BootDisplay_DrawPixel(uint32_t x, uint32_t y, uint16_t color);
 static void BootDisplay_ClearLine(uint32_t row);
-static void BootDisplay_DrawLogLine(uint32_t row, const char *text, BootDisplayColor_t color);
+static void BootDisplay_RenderLine(uint32_t row, const char *text, BootDisplayColor_t color, BootDisplayLineMode_t mode);
 static void BootDisplay_ScrollLogArea(void);
 static void BootDisplay_CopyText(char *dst, const char *src);
 static uint16_t BootDisplay_ResolveColor(BootDisplayColor_t color);
@@ -171,15 +180,7 @@ void BootDisplay_Clear(void)
 
 void BootDisplay_WriteLine(uint32_t row, const char *text)
 {
-    uint32_t x = 0U;
-    uint32_t y = row * CHAR_H;
-
-    while ((*text != '\0') && (x < TEXT_COLS))
-    {
-        BootDisplay_PutChar(TEXT_X_OFFSET + (x * CHAR_W), y, *text, COLOR_FG);
-        x++;
-        text++;
-    }
+    BootDisplay_RenderLine(row, text, BOOT_DISPLAY_COLOR_NORMAL, BOOT_DISPLAY_LINE_DRAW);
 }
 
 void BootDisplay_Log(const char *text)
@@ -195,7 +196,10 @@ void BootDisplay_LogColor(const char *text, BootDisplayColor_t color)
     {
         BootDisplay_CopyText(log_lines[log_count], text);
         log_colors[log_count] = color;
-        BootDisplay_DrawLogLine(log_count, log_lines[log_count], log_colors[log_count]);
+        BootDisplay_RenderLine(log_count,
+                               log_lines[log_count],
+                               log_colors[log_count],
+                               BOOT_DISPLAY_LINE_CLEAR_AND_DRAW);
         log_count++;
     }
     else
@@ -208,7 +212,10 @@ void BootDisplay_LogColor(const char *text, BootDisplayColor_t color)
         }
         BootDisplay_CopyText(log_lines[LOG_ROWS - 1U], text);
         log_colors[LOG_ROWS - 1U] = color;
-        BootDisplay_DrawLogLine(LOG_ROWS - 1U, log_lines[LOG_ROWS - 1U], log_colors[LOG_ROWS - 1U]);
+        BootDisplay_RenderLine(LOG_ROWS - 1U,
+                               log_lines[LOG_ROWS - 1U],
+                               log_colors[LOG_ROWS - 1U],
+                               BOOT_DISPLAY_LINE_CLEAR_AND_DRAW);
     }
 }
 
@@ -250,16 +257,22 @@ void BootDisplay_ShowProgress(const char *label, uint32_t current, uint32_t tota
     if ((progress_cache_valid == 0U) ||
         (strncmp(progress_label_cache, label, TEXT_COLS) != 0))
     {
-        BootDisplay_ClearLine(TEXT_ROWS - 2U);
-        BootDisplay_WriteLine(TEXT_ROWS - 2U, label);
+        BootDisplay_RenderLine(TEXT_ROWS - 2U,
+                               label,
+                               BOOT_DISPLAY_COLOR_NORMAL,
+                               BOOT_DISPLAY_LINE_CLEAR_AND_DRAW);
         BootDisplay_CopyText(progress_label_cache, label);
     }
 
-    BootDisplay_WriteLine(TEXT_ROWS - 1U, line);
+    BootDisplay_RenderLine(TEXT_ROWS - 1U,
+                           line,
+                           BOOT_DISPLAY_COLOR_NORMAL,
+                           BOOT_DISPLAY_LINE_DRAW);
     progress_percent_cache = percent;
     progress_cache_valid = 1U;
 }
 
+/* Clear the two bottom rows reserved for progress title and bar. */
 void BootDisplay_ClearProgress(void)
 {
     BootDisplay_ClearLine(TEXT_ROWS - 2U);
@@ -310,13 +323,17 @@ static void BootDisplay_ClearLine(uint32_t row)
     }
 }
 
-static void BootDisplay_DrawLogLine(uint32_t row, const char *text, BootDisplayColor_t color)
+static void BootDisplay_RenderLine(uint32_t row, const char *text, BootDisplayColor_t color, BootDisplayLineMode_t mode)
 {
     uint32_t x;
     uint32_t y;
     uint16_t fg_color;
 
-    BootDisplay_ClearLine(row);
+    if (mode == BOOT_DISPLAY_LINE_CLEAR_AND_DRAW)
+    {
+        BootDisplay_ClearLine(row);
+    }
+
     x = 0U;
     y = row * CHAR_H;
     fg_color = BootDisplay_ResolveColor(color);
@@ -328,6 +345,7 @@ static void BootDisplay_DrawLogLine(uint32_t row, const char *text, BootDisplayC
     }
 }
 
+/* Scroll only the framebuffer area used by the log, then blank the last row. */
 static void BootDisplay_ScrollLogArea(void)
 {
     uint32_t src_row_start = CHAR_H;
@@ -342,6 +360,7 @@ static void BootDisplay_ScrollLogArea(void)
     BootDisplay_ClearLine(blank_row);
 }
 
+/* Copy and clamp a text line so it always fits the visible text width. */
 static void BootDisplay_CopyText(char *dst, const char *src)
 {
     uint32_t i = 0U;
@@ -355,6 +374,7 @@ static void BootDisplay_CopyText(char *dst, const char *src)
     dst[i] = '\0';
 }
 
+/* Convert logical bootloader colors to the RGB565 palette used by the panel. */
 static uint16_t BootDisplay_ResolveColor(BootDisplayColor_t color)
 {
     switch (color)

@@ -62,7 +62,6 @@ Src/main.o: ../Src/main.c \
  ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h \
  ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_pipes.h \
  ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ctlreq.h \
- ../../Boot/USB/Inc/usb_fs_service.h ../../Boot/USB/Inc/usb_update.h \
  ../../Boot/USB/Inc/usb_fs_service.h \
  ../../Drivers/Vendor/FatFs/source/ff.h ../../FATFS/Target/ffconf.h
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal.h:
@@ -131,8 +130,6 @@ Src/main.o: ../Src/main.c \
 ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h:
 ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_pipes.h:
 ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_ctlreq.h:
-../../Boot/USB/Inc/usb_fs_service.h:
-../../Boot/USB/Inc/usb_update.h:
 ../../Boot/USB/Inc/usb_fs_service.h:
 ../../Drivers/Vendor/FatFs/source/ff.h:
 ../../FATFS/Target/ffconf.h:
