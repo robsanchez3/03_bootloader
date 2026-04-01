@@ -36,6 +36,7 @@ static void FlashAppOspi(uint32_t expected_crc32);
 static void UsbProcessUpdate(void);
 static uint8_t UsbBootCheck(uint32_t detect_timeout_ms, uint32_t ready_timeout_ms);
 static void BootDisplay_EnsureInit(void);
+static void Boot_ShowApplicationLaunchCountdown(void);
 static void BootDisplay_UpdateProgress(const char *label, uint32_t current, uint32_t total);
 static void BootDisplay_Fail(const char *message, uint8_t clear_progress);
 static void BootDisplay_FlashEraseProgress(uint32_t current, uint32_t total);
@@ -220,6 +221,47 @@ static void BootDisplay_Fail(const char *message, uint8_t clear_progress)
     {
         BootDisplay_ClearProgress();
     }
+}
+
+static void Boot_ShowApplicationLaunchCountdown(void)
+{
+    uint32_t elapsed;
+    uint32_t duration = 30U;
+    char line[32];
+    char bar[11];
+    uint32_t i;
+
+    BootDisplay_LogColor("UPDATE COMPLETE", BOOT_DISPLAY_COLOR_GREEN);
+    BootDisplay_ClearProgress();
+    BootDisplay_WriteLine(28U, "STARTING APPLICATION...");
+
+    for (elapsed = 0U; elapsed <= duration; elapsed++)
+    {
+        uint32_t remaining = duration - elapsed;
+        uint32_t percent = (elapsed * 100U) / duration;
+        uint32_t filled = percent / 10U;
+
+        for (i = 0U; i < 10U; i++)
+        {
+            bar[i] = (i < filled) ? '#' : '.';
+        }
+        bar[10] = '\0';
+
+        (void)snprintf(line, sizeof(line), "[%s] %3lu%% - %2lus",
+                       bar,
+                       (unsigned long)percent,
+                       (unsigned long)remaining);
+        BootDisplay_WriteLine(29U, line);
+
+        if (elapsed < duration)
+        {
+            HAL_Delay(1000U);
+        }
+    }
+
+    BootDisplay_ClearProgress();
+    BootDisplay_LogColor("STARTING APPLICATION...", BOOT_DISPLAY_COLOR_GREEN);
+    while (1) {} /* TEMPORARY: keep final bootloader screen visible for tests */
 }
 
 static void BootDisplay_FlashEraseProgress(uint32_t current, uint32_t total)
@@ -635,9 +677,7 @@ static void FlashAppOspi(uint32_t expected_crc32)
     /* Final state: jump only if the resulting application is valid. */
     if (Boot_IsApplicationValid(APP_BASE))
     {
-        BootDisplay_LogColor("UPDATE COMPLETE", BOOT_DISPLAY_COLOR_GREEN);
-        BootDisplay_LogColor("STARTING APPLICATION...", BOOT_DISPLAY_COLOR_GREEN);
-        while (1) {} /* TEMPORARY: keep final bootloader screen visible for tests */
+        Boot_ShowApplicationLaunchCountdown();
         printf("[BOOT] app valid -> jumping...\n");
         UsbFsService_Unmount();
         UsbMscService_SetEnabled(0U);
