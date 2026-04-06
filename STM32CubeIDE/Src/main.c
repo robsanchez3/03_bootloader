@@ -36,7 +36,14 @@ static void FlashAppOspi(uint32_t expected_crc32);
 static void UsbProcessUpdate(void);
 static uint8_t UsbBootCheck(uint32_t detect_timeout_ms, uint32_t ready_timeout_ms);
 static void BootDisplay_EnsureInit(void);
+static void Boot_ShowCountdown(uint32_t row0,
+                               const char *line0,
+                               uint32_t row1,
+                               const char *line1,
+                               uint32_t row2,
+                               BootDisplayColor_t color);
 static void Boot_ShowApplicationLaunchCountdown(void);
+static void Boot_ShowProgrammingCountdown(void);
 static void BootDisplay_UpdateProgress(const char *label, uint32_t current, uint32_t total);
 static void BootDisplay_Fail(const char *message, uint8_t clear_progress);
 static void BootDisplay_FlashEraseProgress(uint32_t current, uint32_t total);
@@ -223,7 +230,12 @@ static void BootDisplay_Fail(const char *message, uint8_t clear_progress)
     }
 }
 
-static void Boot_ShowApplicationLaunchCountdown(void)
+static void Boot_ShowCountdown(uint32_t row0,
+                               const char *line0,
+                               uint32_t row1,
+                               const char *line1,
+                               uint32_t row2,
+                               BootDisplayColor_t color)
 {
     uint32_t elapsed;
     uint32_t duration = 30U;
@@ -231,15 +243,20 @@ static void Boot_ShowApplicationLaunchCountdown(void)
     char bar[11];
     uint32_t i;
 
-    BootDisplay_LogColor("UPDATE COMPLETE", BOOT_DISPLAY_COLOR_GREEN);
-    BootDisplay_ClearProgress();
-    BootDisplay_WriteLine(28U, "STARTING APPLICATION...");
+    BootDisplay_ClearLine(row0);
+    BootDisplay_ClearLine(row1);
+    BootDisplay_ClearLine(row2);
+    BootDisplay_WriteLineColor(row0, line0, color);
+    if ((line1 != NULL) && (line1[0] != '\0'))
+    {
+        BootDisplay_WriteLineColor(row1, line1, color);
+    }
 
     for (elapsed = 0U; elapsed <= duration; elapsed++)
     {
         uint32_t remaining = duration - elapsed;
         uint32_t percent = (elapsed * 100U) / duration;
-        uint32_t filled = percent / 10U;
+        uint32_t filled = 10U - (percent / 10U);
 
         for (i = 0U; i < 10U; i++)
         {
@@ -247,21 +264,45 @@ static void Boot_ShowApplicationLaunchCountdown(void)
         }
         bar[10] = '\0';
 
-        (void)snprintf(line, sizeof(line), "[%s] %3lu%% - %2lus",
+        (void)snprintf(line, sizeof(line), "[%s] %2lus",
                        bar,
-                       (unsigned long)percent,
                        (unsigned long)remaining);
-        BootDisplay_WriteLine(29U, line);
+        BootDisplay_WriteLineColor(row2, line, color);
 
         if (elapsed < duration)
         {
             HAL_Delay(1000U);
         }
     }
+}
+
+static void Boot_ShowApplicationLaunchCountdown(void)
+{
+    BootDisplay_LogColor("UPDATE COMPLETE", BOOT_DISPLAY_COLOR_GREEN);
+    BootDisplay_ClearProgress();
+    Boot_ShowCountdown(28U,
+                       "STARTING APPLICATION...",
+                       29U,
+                       "",
+                       29U,
+                       BOOT_DISPLAY_COLOR_YELLOW);
 
     BootDisplay_ClearProgress();
     BootDisplay_LogColor("STARTING APPLICATION...", BOOT_DISPLAY_COLOR_GREEN);
     while (1) {} /* TEMPORARY: keep final bootloader screen visible for tests */
+}
+
+static void Boot_ShowProgrammingCountdown(void)
+{
+    Boot_ShowCountdown(27U,
+                       "PROGRAMMING STARTS IN 30s",
+                       28U,
+                       "POWER OFF & REMOVE USB TO SKIP",
+                       29U,
+                       BOOT_DISPLAY_COLOR_YELLOW);
+    BootDisplay_ClearLine(27U);
+    BootDisplay_ClearLine(28U);
+    BootDisplay_ClearLine(29U);
 }
 
 static void BootDisplay_FlashEraseProgress(uint32_t current, uint32_t total)
@@ -829,6 +870,8 @@ static void UsbProcessUpdate(void)
     {
         return;
     }
+
+    Boot_ShowProgrammingCountdown();
 
     /* Program both flashes and jump */
     FlashAppInt(expected_crc[0]);

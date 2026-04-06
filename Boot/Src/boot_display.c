@@ -20,6 +20,7 @@
 #define COLOR_FG       0xA534U
 #define COLOR_BLUE     0x051FU
 #define COLOR_GREEN    0x7F2FU
+#define COLOR_YELLOW   0xFFEAU
 #define COLOR_RED      0xD104U
 
 static LTDC_HandleTypeDef hltdc;
@@ -42,15 +43,16 @@ typedef enum
 static void BootDisplay_GPIO_Init(void);
 static void BootDisplay_TIM3_Init(void);
 static void BootDisplay_LTDC_Init(void);
+static void BootDisplay_FormatLogLine(char *dst, const char *src);
 static void BootDisplay_PutChar(uint32_t x, uint32_t y, char c, uint16_t fg_color);
 static void BootDisplay_DrawPixel(uint32_t x, uint32_t y, uint16_t color);
-static void BootDisplay_ClearLine(uint32_t row);
 static void BootDisplay_RenderLine(uint32_t row, const char *text, BootDisplayColor_t color, BootDisplayLineMode_t mode);
 static void BootDisplay_ScrollLogArea(void);
 static void BootDisplay_CopyText(char *dst, const char *src);
 static uint16_t BootDisplay_ResolveColor(BootDisplayColor_t color);
 /* 8x16 VGA-style font: 13 rows of glyph + 3 rows blank (built-in line spacing). */
 static const uint8_t font_space[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+static const uint8_t font_ampersand[16] = {0x00,0x00,0x1C,0x22,0x22,0x24,0x18,0x34,0x4A,0x4A,0x44,0x3A,0x00,0x00,0x00,0x00};
 static const uint8_t font_percent[16] = {0x00,0x00,0x00,0x62,0x64,0x08,0x08,0x10,0x10,0x26,0x46,0x00,0x00,0x00,0x00,0x00};
 static const uint8_t font_hash[16] = {0x00,0x00,0x00,0x24,0x24,0x7E,0x24,0x24,0x7E,0x24,0x24,0x00,0x00,0x00,0x00,0x00};
 static const uint8_t font_dot[16] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x18,0x18,0x00,0x00,0x00,0x00};
@@ -99,6 +101,7 @@ static const uint8_t *BootDisplay_GetGlyph(char c)
 {
     switch (c)
     {
+        case '&': return font_ampersand;
         case '%': return font_percent;
         case '#': return font_hash;
         case '.': return font_dot;
@@ -185,6 +188,11 @@ void BootDisplay_WriteLine(uint32_t row, const char *text)
     BootDisplay_RenderLine(row, text, BOOT_DISPLAY_COLOR_NORMAL, BOOT_DISPLAY_LINE_DRAW);
 }
 
+void BootDisplay_WriteLineColor(uint32_t row, const char *text, BootDisplayColor_t color)
+{
+    BootDisplay_RenderLine(row, text, color, BOOT_DISPLAY_LINE_DRAW);
+}
+
 void BootDisplay_Log(const char *text)
 {
     BootDisplay_LogColor(text, BOOT_DISPLAY_COLOR_NORMAL);
@@ -193,10 +201,13 @@ void BootDisplay_Log(const char *text)
 void BootDisplay_LogColor(const char *text, BootDisplayColor_t color)
 {
     uint32_t i;
+    char formatted[TEXT_COLS + 1U];
+
+    BootDisplay_FormatLogLine(formatted, text);
 
     if (log_count < LOG_ROWS)
     {
-        BootDisplay_CopyText(log_lines[log_count], text);
+        BootDisplay_CopyText(log_lines[log_count], formatted);
         log_colors[log_count] = color;
         BootDisplay_RenderLine(log_count,
                                log_lines[log_count],
@@ -212,7 +223,7 @@ void BootDisplay_LogColor(const char *text, BootDisplayColor_t color)
             memcpy(log_lines[i - 1U], log_lines[i], TEXT_COLS + 1U);
             log_colors[i - 1U] = log_colors[i];
         }
-        BootDisplay_CopyText(log_lines[LOG_ROWS - 1U], text);
+        BootDisplay_CopyText(log_lines[LOG_ROWS - 1U], formatted);
         log_colors[LOG_ROWS - 1U] = color;
         BootDisplay_RenderLine(LOG_ROWS - 1U,
                                log_lines[LOG_ROWS - 1U],
@@ -310,7 +321,7 @@ static void BootDisplay_DrawPixel(uint32_t x, uint32_t y, uint16_t color)
     }
 }
 
-static void BootDisplay_ClearLine(uint32_t row)
+void BootDisplay_ClearLine(uint32_t row)
 {
     uint32_t y;
     uint32_t x;
@@ -376,6 +387,30 @@ static void BootDisplay_CopyText(char *dst, const char *src)
     dst[i] = '\0';
 }
 
+static void BootDisplay_FormatLogLine(char *dst, const char *src)
+{
+    uint32_t total_seconds = HAL_GetTick() / 1000U;
+    uint32_t minutes = (total_seconds / 60U) % 100U;
+    uint32_t seconds = total_seconds % 60U;
+    char prefix[8];
+    uint32_t prefix_len;
+    uint32_t i = 0U;
+
+    (void)snprintf(prefix, sizeof(prefix), "%02lu:%02lu  ",
+                   (unsigned long)minutes,
+                   (unsigned long)seconds);
+
+    BootDisplay_CopyText(dst, prefix);
+    prefix_len = (uint32_t)strlen(dst);
+    while ((prefix_len + i) < TEXT_COLS && src[i] != '\0')
+    {
+        dst[prefix_len + i] = src[i];
+        i++;
+    }
+
+    dst[prefix_len + i] = '\0';
+}
+
 /* Convert logical bootloader colors to the RGB565 palette used by the panel. */
 static uint16_t BootDisplay_ResolveColor(BootDisplayColor_t color)
 {
@@ -385,6 +420,8 @@ static uint16_t BootDisplay_ResolveColor(BootDisplayColor_t color)
             return COLOR_BLUE;
         case BOOT_DISPLAY_COLOR_GREEN:
             return COLOR_GREEN;
+        case BOOT_DISPLAY_COLOR_YELLOW:
+            return COLOR_YELLOW;
         case BOOT_DISPLAY_COLOR_RED:
             return COLOR_RED;
         case BOOT_DISPLAY_COLOR_NORMAL:
