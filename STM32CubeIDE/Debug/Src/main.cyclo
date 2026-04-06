@@ -15,7 +15,7 @@
 ../Src/main.c:321:22:UsbReadChunkWithRecovery	7
 ../Src/main.c:374:5:main	2
 ../Src/main.c:395:13:Recovery_Loop	2
-../Src/main.c:416:13:Boot_SelectBootPath	2
+../Src/main.c:416:13:Boot_SelectBootPath	1
 ../Src/main.c:435:13:Boot_SelectAppOrRecovery	2
 ../Src/main.c:463:13:FlashAppInt	13
 ../Src/main.c:581:13:FlashAppOspi	15
