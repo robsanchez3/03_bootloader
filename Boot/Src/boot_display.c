@@ -389,12 +389,22 @@ static void BootDisplay_CopyText(char *dst, const char *src)
 
 static void BootDisplay_FormatLogLine(char *dst, const char *src)
 {
-    uint32_t total_seconds = HAL_GetTick() / 1000U;
-    uint32_t minutes = (total_seconds / 60U) % 100U;
-    uint32_t seconds = total_seconds % 60U;
+    uint32_t total_seconds;
+    uint32_t minutes;
+    uint32_t seconds;
     char prefix[8];
     uint32_t prefix_len;
     uint32_t i = 0U;
+
+    if (src[0] == '\0')
+    {
+        dst[0] = '\0';
+        return;
+    }
+
+    total_seconds = HAL_GetTick() / 1000U;
+    minutes = (total_seconds / 60U) % 100U;
+    seconds = total_seconds % 60U;
 
     (void)snprintf(prefix, sizeof(prefix), "%02lu:%02lu  ",
                    (unsigned long)minutes,

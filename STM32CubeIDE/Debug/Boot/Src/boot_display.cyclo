@@ -14,8 +14,8 @@ C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:324:6:BootDisplay_ClearLine	
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:339:13:BootDisplay_RenderLine	4
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:362:13:BootDisplay_ScrollLogArea	1
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:377:13:BootDisplay_CopyText	3
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:390:13:BootDisplay_FormatLogLine	3
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:415:17:BootDisplay_ResolveColor	5
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:433:13:BootDisplay_GPIO_Init	1
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:456:13:BootDisplay_TIM3_Init	1
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:477:13:BootDisplay_LTDC_Init	1
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:390:13:BootDisplay_FormatLogLine	4
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:425:17:BootDisplay_ResolveColor	5
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:443:13:BootDisplay_GPIO_Init	1
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:466:13:BootDisplay_TIM3_Init	1
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_display.c:487:13:BootDisplay_LTDC_Init	1

@@ -1,0 +1,3 @@
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_crc.c:7:6:BootCrc32_Init	16	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_crc.c:29:10:BootCrc32_Compute	32	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_crc.c:47:6:BootCrc32_DeInit	8	static

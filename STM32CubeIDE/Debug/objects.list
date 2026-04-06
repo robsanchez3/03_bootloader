@@ -1,6 +1,8 @@
+"./Boot/Src/boot_crc.o"
 "./Boot/Src/boot_display.o"
 "./Boot/Src/boot_flash.o"
 "./Boot/Src/boot_jump.o"
+"./Boot/Src/boot_manifest.o"
 "./Boot/Src/boot_ospi.o"
 "./Boot/USB/Src/usb_fs_service.o"
 "./Boot/USB/Src/usb_msc_service.o"

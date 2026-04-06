@@ -15,6 +15,8 @@
 #include "boot_flash.h"
 #include "boot_ospi.h"
 #include "boot_display.h"
+#include "boot_crc.h"
+#include "boot_manifest.h"
 #include "usb_msc_service.h"
 #include "usb_fs_service.h"
 #include "ff.h"
@@ -43,7 +45,7 @@ static void Boot_ShowCountdown(uint32_t row0,
                                uint32_t row2,
                                BootDisplayColor_t color);
 static void Boot_ShowApplicationLaunchCountdown(void);
-static void Boot_ShowProgrammingCountdown(void);
+static void Boot_ShowProgrammingCountdown(const char *ver_line, const char *build_date);
 static void BootDisplay_UpdateProgress(const char *label, uint32_t current, uint32_t total);
 static void BootDisplay_Fail(const char *message, uint8_t clear_progress);
 static void BootDisplay_FlashEraseProgress(uint32_t current, uint32_t total);
@@ -57,8 +59,7 @@ static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total);
 #define USB_UPDATE_DIR_PATH               "0:/UPDATE"
 #define USB_UPDATE_APP_INT_BIN            "0:/UPDATE/app_int.bin"
 #define USB_UPDATE_APP_OSPI_BIN           "0:/UPDATE/app_ospi.bin"
-#define USB_UPDATE_APP_INT_CRC            "0:/UPDATE/app_int.crc"
-#define USB_UPDATE_APP_OSPI_CRC           "0:/UPDATE/app_ospi.crc"
+#define USB_UPDATE_MANIFEST               "0:/UPDATE/manifest.ini"
 
 /* Chunked read configuration */
 #define CHUNKED_READ_BLOCK_SIZE           1048576U /* bytes per open/read/close cycle */
@@ -84,61 +85,6 @@ int _write(int file, char *ptr, int len)
     return len;
 }
 
-/* -----------------------------------------------------------------------
- * CRC32 IEEE 802.3 using STM32 hardware CRC peripheral.
- * ----------------------------------------------------------------------- */
-static CRC_HandleTypeDef hcrc;
-static uint8_t hcrc_initialized = 0U;
-
-static void crc32_hw_init(void)
-{
-    if (hcrc_initialized != 0U)
-    {
-        return;
-    }
-
-    __HAL_RCC_CRC_CLK_ENABLE();
-
-    hcrc.Instance                     = CRC;
-    hcrc.Init.DefaultPolynomialUse    = DEFAULT_POLYNOMIAL_ENABLE;
-    hcrc.Init.DefaultInitValueUse     = DEFAULT_INIT_VALUE_ENABLE;
-    hcrc.Init.InputDataInversionMode  = CRC_INPUTDATA_INVERSION_BYTE;
-    hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_ENABLE;
-    hcrc.InputDataFormat              = CRC_INPUTDATA_FORMAT_BYTES;
-
-    if (HAL_CRC_Init(&hcrc) == HAL_OK)
-    {
-        hcrc_initialized = 1U;
-    }
-}
-
-static uint32_t crc32_update(uint32_t crc, const uint8_t *buf, uint32_t len)
-{
-    uint32_t raw;
-
-    crc32_hw_init();
-
-    if (crc == 0U)
-    {
-        raw = HAL_CRC_Calculate(&hcrc, (uint32_t *)buf, len);
-    }
-    else
-    {
-        raw = HAL_CRC_Accumulate(&hcrc, (uint32_t *)buf, len);
-    }
-
-    return raw ^ 0xFFFFFFFFU;
-}
-
-static void crc32_deinit(void)
-{
-    if (hcrc_initialized != 0U)
-    {
-        HAL_CRC_DeInit(&hcrc);
-        __HAL_RCC_CRC_CLK_DISABLE();
-        hcrc_initialized = 0U;
-    }
-}
 
 static void BootDisplay_EnsureInit(void)
 {
@@ -292,14 +238,20 @@ static void Boot_ShowApplicationLaunchCountdown(void)
     while (1) {} /* TEMPORARY: keep final bootloader screen visible for tests */
 }
 
-static void Boot_ShowProgrammingCountdown(void)
+static void Boot_ShowProgrammingCountdown(const char *ver_line, const char *build_date)
 {
-    Boot_ShowCountdown(27U,
+    BootDisplay_ClearLine(26U);
+    BootDisplay_WriteLineColor(26U, ver_line, BOOT_DISPLAY_COLOR_YELLOW);
+    BootDisplay_ClearLine(27U);
+    BootDisplay_WriteLineColor(27U, build_date, BOOT_DISPLAY_COLOR_YELLOW);
+    Boot_ShowCountdown(25U,
                        "PROGRAMMING STARTS IN 30s",
                        28U,
                        "POWER OFF & REMOVE USB TO SKIP",
                        29U,
                        BOOT_DISPLAY_COLOR_YELLOW);
+    BootDisplay_ClearLine(25U);
+    BootDisplay_ClearLine(26U);
     BootDisplay_ClearLine(27U);
     BootDisplay_ClearLine(28U);
     BootDisplay_ClearLine(29U);
@@ -557,7 +509,7 @@ static void FlashAppInt(uint32_t expected_crc32)
     BootDisplay_Log("VERIFYING INT FLASH...");
     BootDisplay_ClearProgress();
     {
-        uint32_t crc_flash = crc32_update(0U, (const uint8_t *)APP_BASE, file_size);
+        uint32_t crc_flash = BootCrc32_Compute(0U, (const uint8_t *)APP_BASE, file_size);
         BootDisplay_LogColor((crc_flash == expected_crc32) ? "INT FLASH CRC OK" : "INT FLASH CRC FAIL",
                              (crc_flash == expected_crc32) ? BOOT_DISPLAY_COLOR_NORMAL : BOOT_DISPLAY_COLOR_RED);
 
@@ -691,7 +643,7 @@ static void FlashAppOspi(uint32_t expected_crc32)
         BootDisplay_ClearProgress();
         BootDisplay_ShowProgress("VERIFYING OSPI FLASH...", 0U, 1U);
 
-        crc_flash = crc32_update(0U, (const uint8_t *)OCTOSPI1_BASE, file_size);
+        crc_flash = BootCrc32_Compute(0U, (const uint8_t *)OCTOSPI1_BASE, file_size);
 
         /* Re-establish memory-mapped for app, then deinit CRC */
         HAL_OSPI_Abort(BootOspi_GetHandle());
@@ -700,7 +652,7 @@ static void FlashAppOspi(uint32_t expected_crc32)
             BootDisplay_Fail("OSPI VERIFY FAILED", 0U);
             printf("[OSPI] re-enable memory-mapped FAILED\n");
         }
-        crc32_deinit();
+        BootCrc32_DeInit();
 
         printf("[OSPI] CRC32=%08lX  expected=%08lX  %s  (%lu ms)\n",
                (unsigned long)crc_flash,
@@ -740,27 +692,19 @@ static void FlashAppOspi(uint32_t expected_crc32)
 static void UsbProcessUpdate(void)
 {
     UsbFsResult_t mount_result;
-    static const char * const update_paths[4] =
+    static const char * const update_paths[3] =
     {
         USB_UPDATE_APP_INT_BIN,
         USB_UPDATE_APP_OSPI_BIN,
-        USB_UPDATE_APP_INT_CRC,
-        USB_UPDATE_APP_OSPI_CRC
-    };
-    static const char * const crc_paths[2] =
-    {
-        USB_UPDATE_APP_INT_CRC,
-        USB_UPDATE_APP_OSPI_CRC
+        USB_UPDATE_MANIFEST
     };
     uint32_t i;
     UsbFsResult_t stat_result;
     uint8_t all_present;
-    uint8_t crc_read_ok = 1U;
-    uint8_t crc_buf[16];
-    uint32_t bytes_read;
-    UsbFsResult_t read_result;
-    uint32_t expected_crc[2] = { 0U, 0U };
     uint32_t fsize_tmp;
+    BootManifest_t manifest;
+    BootManifestResult_t mresult;
+    char ver_line[48];
 
     printf("[UPDATE] update drive accepted by boot check\n");
     BootDisplay_Log("WAITING FOR USB DRIVE...");
@@ -795,7 +739,7 @@ static void UsbProcessUpdate(void)
     }
 
     all_present = 1U;
-    for (i = 0U; i < 4U; i++)
+    for (i = 0U; i < 3U; i++)
     {
         stat_result = UsbFsService_FileExists(update_paths[i]);
         printf("[UPDATE] %s -> %s\n",
@@ -814,68 +758,101 @@ static void UsbProcessUpdate(void)
         return;
     }
 
+    printf("[UPDATE] all files present\n");
+    BootDisplay_Log("ALL FILES FOUND");
+    BootDisplay_Log("READING MANIFEST...");
+
+    /* Parse manifest and validate its integrity CRC */
+    mresult = BootManifest_LoadAndParse(USB_UPDATE_MANIFEST, &manifest);
+    if (mresult != BOOT_MANIFEST_OK)
+    {
+        const char *err_msg = "MANIFEST ERROR";
+        if (mresult == BOOT_MANIFEST_ERR_INTEGRITY)
+            err_msg = "MANIFEST CRC FAILED";
+        else if (mresult == BOOT_MANIFEST_ERR_PARSE)
+            err_msg = "MANIFEST PARSE FAILED";
+        else if (mresult == BOOT_MANIFEST_ERR_READ)
+            err_msg = "MANIFEST READ FAILED";
+
+        BootDisplay_Fail(err_msg, 0U);
+        printf("[UPDATE] manifest error=%u\n", (unsigned int)mresult);
+        return;
+    }
+
+    BootManifest_Print(&manifest);
+    BootDisplay_Log("MANIFEST OK");
+
+    /* Display version info — strip trailing _x suffix (e.g. V1.R1.P1_b -> V1.R1.P1) */
+    {
+        char sw_short[20];
+        char lib_short[20];
+        char *p;
+
+        strncpy(sw_short, manifest.sw_version, sizeof(sw_short) - 1U);
+        sw_short[sizeof(sw_short) - 1U] = '\0';
+        p = strrchr(sw_short, '_');
+        if (p != NULL) *p = '\0';
+
+        strncpy(lib_short, manifest.o3_lib_version, sizeof(lib_short) - 1U);
+        lib_short[sizeof(lib_short) - 1U] = '\0';
+        p = strrchr(lib_short, '_');
+        if (p != NULL) *p = '\0';
+
+        {
+            char log_line[32];
+            (void)snprintf(log_line, sizeof(log_line), "SW: %s", sw_short);
+            BootDisplay_LogColor(log_line, BOOT_DISPLAY_COLOR_BLUE);
+            (void)snprintf(log_line, sizeof(log_line), "LIB: %s", lib_short);
+            BootDisplay_LogColor(log_line, BOOT_DISPLAY_COLOR_BLUE);
+        }
+
+        (void)snprintf(ver_line, sizeof(ver_line), "SW: %s - LIB: %s",
+                       sw_short, lib_short);
+    }
+
+    /* Validate file sizes against manifest */
     if (UsbFsService_GetFileSize(USB_UPDATE_APP_INT_BIN, &fsize_tmp) == USB_FS_RESULT_OK)
     {
         printf("[UPDATE] %s size=%lu bytes\n", USB_UPDATE_APP_INT_BIN, (unsigned long)fsize_tmp);
+        if (fsize_tmp != manifest.app_int.size)
+        {
+            BootDisplay_Fail("INT FILE SIZE MISMATCH", 0U);
+            printf("[UPDATE] expected=%lu actual=%lu\n",
+                   (unsigned long)manifest.app_int.size, (unsigned long)fsize_tmp);
+            return;
+        }
     }
     if (UsbFsService_GetFileSize(USB_UPDATE_APP_OSPI_BIN, &fsize_tmp) == USB_FS_RESULT_OK)
     {
         printf("[UPDATE] %s size=%lu bytes\n", USB_UPDATE_APP_OSPI_BIN, (unsigned long)fsize_tmp);
-    }
-
-    printf("[UPDATE] all 4 files present\n");
-    BootDisplay_Log("ALL FILES FOUND");
-    BootDisplay_Log("READING CRC FILES...");
-
-    for (i = 0U; i < 2U; i++)
-    {
-        uint32_t k;
-        uint32_t val = 0U;
-
-        bytes_read  = 0U;
-        read_result = UsbFsService_ReadFile(crc_paths[i],
-                                            crc_buf,
-                                            0U,
-                                            sizeof(crc_buf),
-                                            &bytes_read);
-        if (read_result != USB_FS_RESULT_OK)
+        if (fsize_tmp != manifest.app_ospi.size)
         {
-            crc_read_ok = 0U;
-            BootDisplay_Fail("CRC FILE READ FAILED", 0U);
-            printf("[UPDATE] read %s FAILED result=%u fatfs_err=%lu\n",
-                   crc_paths[i],
-                   (unsigned int)read_result,
-                   (unsigned long)UsbFsService_GetLastError());
-            break;
+            BootDisplay_Fail("OSPI FILE SIZE MISMATCH", 0U);
+            printf("[UPDATE] expected=%lu actual=%lu\n",
+                   (unsigned long)manifest.app_ospi.size, (unsigned long)fsize_tmp);
+            return;
         }
-
-        for (k = 0U; k < bytes_read; k++)
-        {
-            uint8_t c = crc_buf[k];
-            if ((c >= '0') && (c <= '9'))
-                val = (val << 4) | (uint32_t)(c - '0');
-            else if ((c >= 'A') && (c <= 'F'))
-                val = (val << 4) | (uint32_t)(c - 'A' + 10);
-            else if ((c >= 'a') && (c <= 'f'))
-                val = (val << 4) | (uint32_t)(c - 'a' + 10);
-            else
-                break;
-        }
-        expected_crc[i] = val;
-        printf("[UPDATE] %s -> 0x%08lX\n",
-               crc_paths[i], (unsigned long)val);
     }
 
-    if (crc_read_ok == 0U)
     {
-        return;
-    }
+        char date_upper[32];
+        uint32_t di;
 
-    Boot_ShowProgrammingCountdown();
+        strncpy(date_upper, manifest.build_date, sizeof(date_upper) - 1U);
+        date_upper[sizeof(date_upper) - 1U] = '\0';
+        for (di = 0U; date_upper[di] != '\0'; di++)
+        {
+            if ((date_upper[di] >= 'a') && (date_upper[di] <= 'z'))
+            {
+                date_upper[di] = date_upper[di] - ('a' - 'A');
+            }
+        }
+        Boot_ShowProgrammingCountdown(ver_line, date_upper);
+    }
 
     /* Program both flashes and jump */
-    FlashAppInt(expected_crc[0]);
-    FlashAppOspi(expected_crc[1]);
+    FlashAppInt(manifest.app_int.crc32);
+    FlashAppOspi(manifest.app_ospi.crc32);
 }
 
 /* -----------------------------------------------------------------------
