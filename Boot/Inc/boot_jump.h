@@ -14,6 +14,25 @@
 #define RAM_TOP           (RAM_END + 1U)
 
 /**
+ * @brief  Store CRC32 and size of both app images in RTC backup registers
+ *         after a successful programming cycle.  Values survive resets.
+ * @param  int_crc32   CRC32 of app_int image in internal flash
+ * @param  int_size    Size in bytes of app_int image
+ * @param  ospi_crc32  CRC32 of app_ospi image in OSPI flash
+ * @param  ospi_size   Size in bytes of app_ospi image
+ */
+void Boot_StoreAppCrc(uint32_t int_crc32, uint32_t int_size,
+                      uint32_t ospi_crc32, uint32_t ospi_size);
+
+/**
+ * @brief  Verify that the app images in flash match the CRC stored in
+ *         backup registers by a previous successful programming cycle.
+ * @retval  1  CRC matches (or no stored CRC — first boot)
+ *          0  CRC mismatch — app is corrupt
+ */
+int Boot_VerifyAppCrc(void);
+
+/**
  * @brief  Check that a valid application is present at app_base.
  *         Verifies that the initial MSP is within RAM and that the
  *         reset vector points within the application flash region.

@@ -1,5 +1,6 @@
 Boot/Src/boot_jump.o: C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c \
- ../../Boot/Inc/boot_jump.h ../Inc/main.h \
+ ../../Boot/Inc/boot_jump.h ../../Boot/Inc/boot_crc.h \
+ ../../Boot/Inc/boot_ospi.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_conf.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_rcc.h \
@@ -52,9 +53,11 @@ Boot/Src/boot_jump.o: C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_cordic.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_exti.h \
  ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_fdcan.h \
- ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h
+ ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h \
+ ../Inc/main.h
 ../../Boot/Inc/boot_jump.h:
-../Inc/main.h:
+../../Boot/Inc/boot_crc.h:
+../../Boot/Inc/boot_ospi.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_conf.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_rcc.h:
@@ -108,3 +111,4 @@ Boot/Src/boot_jump.o: C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_jump.c \
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_exti.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_fdcan.h:
 ../../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_hal_gpu2d.h:
+../Inc/main.h:

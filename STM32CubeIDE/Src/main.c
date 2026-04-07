@@ -34,7 +34,9 @@ static void Recovery_Loop(void);
 static void Boot_SelectBootPath(void);
 static void Boot_SelectAppOrRecovery(void);
 static void FlashAppInt(uint32_t expected_crc32);
-static void FlashAppOspi(uint32_t expected_crc32);
+static void FlashAppOspi(uint32_t expected_crc32,
+                         uint32_t int_crc32, uint32_t int_size,
+                         uint32_t ospi_size);
 static void UsbProcessUpdate(void);
 static uint8_t UsbBootCheck(uint32_t detect_timeout_ms, uint32_t ready_timeout_ms);
 static void BootDisplay_EnsureInit(void);
@@ -351,7 +353,10 @@ static void Recovery_Loop(void)
 
     BootDisplay_EnsureInit();
     BootDisplay_Log("RECOVERY MODE");
-    BootDisplay_Log("NO VALID APP");
+    BootDisplay_LogColor("NO VALID APP", BOOT_DISPLAY_COLOR_RED);
+    BootDisplay_Log("");
+    BootDisplay_LogColor("INSERT UPDATE USB", BOOT_DISPLAY_COLOR_YELLOW);
+    BootDisplay_LogColor("AND REBOOT", BOOT_DISPLAY_COLOR_YELLOW);
 
     while (1)
     {
@@ -372,7 +377,6 @@ static void Boot_SelectBootPath(void)
     if (UsbBootCheck(BOOT_USB_DETECT_TIMEOUT_MS, BOOT_USB_READY_TIMEOUT_MS) != 0U)
     {
         BootDisplay_EnsureInit();
-        BootDisplay_Log("");
         BootDisplay_LogColor("BOOT START", BOOT_DISPLAY_COLOR_BLUE);
         UsbProcessUpdate();
         return;
@@ -396,17 +400,22 @@ static void Boot_SelectAppOrRecovery(void)
 
     if (app_valid != 0U)
     {
+        if (Boot_VerifyAppCrc() == 0)
+        {
+            app_valid = 0U;
+        }
+    }
+
+    if (app_valid != 0U)
+    {
         UsbFsService_Unmount();
         UsbMscService_SetEnabled(0U);
         HAL_Delay(50U);
-        printf("[BOOT] Valid app found -> jump\n");
         Boot_JumpToApplication(APP_BASE);
     }
 
     BootDisplay_EnsureInit();
-    BootDisplay_Log("APP INVALID");
-    BootDisplay_Log("ENTER RECOVERY");
-    printf("[BOOT] No valid app -> recovery loop\n");
+    printf("[BOOT] Recovery mode\n");
     Recovery_Loop();
 }
 
@@ -550,7 +559,9 @@ static void FlashAppInt(uint32_t expected_crc32)
  * FlashAppOspi — Read app_ospi.bin from USB, program OSPI flash, verify,
  *                re-enable memory-mapped mode and decide final app state.
  * ----------------------------------------------------------------------- */
-static void FlashAppOspi(uint32_t expected_crc32)
+static void FlashAppOspi(uint32_t expected_crc32,
+                         uint32_t int_crc32, uint32_t int_size,
+                         uint32_t ospi_size)
 {
     uint8_t * const chunk = io_buf;
     UsbFsResult_t  result;
@@ -709,6 +720,7 @@ static void FlashAppOspi(uint32_t expected_crc32)
     /* Final state: jump only if the resulting application is valid. */
     if (Boot_IsApplicationValid(APP_BASE))
     {
+        Boot_StoreAppCrc(int_crc32, int_size, expected_crc32, ospi_size);
         Boot_ShowApplicationLaunchCountdown();
         printf("[BOOT] app valid -> jumping...\n");
         UsbFsService_Unmount();
@@ -979,9 +991,19 @@ static void UsbProcessUpdate(void)
         Boot_ShowProgrammingCountdown(ver_line, date_upper);
     }
 
-    /* Program both flashes and jump */
+    /* Invalidate stored CRCs before touching flash.  This ensures that if
+     * power is lost at any point during programming, the next boot will see
+     * a valid magic but mismatched CRCs and enter recovery mode.
+     * The correct CRCs are written at the end of FlashAppOspi on success.
+     * This keeps a single path to recovery (CRC mismatch) regardless of
+     * whether the failure is a mid-update power loss or post-update
+     * corruption. */
+    Boot_StoreAppCrc(0U, 0U, 0U, 0U);
+
     FlashAppInt(manifest.app_int.crc32);
-    FlashAppOspi(manifest.app_ospi.crc32);
+    FlashAppOspi(manifest.app_ospi.crc32,
+                 manifest.app_int.crc32, manifest.app_int.size,
+                 manifest.app_ospi.size);
 }
 
 /* -----------------------------------------------------------------------

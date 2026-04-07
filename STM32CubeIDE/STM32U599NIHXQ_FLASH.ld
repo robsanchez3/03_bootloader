@@ -47,7 +47,7 @@ MEMORY
 {
   RAM (xrw)   : ORIGIN = 0x20000000, LENGTH = 2496K
   SRAM4 (xrw) : ORIGIN = 0x28000000, LENGTH = 16K
-  FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = 2048K
+  FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = 120K  /* 128K bootloader minus 8K config page at 0x0801E000 */
 }
 
 /* Sections */
