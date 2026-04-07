@@ -288,10 +288,29 @@ static BootManifestResult_t parse_buf(const uint8_t *buf, uint32_t len,
     }
 
     /* Validate required fields */
-    if ((out->app_int.crc32 == 0U) || (out->app_int.size == 0U) ||
-        (out->app_ospi.crc32 == 0U) || (out->app_ospi.size == 0U) ||
-        (*has_integrity == 0U))
+    if (out->app_int.crc32 == 0U)
     {
+        printf("[MANIFEST] missing [app_int] crc32\n");
+        return BOOT_MANIFEST_ERR_PARSE;
+    }
+    if (out->app_int.size == 0U)
+    {
+        printf("[MANIFEST] missing [app_int] size\n");
+        return BOOT_MANIFEST_ERR_PARSE;
+    }
+    if (out->app_ospi.crc32 == 0U)
+    {
+        printf("[MANIFEST] missing [app_ospi] crc32\n");
+        return BOOT_MANIFEST_ERR_PARSE;
+    }
+    if (out->app_ospi.size == 0U)
+    {
+        printf("[MANIFEST] missing [app_ospi] size\n");
+        return BOOT_MANIFEST_ERR_PARSE;
+    }
+    if (*has_integrity == 0U)
+    {
+        printf("[MANIFEST] missing [integrity] manifest_crc32\n");
         return BOOT_MANIFEST_ERR_PARSE;
     }
 

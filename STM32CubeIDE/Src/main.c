@@ -53,6 +53,7 @@ static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total);
 
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
 #define BOOT_USB_UPDATE_ENABLED           1U
+#define BOOT_PRE_FLASH_CRC_CHECK         1U
 #define BOOT_USB_DETECT_TIMEOUT_MS        1800U
 #define BOOT_USB_READY_TIMEOUT_MS         2500U
 
@@ -871,6 +872,96 @@ static void UsbProcessUpdate(void)
             return;
         }
     }
+
+#if BOOT_PRE_FLASH_CRC_CHECK
+    /* Pre-flash CRC check of app_int.bin — read from USB and verify before
+     * touching any flash.  app_ospi.bin is too large to pre-verify. */
+    BootDisplay_Log("VERIFYING INT BIN CRC...");
+    {
+        uint32_t pre_crc = 0U;
+        uint32_t pre_off = 0U;
+        uint32_t pre_read = 0U;
+
+        while (pre_off < manifest.app_int.size)
+        {
+            uint32_t pre_len = manifest.app_int.size - pre_off;
+            if (pre_len > CHUNKED_READ_BLOCK_SIZE)
+            {
+                pre_len = CHUNKED_READ_BLOCK_SIZE;
+            }
+            if (UsbReadChunkWithRecovery(USB_UPDATE_APP_INT_BIN, io_buf,
+                                         pre_off, pre_len, &pre_read,
+                                         "PRE-CRC") != USB_FS_RESULT_OK)
+            {
+                BootDisplay_Fail("INT BIN READ FAILED", 0U);
+                printf("[UPDATE] pre-CRC read FAILED at offset=%lu\n",
+                       (unsigned long)pre_off);
+                return;
+            }
+            pre_crc = BootCrc32_Compute(pre_crc, io_buf, pre_read);
+            pre_off += pre_read;
+        }
+
+        if (pre_crc != manifest.app_int.crc32)
+        {
+            BootDisplay_Fail("INT BIN CRC MISMATCH", 0U);
+            printf("[UPDATE] app_int.bin CRC=%08lX expected=%08lX\n",
+                   (unsigned long)pre_crc,
+                   (unsigned long)manifest.app_int.crc32);
+            return;
+        }
+        printf("[UPDATE] app_int.bin pre-CRC OK\n");
+        BootDisplay_Log("INT BIN CRC OK");
+    }
+
+    /* Pre-flash CRC check of app_ospi.bin — same approach, slower (~140s). */
+    BootDisplay_Log("VERIFYING OSPI BIN CRC...");
+    BootDisplay_ShowProgress("VERIFYING OSPI BIN CRC...", 0U, manifest.app_ospi.size);
+    {
+        uint32_t pre_crc = 0U;
+        uint32_t pre_off = 0U;
+        uint32_t pre_read = 0U;
+
+        while (pre_off < manifest.app_ospi.size)
+        {
+            uint32_t pre_len = manifest.app_ospi.size - pre_off;
+            if (pre_len > CHUNKED_READ_BLOCK_SIZE)
+            {
+                pre_len = CHUNKED_READ_BLOCK_SIZE;
+            }
+            if (UsbReadChunkWithRecovery(USB_UPDATE_APP_OSPI_BIN, io_buf,
+                                         pre_off, pre_len, &pre_read,
+                                         "PRE-CRC") != USB_FS_RESULT_OK)
+            {
+                BootDisplay_Fail("OSPI BIN READ FAILED", 1U);
+                printf("[UPDATE] pre-CRC read FAILED at offset=%lu\n",
+                       (unsigned long)pre_off);
+                return;
+            }
+            pre_crc = BootCrc32_Compute(pre_crc, io_buf, pre_read);
+            pre_off += pre_read;
+            BootDisplay_UpdateProgress("VERIFYING OSPI BIN CRC...",
+                                       pre_off, manifest.app_ospi.size);
+
+            if (pre_off < manifest.app_ospi.size)
+            {
+                HAL_Delay(CHUNKED_READ_INTER_BLOCK_DELAY_MS);
+            }
+        }
+
+        if (pre_crc != manifest.app_ospi.crc32)
+        {
+            BootDisplay_Fail("OSPI BIN CRC MISMATCH", 1U);
+            printf("[UPDATE] app_ospi.bin CRC=%08lX expected=%08lX\n",
+                   (unsigned long)pre_crc,
+                   (unsigned long)manifest.app_ospi.crc32);
+            return;
+        }
+        printf("[UPDATE] app_ospi.bin pre-CRC OK\n");
+        BootDisplay_Log("OSPI BIN CRC OK");
+        BootDisplay_ClearProgress();
+    }
+#endif
 
     {
         char date_upper[32];
