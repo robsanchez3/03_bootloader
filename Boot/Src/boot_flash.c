@@ -15,7 +15,7 @@
  *   3. Verify each programmed chunk and later verify the full image by CRC. */
 
 /* Convert an absolute flash address to bank + page number. */
-static BootFlashResult_t AddressToPage(uint32_t address, uint32_t *bank, uint32_t *page)
+static BootFlashResult_t BootFlash_AddressToPage(uint32_t address, uint32_t *bank, uint32_t *page)
 {
     if (address >= FLASH_BANK2_BASE)
     {
@@ -39,7 +39,7 @@ static BootFlashResult_t AddressToPage(uint32_t address, uint32_t *bank, uint32_
 BootFlashResult_t BootFlash_EraseAppArea(uint32_t size, BootFlash_ProgressCb_t progress_cb)
 {
     FLASH_EraseInitTypeDef erase_init;
-    uint32_t page_error = 0U;
+    uint32_t page_error;
     uint32_t addr = APP_BASE;
     uint32_t end_addr = APP_BASE + size;
     uint32_t bank;
@@ -67,7 +67,7 @@ BootFlashResult_t BootFlash_EraseAppArea(uint32_t size, BootFlash_ProgressCb_t p
 
     while (addr < end_addr)
     {
-        if (AddressToPage(addr, &bank, &page) != BOOT_FLASH_OK)
+        if (BootFlash_AddressToPage(addr, &bank, &page) != BOOT_FLASH_OK)
         {
             (void)HAL_FLASH_Lock();
             return BOOT_FLASH_ERR_RANGE;

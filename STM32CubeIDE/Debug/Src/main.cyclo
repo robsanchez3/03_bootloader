@@ -14,10 +14,10 @@
 ../Src/main.c:347:13:Recovery_Loop	2
 ../Src/main.c:368:13:Boot_SelectBootPath	2
 ../Src/main.c:387:13:Boot_SelectAppOrRecovery	2
-../Src/main.c:415:13:FlashAppInt	13
-../Src/main.c:533:13:FlashAppOspi	15
-../Src/main.c:692:13:UsbProcessUpdate	20
-../Src/main.c:861:13:SystemPower_Config	2
-../Src/main.c:872:13:SystemClock_Config	3
-../Src/main.c:912:13:MX_GPIO_Init	1
-../Src/main.c:937:6:Error_Handler	1
+../Src/main.c:415:13:FlashAppInt	15
+../Src/main.c:552:13:FlashAppOspi	17
+../Src/main.c:730:13:UsbProcessUpdate	20
+../Src/main.c:899:13:SystemPower_Config	2
+../Src/main.c:910:13:SystemClock_Config	3
+../Src/main.c:950:13:MX_GPIO_Init	1
+../Src/main.c:975:6:Error_Handler	1

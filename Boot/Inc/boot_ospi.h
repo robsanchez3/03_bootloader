@@ -22,9 +22,9 @@ BootOspiResult_t BootOspi_Init(void);
 typedef void (*BootOspi_ProgressCb_t)(uint32_t current, uint32_t total);
 
 /* Erase the required number of 64KB sectors starting at address 0.
- * size: bytes to erase (rounded up to 64KB sectors).
+ * len: bytes to erase (rounded up to 64KB sectors).
  * progress_cb: optional callback called after each sector (NULL to disable). */
-BootOspiResult_t BootOspi_Erase(uint32_t size, BootOspi_ProgressCb_t progress_cb);
+BootOspiResult_t BootOspi_Erase(uint32_t len, BootOspi_ProgressCb_t progress_cb);
 
 /* Program data into OSPI flash.
  * address: offset within OSPI flash (0-based).

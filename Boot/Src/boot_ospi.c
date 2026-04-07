@@ -198,17 +198,17 @@ BootOspiResult_t BootOspi_Init(void)
 }
 
 /* Erase the external flash area needed by the OSPI image, sector by sector. */
-BootOspiResult_t BootOspi_Erase(uint32_t size, BootOspi_ProgressCb_t progress_cb)
+BootOspiResult_t BootOspi_Erase(uint32_t len, BootOspi_ProgressCb_t progress_cb)
 {
     uint32_t address = 0U;
     uint32_t sector  = 0U;
-    uint32_t total_sectors = (size + OSPI_SECTOR_SIZE - 1U) / OSPI_SECTOR_SIZE;
+    uint32_t total_sectors = (len + OSPI_SECTOR_SIZE - 1U) / OSPI_SECTOR_SIZE;
 
     printf("[OSPI] erase %lu sectors (%lu KB)\n",
            (unsigned long)total_sectors,
            (unsigned long)(total_sectors * 64U));
 
-    while (address < size)
+    while (address < len)
     {
         if (MX25LM51245G_WriteEnable(&hospi1, MX25LM51245G_OPI_MODE, MX25LM51245G_STR_TRANSFER) != MX25LM51245G_OK)
         {

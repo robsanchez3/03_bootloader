@@ -438,7 +438,6 @@ static void FlashAppInt(uint32_t expected_crc32)
 
     /* Erase phase. */
     printf("[FLASH] erasing...\n");
-    BootDisplay_Log("ERASING INT FLASH...");
     BootDisplay_ShowProgress("ERASING INT FLASH...", 0U, 1U);
     flash_result = BootFlash_EraseAppArea(file_size, BootDisplay_FlashEraseProgress);
     if (flash_result != BOOT_FLASH_OK)
@@ -473,25 +472,45 @@ static void FlashAppInt(uint32_t expected_crc32)
             return;
         }
 
-        flash_result = BootFlash_Program(APP_BASE + offset, chunk, bytes_read);
-        if (flash_result != BOOT_FLASH_OK)
+        /* Program and verify in 64KB sub-blocks so the display can refresh. */
         {
-            BootDisplay_Fail("INT FLASH WRITE FAILED", 1U);
-            printf("[FLASH] program FAILED at offset=%lu result=%u\n",
-                   (unsigned long)offset, (unsigned int)flash_result);
-            return;
-        }
+            uint32_t sub_off = 0U;
+            while (sub_off < bytes_read)
+            {
+                uint32_t sub_len = bytes_read - sub_off;
+                if (sub_len > 65536U)
+                {
+                    sub_len = 65536U;
+                }
 
-        flash_result = BootFlash_Verify(APP_BASE + offset, chunk, bytes_read);
-        if (flash_result != BOOT_FLASH_OK)
-        {
-            BootDisplay_Fail("INT FLASH VERIFY FAILED", 1U);
-            printf("[FLASH] verify FAILED at offset=%lu\n", (unsigned long)offset);
-            return;
+                flash_result = BootFlash_Program(APP_BASE + offset + sub_off,
+                                                 &chunk[sub_off], sub_len);
+                if (flash_result != BOOT_FLASH_OK)
+                {
+                    BootDisplay_Fail("INT FLASH WRITE FAILED", 1U);
+                    printf("[FLASH] program FAILED at offset=%lu result=%u\n",
+                           (unsigned long)(offset + sub_off), (unsigned int)flash_result);
+                    return;
+                }
+
+                flash_result = BootFlash_Verify(APP_BASE + offset + sub_off,
+                                                &chunk[sub_off], sub_len);
+                if (flash_result != BOOT_FLASH_OK)
+                {
+                    BootDisplay_Fail("INT FLASH VERIFY FAILED", 1U);
+                    printf("[FLASH] verify FAILED at offset=%lu\n",
+                           (unsigned long)(offset + sub_off));
+                    return;
+                }
+
+                sub_off += sub_len;
+                BootDisplay_UpdateProgress("WRITING INT FLASH...",
+                                           offset + sub_off, file_size);
+                HAL_Delay(20U);
+            }
         }
 
         offset += bytes_read;
-        BootDisplay_UpdateProgress("WRITING INT FLASH...", offset, file_size);
 
         printf("[FLASH] %lu / %lu bytes (%lu%%)\n",
                (unsigned long)offset,
@@ -565,7 +584,6 @@ static void FlashAppOspi(uint32_t expected_crc32)
 
     /* Erase phase. */
     printf("[OSPI] erasing...\n");
-    BootDisplay_Log("ERASING OSPI FLASH...");
     BootDisplay_ShowProgress("ERASING OSPI FLASH...", 0U, 1U);
     ospi_result = BootOspi_Erase(file_size, BootDisplay_OspiEraseProgress);
     if (ospi_result != BOOT_OSPI_OK)
@@ -641,9 +659,29 @@ static void FlashAppOspi(uint32_t expected_crc32)
         BootDisplay_Log("OSPI FLASH WRITE DONE");
         BootDisplay_Log("VERIFYING OSPI FLASH...");
         BootDisplay_ClearProgress();
-        BootDisplay_ShowProgress("VERIFYING OSPI FLASH...", 0U, 1U);
+        BootDisplay_ShowProgress("VERIFYING OSPI FLASH...", 0U, file_size);
 
-        crc_flash = BootCrc32_Compute(0U, (const uint8_t *)OCTOSPI1_BASE, file_size);
+        /* CRC could be computed in one call, but chunking in 64KB lets
+         * the LTDC refresh the progress bar between iterations. */
+        {
+            uint32_t crc_off = 0U;
+            crc_flash = 0U;
+            while (crc_off < file_size)
+            {
+                uint32_t crc_len = file_size - crc_off;
+                if (crc_len > 65536U)
+                {
+                    crc_len = 65536U;
+                }
+                crc_flash = BootCrc32_Compute(crc_flash,
+                                              (const uint8_t *)(OCTOSPI1_BASE + crc_off),
+                                              crc_len);
+                crc_off += crc_len;
+                BootDisplay_UpdateProgress("VERIFYING OSPI FLASH...",
+                                           crc_off, file_size);
+                HAL_Delay(20U);
+            }
+        }
 
         /* Re-establish memory-mapped for app, then deinit CRC */
         HAL_OSPI_Abort(BootOspi_GetHandle());

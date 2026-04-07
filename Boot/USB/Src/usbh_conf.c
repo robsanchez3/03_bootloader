@@ -92,17 +92,18 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef *hcdHandle)
     __HAL_RCC_USB_OTG_HS_CLK_ENABLE();
     __HAL_RCC_USBPHYC_CLK_ENABLE();
 
-    if (__HAL_RCC_PWR_IS_CLK_DISABLED())
     {
-        __HAL_RCC_PWR_CLK_ENABLE();
+        uint8_t pwr_was_off = __HAL_RCC_PWR_IS_CLK_DISABLED();
+        if (pwr_was_off)
+        {
+            __HAL_RCC_PWR_CLK_ENABLE();
+        }
         HAL_PWREx_EnableVddUSB();
         HAL_PWREx_EnableUSBHSTranceiverSupply();
-        __HAL_RCC_PWR_CLK_DISABLE();
-    }
-    else
-    {
-        HAL_PWREx_EnableVddUSB();
-        HAL_PWREx_EnableUSBHSTranceiverSupply();
+        if (pwr_was_off)
+        {
+            __HAL_RCC_PWR_CLK_DISABLE();
+        }
     }
 
     HAL_SYSCFG_EnableOTGPHY(SYSCFG_OTG_HS_PHY_ENABLE);

@@ -1,4 +1,4 @@
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_flash.c:18:26:AddressToPage	24	static
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_flash.c:18:26:BootFlash_AddressToPage	24	static
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_flash.c:39:19:BootFlash_EraseAppArea	64	static
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_flash.c:107:19:BootFlash_Program	64	static
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_flash.c:158:19:BootFlash_Verify	32	static
