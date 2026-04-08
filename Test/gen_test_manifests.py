@@ -30,8 +30,8 @@ def crc32(data: bytes) -> int:
 # -------------------------------------------------------------------
 # Reference values from the real manifest
 # -------------------------------------------------------------------
-PRODUCT        = "O3"
-HW_REVISION    = "1"
+PRODUCT        = "O3 interface"
+HW_REVISION    = "edt EVK070027B"
 SW_VERSION     = "V1.R1.P1_b"
 O3_LIB_VERSION = "V0.R0.P0_a"
 BUILD_DATE     = "Apr 6 2026 11:26:51"
@@ -157,13 +157,13 @@ def main():
 
     # 6. Wrong product
     write_manifest(outdir, "06_wrong_product.ini",
-                   "WRONG PRODUCT (product=O4)",
-                   build_manifest(product="O4"))
+                   "MANIFEST FAIL: PRODUCT (product=O3 other)",
+                   build_manifest(product="O3 other"))
 
     # 7. Wrong hw_revision
     write_manifest(outdir, "07_wrong_hw_rev.ini",
-                   "WRONG HW REVISION (hw_revision=99)",
-                   build_manifest(hw_revision="99"))
+                   "MANIFEST FAIL: HW (hw_revision=edt OTHER)",
+                   build_manifest(hw_revision="edt OTHER"))
 
     # --- MANIFEST CRC FAILED ---
 
