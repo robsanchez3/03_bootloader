@@ -53,9 +53,12 @@ static void BootDisplay_Fail(const char *message, uint8_t clear_progress);
 static void BootDisplay_FlashEraseProgress(uint32_t current, uint32_t total);
 static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total);
 
+#define BOOT_VERSION                      "V1.R0.P0"
 #define BOOT_FORCE_INVALID_APP_FOR_TEST   0U
 #define BOOT_USB_UPDATE_ENABLED           1U
 #define BOOT_PRE_FLASH_CRC_CHECK         1U
+#define BOOT_EXPECTED_PRODUCT             "O3 interface"
+#define BOOT_EXPECTED_HW_REVISION        "edt EVK070027B"
 #define BOOT_USB_DETECT_TIMEOUT_MS        1800U
 #define BOOT_USB_READY_TIMEOUT_MS         2500U
 
@@ -238,7 +241,6 @@ static void Boot_ShowApplicationLaunchCountdown(void)
 
     BootDisplay_ClearProgress();
     BootDisplay_LogColor("STARTING APPLICATION...", BOOT_DISPLAY_COLOR_GREEN);
-    while (1) {} /* TEMPORARY: keep final bootloader screen visible for tests */
 }
 
 static void Boot_ShowProgrammingCountdown(const char *ver_line, const char *build_date)
@@ -377,7 +379,8 @@ static void Boot_SelectBootPath(void)
     if (UsbBootCheck(BOOT_USB_DETECT_TIMEOUT_MS, BOOT_USB_READY_TIMEOUT_MS) != 0U)
     {
         BootDisplay_EnsureInit();
-        BootDisplay_LogColor("BOOT START", BOOT_DISPLAY_COLOR_BLUE);
+        BootDisplay_LogColor("edt EVK070027B BOOTLOADER " BOOT_VERSION,
+                             BOOT_DISPLAY_COLOR_BLUE);
         UsbProcessUpdate();
         return;
     }
@@ -755,7 +758,7 @@ static void UsbProcessUpdate(void)
     uint32_t fsize_tmp;
     BootManifest_t manifest;
     BootManifestResult_t mresult;
-    char ver_line[48];
+    char ver_line[56];
 
     printf("[UPDATE] update drive accepted by boot check\n");
     BootDisplay_Log("WAITING FOR USB DRIVE...");
@@ -818,10 +821,10 @@ static void UsbProcessUpdate(void)
     if (mresult != BOOT_MANIFEST_OK)
     {
         const char *err_msg = "MANIFEST ERROR";
-        if (mresult == BOOT_MANIFEST_ERR_INTEGRITY)
+        if (mresult == BOOT_MANIFEST_ERR_PARSE && manifest.error_msg != NULL)
+            err_msg = manifest.error_msg;
+        else if (mresult == BOOT_MANIFEST_ERR_INTEGRITY)
             err_msg = "MANIFEST CRC FAILED";
-        else if (mresult == BOOT_MANIFEST_ERR_PARSE)
-            err_msg = "MANIFEST PARSE FAILED";
         else if (mresult == BOOT_MANIFEST_ERR_READ)
             err_msg = "MANIFEST READ FAILED";
 
@@ -831,6 +834,23 @@ static void UsbProcessUpdate(void)
     }
 
     BootManifest_Print(&manifest);
+
+    /* Validate product and hardware revision */
+    if (strcmp(manifest.product, BOOT_EXPECTED_PRODUCT) != 0)
+    {
+        BootDisplay_Fail("MANIFEST FAIL: PRODUCT", 0U);
+        printf("[UPDATE] product=%s expected=%s\n",
+               manifest.product, BOOT_EXPECTED_PRODUCT);
+        return;
+    }
+    if (strcmp(manifest.hw_revision, BOOT_EXPECTED_HW_REVISION) != 0)
+    {
+        BootDisplay_Fail("MANIFEST FAIL: HW", 0U);
+        printf("[UPDATE] hw_rev=%s expected=%s\n",
+               manifest.hw_revision, BOOT_EXPECTED_HW_REVISION);
+        return;
+    }
+
     BootDisplay_Log("MANIFEST OK");
 
     /* Display version info — strip trailing _x suffix (e.g. V1.R1.P1_b -> V1.R1.P1) */

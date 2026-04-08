@@ -25,14 +25,16 @@ typedef struct
 
 typedef struct
 {
-    char     product[16];
-    uint32_t hw_revision;
+    char     product[20];
+    char     hw_revision[20];
     char     sw_version[20];
     char     o3_lib_version[20];
     char     build_date[32];
 
     BootManifestImage_t app_int;
     BootManifestImage_t app_ospi;
+
+    const char *error_msg;  /* human-readable error detail (NULL when OK) */
 } BootManifest_t;
 
 /**

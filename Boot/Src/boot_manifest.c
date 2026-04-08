@@ -186,7 +186,7 @@ static void parse_kv(Section_t sec, const char *line, uint32_t len,
         if ((val = match_key(line, len, "product", &vlen)) != NULL)
             copy_str(val, vlen, m->product, sizeof(m->product));
         else if ((val = match_key(line, len, "hw_revision", &vlen)) != NULL)
-            parse_uint32_dec(val, vlen, &m->hw_revision);
+            copy_str(val, vlen, m->hw_revision, sizeof(m->hw_revision));
         else if ((val = match_key(line, len, "sw_version", &vlen)) != NULL)
             copy_str(val, vlen, m->sw_version, sizeof(m->sw_version));
         else if ((val = match_key(line, len, "o3_lib_version", &vlen)) != NULL)
@@ -290,27 +290,27 @@ static BootManifestResult_t parse_buf(const uint8_t *buf, uint32_t len,
     /* Validate required fields */
     if (out->app_int.crc32 == 0U)
     {
-        printf("[MANIFEST] missing [app_int] crc32\n");
+        out->error_msg = "MANIFEST FAIL: INT CRC";
         return BOOT_MANIFEST_ERR_PARSE;
     }
     if (out->app_int.size == 0U)
     {
-        printf("[MANIFEST] missing [app_int] size\n");
+        out->error_msg = "MANIFEST FAIL: INT SIZE";
         return BOOT_MANIFEST_ERR_PARSE;
     }
     if (out->app_ospi.crc32 == 0U)
     {
-        printf("[MANIFEST] missing [app_ospi] crc32\n");
+        out->error_msg = "MANIFEST FAIL: OSPI CRC";
         return BOOT_MANIFEST_ERR_PARSE;
     }
     if (out->app_ospi.size == 0U)
     {
-        printf("[MANIFEST] missing [app_ospi] size\n");
+        out->error_msg = "MANIFEST FAIL: OSPI SIZE";
         return BOOT_MANIFEST_ERR_PARSE;
     }
     if (*has_integrity == 0U)
     {
-        printf("[MANIFEST] missing [integrity] manifest_crc32\n");
+        out->error_msg = "MANIFEST FAIL: INTEGRITY";
         return BOOT_MANIFEST_ERR_PARSE;
     }
 
@@ -379,8 +379,8 @@ BootManifestResult_t BootManifest_LoadAndParse(const char *path,
 
 void BootManifest_Print(const BootManifest_t *m)
 {
-    printf("[MANIFEST] product=%s  hw_rev=%lu\n",
-           m->product, (unsigned long)m->hw_revision);
+    printf("[MANIFEST] product=%s  hw_rev=%s\n",
+           m->product, m->hw_revision);
     printf("[MANIFEST] sw_version=%s\n", m->sw_version);
     printf("[MANIFEST] o3_lib_version=%s\n", m->o3_lib_version);
     printf("[MANIFEST] build_date=%s\n", m->build_date);

@@ -111,8 +111,6 @@ void Boot_StoreAppCrc(uint32_t int_crc32, uint32_t int_size,
 
 int Boot_VerifyAppCrc(void)
 {
-    uint32_t computed_crc;
-
     if (boot_cfg->magic != BOOT_CFG_MAGIC)
     {
         printf("[BOOT] No stored CRC: skip verify\n");
@@ -134,14 +132,16 @@ int Boot_VerifyAppCrc(void)
      * Boot_StoreAppCrc(0,0,0,0) invalidation before programming already
      * covers incomplete updates via the size==0 check above.
      * Disable only if boot time is ultra-critical (<50ms). */
-    computed_crc = BootCrc32_Compute(0U, (const uint8_t *)APP_BASE,
-                                    boot_cfg->int_size);
+    {
+    uint32_t computed_crc = BootCrc32_Compute(0U, (const uint8_t *)APP_BASE,
+                                              boot_cfg->int_size);
     if (computed_crc != boot_cfg->int_crc32)
     {
         printf("[BOOT] CRC verify: int FAIL (computed=%08lX stored=%08lX)\n",
                (unsigned long)computed_crc,
                (unsigned long)boot_cfg->int_crc32);
         return 0;
+    }
     }
 #endif
 
@@ -167,8 +167,9 @@ int Boot_VerifyAppCrc(void)
         return 0;
     }
 
-    computed_crc = BootCrc32_Compute(0U, (const uint8_t *)OCTOSPI1_BASE,
-                                    boot_cfg->ospi_size);
+    {
+    uint32_t computed_crc = BootCrc32_Compute(0U, (const uint8_t *)OCTOSPI1_BASE,
+                                              boot_cfg->ospi_size);
 
     /* Deinit OSPI so the app can reinitialize it from a clean state */
     HAL_OSPI_Abort(BootOspi_GetHandle());
@@ -180,6 +181,7 @@ int Boot_VerifyAppCrc(void)
                (unsigned long)computed_crc,
                (unsigned long)boot_cfg->ospi_crc32);
         return 0;
+    }
     }
 
     printf("[BOOT] CRC verify: int OK, ospi OK\n");
