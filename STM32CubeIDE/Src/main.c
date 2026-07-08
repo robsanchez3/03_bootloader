@@ -37,7 +37,7 @@ static void FlashAppInt(uint32_t expected_crc32);
 static void FlashAppOspi(uint32_t expected_crc32,
                          uint32_t int_crc32, uint32_t int_size,
                          uint32_t ospi_size);
-static void UsbProcessUpdate(void);
+static uint8_t UsbProcessUpdate(void);
 static uint8_t UsbBootCheck(uint32_t detect_timeout_ms, uint32_t ready_timeout_ms);
 static void BootDisplay_EnsureInit(void);
 static void Boot_ShowCountdown(uint32_t row0,
@@ -378,11 +378,11 @@ static void Boot_SelectBootPath(void)
 #if BOOT_USB_UPDATE_ENABLED
     if (UsbBootCheck(BOOT_USB_DETECT_TIMEOUT_MS, BOOT_USB_READY_TIMEOUT_MS) != 0U)
     {
-        BootDisplay_EnsureInit();
-        BootDisplay_LogColor("edt EVK070027B BOOTLOADER " BOOT_VERSION,
-                             BOOT_DISPLAY_COLOR_BLUE);
-        UsbProcessUpdate();
-        return;
+        if (UsbProcessUpdate() != 0U)
+        {
+            return;
+        }
+        /* UPDATE directory not found on USB — fall through to normal boot */
     }
 #endif
 
@@ -743,7 +743,7 @@ static void FlashAppOspi(uint32_t expected_crc32,
  * UsbProcessUpdate — Process the update flow for a USB drive that is already
  *                    connected and ready after the silent boot check.
  * ----------------------------------------------------------------------- */
-static void UsbProcessUpdate(void)
+static uint8_t UsbProcessUpdate(void)
 {
     UsbFsResult_t mount_result;
     static const char * const update_paths[3] =
@@ -760,22 +760,36 @@ static void UsbProcessUpdate(void)
     BootManifestResult_t mresult;
     char ver_line[56];
 
-    printf("[UPDATE] update drive accepted by boot check\n");
-    BootDisplay_Log("WAITING FOR USB DRIVE...");
-    BootDisplay_Log("USB DRIVE DETECTED");
-    printf("[UPDATE] USB state: %s\n", UsbMscService_GetStateName());
-    printf("[UPDATE] MSC ready -> mounting\n");
+    printf("[UPDATE] USB drive ready, mounting to check for UPDATE directory\n");
     mount_result = UsbFsService_Mount();
 
     if (mount_result != USB_FS_RESULT_OK)
     {
+        BootDisplay_EnsureInit();
+        BootDisplay_LogColor("edt EVK070027B BOOTLOADER " BOOT_VERSION,
+                             BOOT_DISPLAY_COLOR_BLUE);
         BootDisplay_Fail("USB MOUNT FAILED", 0U);
         printf("[UPDATE] f_mount FAILED result=%u fatfs_err=%lu\n",
                (unsigned int)mount_result,
                (unsigned long)UsbFsService_GetLastError());
-        return;
+        return 1U;
     }
 
+    /* If UPDATE directory is absent this is a plain USB drive — boot normally */
+    if (UsbFsService_FileExists(USB_UPDATE_DIR_PATH) != USB_FS_RESULT_OK)
+    {
+        printf("[UPDATE] UPDATE directory not found, continuing normal boot\n");
+        UsbFsService_Unmount();
+        UsbMscService_SetEnabled(0U);
+        return 0U;
+    }
+
+    /* UPDATE directory found — enter update mode */
+    BootDisplay_EnsureInit();
+    BootDisplay_LogColor("edt EVK070027B BOOTLOADER " BOOT_VERSION,
+                         BOOT_DISPLAY_COLOR_BLUE);
+    BootDisplay_Log("USB DRIVE DETECTED");
+    printf("[UPDATE] USB state: %s\n", UsbMscService_GetStateName());
     printf("[UPDATE] f_mount OK\n");
     BootDisplay_Log("USB DRIVE MOUNTED");
     BootDisplay_Log("CHECKING UPDATE FILES...");
@@ -809,7 +823,7 @@ static void UsbProcessUpdate(void)
     {
         BootDisplay_Fail("UPDATE FILES MISSING", 0U);
         printf("[UPDATE] one or more files missing\n");
-        return;
+        return 1U;
     }
 
     printf("[UPDATE] all files present\n");
@@ -830,7 +844,7 @@ static void UsbProcessUpdate(void)
 
         BootDisplay_Fail(err_msg, 0U);
         printf("[UPDATE] manifest error=%u\n", (unsigned int)mresult);
-        return;
+        return 1U;
     }
 
     BootManifest_Print(&manifest);
@@ -841,14 +855,14 @@ static void UsbProcessUpdate(void)
         BootDisplay_Fail("MANIFEST FAIL: PRODUCT", 0U);
         printf("[UPDATE] product=%s expected=%s\n",
                manifest.product, BOOT_EXPECTED_PRODUCT);
-        return;
+        return 1U;
     }
     if (strcmp(manifest.hw_revision, BOOT_EXPECTED_HW_REVISION) != 0)
     {
         BootDisplay_Fail("MANIFEST FAIL: HW", 0U);
         printf("[UPDATE] hw_rev=%s expected=%s\n",
                manifest.hw_revision, BOOT_EXPECTED_HW_REVISION);
-        return;
+        return 1U;
     }
 
     BootDisplay_Log("MANIFEST OK");
@@ -890,7 +904,7 @@ static void UsbProcessUpdate(void)
             BootDisplay_Fail("INT FILE SIZE MISMATCH", 0U);
             printf("[UPDATE] expected=%lu actual=%lu\n",
                    (unsigned long)manifest.app_int.size, (unsigned long)fsize_tmp);
-            return;
+            return 1U;
         }
     }
     if (UsbFsService_GetFileSize(USB_UPDATE_APP_OSPI_BIN, &fsize_tmp) == USB_FS_RESULT_OK)
@@ -901,7 +915,7 @@ static void UsbProcessUpdate(void)
             BootDisplay_Fail("OSPI FILE SIZE MISMATCH", 0U);
             printf("[UPDATE] expected=%lu actual=%lu\n",
                    (unsigned long)manifest.app_ospi.size, (unsigned long)fsize_tmp);
-            return;
+            return 1U;
         }
     }
 
@@ -928,7 +942,7 @@ static void UsbProcessUpdate(void)
                 BootDisplay_Fail("INT BIN READ FAILED", 0U);
                 printf("[UPDATE] pre-CRC read FAILED at offset=%lu\n",
                        (unsigned long)pre_off);
-                return;
+                return 1U;
             }
             pre_crc = BootCrc32_Compute(pre_crc, io_buf, pre_read);
             pre_off += pre_read;
@@ -940,7 +954,7 @@ static void UsbProcessUpdate(void)
             printf("[UPDATE] app_int.bin CRC=%08lX expected=%08lX\n",
                    (unsigned long)pre_crc,
                    (unsigned long)manifest.app_int.crc32);
-            return;
+            return 1U;
         }
         printf("[UPDATE] app_int.bin pre-CRC OK\n");
         BootDisplay_Log("INT BIN CRC OK");
@@ -968,7 +982,7 @@ static void UsbProcessUpdate(void)
                 BootDisplay_Fail("OSPI BIN READ FAILED", 1U);
                 printf("[UPDATE] pre-CRC read FAILED at offset=%lu\n",
                        (unsigned long)pre_off);
-                return;
+                return 1U;
             }
             pre_crc = BootCrc32_Compute(pre_crc, io_buf, pre_read);
             pre_off += pre_read;
@@ -987,7 +1001,7 @@ static void UsbProcessUpdate(void)
             printf("[UPDATE] app_ospi.bin CRC=%08lX expected=%08lX\n",
                    (unsigned long)pre_crc,
                    (unsigned long)manifest.app_ospi.crc32);
-            return;
+            return 1U;
         }
         printf("[UPDATE] app_ospi.bin pre-CRC OK\n");
         BootDisplay_Log("OSPI BIN CRC OK");
@@ -1024,6 +1038,7 @@ static void UsbProcessUpdate(void)
     FlashAppOspi(manifest.app_ospi.crc32,
                  manifest.app_int.crc32, manifest.app_int.size,
                  manifest.app_ospi.size);
+    return 1U;
 }
 
 /* -----------------------------------------------------------------------
