@@ -16,8 +16,8 @@
 ../Src/main.c:395:13:Boot_SelectAppOrRecovery	16	static
 ../Src/main.c:428:13:FlashAppInt	64	static
 ../Src/main.c:565:13:FlashAppOspi	88	static
-../Src/main.c:746:13:UsbProcessUpdate	424	static
-../Src/main.c:1032:13:SystemPower_Config	8	static
-../Src/main.c:1043:13:SystemClock_Config	128	static
-../Src/main.c:1083:13:MX_GPIO_Init	40	static
-../Src/main.c:1108:6:Error_Handler	4	static,ignoring_inline_asm
+../Src/main.c:746:16:UsbProcessUpdate	424	static
+../Src/main.c:1047:13:SystemPower_Config	8	static
+../Src/main.c:1058:13:SystemClock_Config	128	static
+../Src/main.c:1098:13:MX_GPIO_Init	40	static
+../Src/main.c:1123:6:Error_Handler	4	static,ignoring_inline_asm
