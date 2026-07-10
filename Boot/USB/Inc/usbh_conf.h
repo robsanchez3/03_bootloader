@@ -29,7 +29,11 @@ extern "C" {
    hacks resubmitted in-flight transfers and corrupted the BOT protocol
    at 160 MHz. */
 #define USBH_IN_NAK_PROCESS            1U
-#define USBH_NAK_SOF_COUNT             20U
+/* Pacing of software IN-NAK resubmission (units: SOF ticks, 125 µs in HS).
+   20 meant a 2.5 ms stall per NAKed 512-byte packet — flash drives NAK
+   routinely while streaming from NAND, which capped reads at a few
+   hundred KB/s. 1 retries on the next microframe (~125-250 µs). */
+#define USBH_NAK_SOF_COUNT             1U
 #define USBH_USE_OS                    0U
 #define BOOT_USB_ST_TRACE_VERBOSE      0U
 

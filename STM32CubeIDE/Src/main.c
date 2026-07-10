@@ -74,7 +74,6 @@ static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total);
 /* Chunked read configuration */
 #define CHUNKED_READ_BLOCK_SIZE           1048576U /* bytes per open/read/close cycle */
 #define CHUNKED_READ_MAX_RETRIES          20U      /* retries per block on failure    */
-#define CHUNKED_READ_INTER_BLOCK_DELAY_MS 500U     /* pause between blocks            */
 
 /* Single shared IO buffer — used by FlashAppInt and FlashAppOspi.
  * These functions never run concurrently so one buffer is sufficient.
@@ -196,7 +195,7 @@ static void Boot_ShowCountdown(uint32_t row0,
                                BootDisplayColor_t color)
 {
     uint32_t elapsed;
-    uint32_t duration = 30U;
+    uint32_t duration = 15U;
     char line[32];
     char bar[11];
     uint32_t i;
@@ -256,7 +255,7 @@ static void Boot_ShowProgrammingCountdown(const char *ver_line, const char *buil
     BootDisplay_ClearLine(27U);
     BootDisplay_WriteLineColor(27U, build_date, BOOT_DISPLAY_COLOR_YELLOW);
     Boot_ShowCountdown(25U,
-                       "PROGRAMMING STARTS IN 30s",
+                       "PROGRAMMING STARTS IN 15s",
                        28U,
                        "POWER OFF & REMOVE USB TO SKIP",
                        29U,
@@ -339,11 +338,24 @@ int main(void)
     HAL_Init();
     __HAL_RCC_PWR_CLK_ENABLE();
     SystemPower_Config();
-    if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE2) != HAL_OK)
+    /* Voltage scaling is handled inside SystemClock_Config (scale 1,
+       required for 160 MHz). */
+    SystemClock_Config();
+
+    /* Instruction cache (1-way, mirroring the application project).
+       Essential at 160 MHz with FLASH_LATENCY_4: without it every
+       instruction fetch pays the full flash latency — measured impact:
+       the software CRC32+SHA-256 pre-check ran at ~2.5 s/MB of pure CPU
+       time, dominating the USB verification pass. */
+    if (HAL_ICACHE_ConfigAssociativityMode(ICACHE_1WAY) != HAL_OK)
     {
         Error_Handler();
     }
-    SystemClock_Config();
+    if (HAL_ICACHE_Enable() != HAL_OK)
+    {
+        Error_Handler();
+    }
+
     MX_GPIO_Init();
 
     printf("BL start\n");
@@ -536,10 +548,6 @@ static void FlashAppInt(uint32_t expected_crc32)
                (unsigned long)file_size,
                (unsigned long)((offset * 100U) / file_size));
 
-        if (offset < file_size)
-        {
-            HAL_Delay(CHUNKED_READ_INTER_BLOCK_DELAY_MS);
-        }
     }
 
     /* Verify phase. */
@@ -651,15 +659,12 @@ static void FlashAppOspi(uint32_t expected_crc32,
         offset += bytes_read;
         BootDisplay_UpdateProgress("WRITING OSPI FLASH...", offset, file_size);
 
-        printf("[OSPI] %lu / %lu bytes (%lu%%)\n",
+        printf("[OSPI] %lu / %lu bytes (%lu%%) t=%lums\n",
                (unsigned long)offset,
                (unsigned long)file_size,
-               (unsigned long)((offset * 100U) / file_size));
+               (unsigned long)((offset * 100U) / file_size),
+               (unsigned long)HAL_GetTick());
 
-        if (offset < file_size)
-        {
-            HAL_Delay(CHUNKED_READ_INTER_BLOCK_DELAY_MS);
-        }
     }
 
     uint32_t elapsed = HAL_GetTick() - t_start;
@@ -1047,9 +1052,13 @@ static uint8_t UsbProcessUpdate(void)
             BootDisplay_UpdateProgress("VERIFYING OSPI BIN CRC...",
                                        pre_off, manifest.app_ospi.size);
 
-            if (pre_off < manifest.app_ospi.size)
+            /* Throughput telemetry: one line per MB with wall-clock time,
+               to pinpoint where USB read time actually goes. */
+            if ((pre_off % (1024U * 1024U)) == 0U)
             {
-                HAL_Delay(CHUNKED_READ_INTER_BLOCK_DELAY_MS);
+                printf("[PRE-CRC] ospi %lu KB t=%lums\n",
+                       (unsigned long)(pre_off / 1024U),
+                       (unsigned long)HAL_GetTick());
             }
         }
 

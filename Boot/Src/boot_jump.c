@@ -250,6 +250,13 @@ void Boot_JumpToApplication(uint32_t app_base)
 
     printf("[BOOT] Jump to app\n");
 
+    /* Hand the ICACHE over disabled: the application's MX_ICACHE_Init()
+       calls HAL_ICACHE_ConfigAssociativityMode(), which requires the cache
+       to be disabled — if the bootloader leaves it enabled the app hits
+       Error_Handler() at startup and hangs right after the jump. */
+    (void)HAL_ICACHE_Disable();
+    (void)HAL_ICACHE_Invalidate();
+
     __disable_irq();
     Boot_DisableAllInterrupts();
 

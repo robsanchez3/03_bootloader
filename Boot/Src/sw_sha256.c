@@ -3,6 +3,12 @@
    (see Plan_Cifrado_Bootloader.txt). Streaming API so large files can be
    hashed directly from FatFS reads without loading them fully into RAM. */
 
+/* Bootloader-only addition: this project builds with -O0 (Debug), which
+   makes SHA-256 cost ~2.4 s per MB at 160 MHz — it dominated the 17.5 MB
+   manifest.sig verification pass (measured). Force optimization for this
+   file regardless of the build configuration. */
+#pragma GCC optimize ("O2")
+
 #include "sw_sha256.h"
 #include <string.h>
 
