@@ -128,6 +128,20 @@ typedef struct _MSC_Process
 }
 MSC_HandleTypeDef;
 
+/* Diagnostic snapshot of the last USBH_MSC_Read failure, captured BEFORE the
+   state machine is reset (project addition — the reset in the fail paths wipes
+   unit/hbot state, so logging after USBH_MSC_Read() returns always shows
+   IDLE/SEND_CBW/CMD_SEND and carries no information). */
+typedef struct
+{
+  uint8_t  timed_out;   /* 1 = read timed out stuck in BUSY; 0 = BOT error path */
+  uint8_t  unit_state;  /* MSC_STATETypeDef at failure                          */
+  uint8_t  bot_state;   /* BOT_StateTypeDef at failure                          */
+  uint8_t  cmd_state;   /* BOT_CMDStateTypeDef at failure                       */
+  uint32_t elapsed_ms;  /* time spent inside USBH_MSC_Read (HAL_GetTick based)  */
+}
+USBH_MSC_ErrInfoTypeDef;
+
 
 /**
   * @}
@@ -165,6 +179,9 @@ MSC_HandleTypeDef;
   */
 extern USBH_ClassTypeDef  USBH_msc;
 #define USBH_MSC_CLASS    &USBH_msc
+
+/* Last read-failure diagnostics (see USBH_MSC_ErrInfoTypeDef above). */
+extern USBH_MSC_ErrInfoTypeDef USBH_MSC_LastErr;
 
 /**
   * @}

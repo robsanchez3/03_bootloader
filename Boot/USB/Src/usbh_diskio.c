@@ -53,10 +53,22 @@ static DSTATUS USBH_status(BYTE lun)
     return 0;
 }
 
+/* Cap per-BOT-transfer size: FatFs may request very large multi-sector reads
+   (a 1 MB chunk over contiguous clusters arrives as a single 2048-sector call,
+   i.e. one 1 MB READ(10)). A transient link error anywhere in that burst kills
+   the whole transfer. 128 sectors (64 KB @ 512 B) shrinks the exposure window
+   ~16x and makes retries cheap. */
+#define USBH_READ_MAX_SECTORS    128U
+
+/* Local retries of a failed sub-read before escalating to the caller
+   (which triggers the full ForceRestart + re-enumeration recovery). */
+#define USBH_READ_LOCAL_RETRIES  3U
+
 static DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
     USBH_StatusTypeDef status;
     MSC_HandleTypeDef *msc;
+    UINT block_size;
 
     if (hUsbHostHS.pActiveClass == NULL)
     {
@@ -70,28 +82,83 @@ static DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 
     msc = (MSC_HandleTypeDef *)hUsbHostHS.pActiveClass->pData;
 
-    if (msc->unit[lun].state != MSC_IDLE)
+    block_size = (UINT)msc->unit[lun].capacity.block_size;
+    if (block_size == 0U)
     {
-        msc->unit[lun].state = MSC_IDLE;
-        msc->hbot.state      = BOT_SEND_CBW;
-        msc->hbot.cmd_state  = BOT_CMD_SEND;
+        block_size = 512U;
     }
 
-    status = USBH_MSC_Read(&hUsbHostHS, lun, sector, buff, count);
-
-    if (status == USBH_OK)
+    while (count > 0U)
     {
-        return RES_OK;
+        UINT n = (count > USBH_READ_MAX_SECTORS) ? USBH_READ_MAX_SECTORS : count;
+        UINT attempt;
+
+        for (attempt = 0U; ; attempt++)
+        {
+            if (msc->unit[lun].state != MSC_IDLE)
+            {
+                msc->unit[lun].state = MSC_IDLE;
+                msc->hbot.state      = BOT_SEND_CBW;
+                msc->hbot.cmd_state  = BOT_CMD_SEND;
+            }
+
+            status = USBH_MSC_Read(&hUsbHostHS, lun, sector, buff, n);
+            if (status == USBH_OK)
+            {
+                break;
+            }
+
+            /* USBH_MSC_LastErr holds the pre-reset state machine snapshot. */
+            printf("[DISKIO] t=%lums FAIL sector=%lu n=%u try=%u/%u %s "
+                   "unit=%u bot=%u cmd=%u el=%lums PortEnabled=%u\n",
+                   (unsigned long)HAL_GetTick(),
+                   (unsigned long)sector,
+                   (unsigned int)n,
+                   (unsigned int)(attempt + 1U),
+                   (unsigned int)(USBH_READ_LOCAL_RETRIES + 1U),
+                   (USBH_MSC_LastErr.timed_out != 0U) ? "TIMEOUT" : "BOTERR",
+                   (unsigned int)USBH_MSC_LastErr.unit_state,
+                   (unsigned int)USBH_MSC_LastErr.bot_state,
+                   (unsigned int)USBH_MSC_LastErr.cmd_state,
+                   (unsigned long)USBH_MSC_LastErr.elapsed_ms,
+                   (unsigned int)hUsbHostHS.device.PortEnabled);
+
+            /* HAL-level channel diagnostics: where exactly are the bulk
+               pipes stuck? (HC state: 1=XFRC 2=HALTED 3=NAK 5=STALL
+               6=XACTERR 7=BBLERR 8=DATATGLERR; URB: 0=IDLE 1=DONE
+               2=NOTREADY 3=NYET 4=ERROR 5=STALL — see HCD_HCStateTypeDef
+               and HCD_URBStateTypeDef.) */
+            {
+                HCD_HandleTypeDef *hhcd = (HCD_HandleTypeDef *)hUsbHostHS.pData;
+                printf("[DISKIO]   IN pipe %u: hc_state=%u urb=%u xfer=%lu | "
+                       "OUT pipe %u: hc_state=%u urb=%u\n",
+                       (unsigned int)msc->InPipe,
+                       (unsigned int)HAL_HCD_HC_GetState(hhcd, msc->InPipe),
+                       (unsigned int)HAL_HCD_HC_GetURBState(hhcd, msc->InPipe),
+                       (unsigned long)HAL_HCD_HC_GetXferCount(hhcd, msc->InPipe),
+                       (unsigned int)msc->OutPipe,
+                       (unsigned int)HAL_HCD_HC_GetState(hhcd, msc->OutPipe),
+                       (unsigned int)HAL_HCD_HC_GetURBState(hhcd, msc->OutPipe));
+            }
+
+            if (hUsbHostHS.device.PortEnabled == 0U)
+            {
+                return RES_ERROR;   /* link down — local retry is pointless */
+            }
+            if (attempt >= USBH_READ_LOCAL_RETRIES)
+            {
+                return RES_ERROR;   /* escalate to caller's full recovery */
+            }
+
+            HAL_Delay(5U);          /* let the drive settle before retrying */
+        }
+
+        sector += n;
+        buff   += n * block_size;
+        count  -= n;
     }
 
-    printf("[DISKIO] FAIL sector=%lu lun=%u bot=%u cmd=%u PortEnabled=%u\n",
-           (unsigned long)sector,
-           (unsigned int)msc->unit[lun].state,
-           (unsigned int)msc->hbot.state,
-           (unsigned int)msc->hbot.cmd_state,
-           (unsigned int)hUsbHostHS.device.PortEnabled);
-
-    return RES_ERROR;
+    return RES_OK;
 }
 
 static DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)

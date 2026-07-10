@@ -191,6 +191,15 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     hhcd_USB_OTG_HS.Instance = USB_OTG_HS;
     hhcd_USB_OTG_HS.Init.Host_channels = 16;
     hhcd_USB_OTG_HS.Init.speed = HCD_SPEED_HIGH;
+    /* FIFO (slave) mode, matching the application's ACTUAL working config
+       (STM32CubeIDE/USB_Host/Target/usbh_conf.c: "FIFO mode: avoids DMA
+       alignment issues on BULK OUT"). Two failed configs, for the record:
+       - 16 MHz CPU + FIFO: CPU can't service HS bulk FIFOs -> ~20-30 KB/s
+         + periodic wedged BOT error recovery (the original 20-min updates).
+       - DMA (at 16 or 160 MHz): with 16 MHz enumeration never completes;
+         at 160 MHz transfers hang in DATA_IN/CSW wait states.
+       The real fix was raising SYSCLK to 160 MHz (see SystemClock_Config
+       in main.c); at 160 MHz FIFO mode services HS transfers fine. */
     hhcd_USB_OTG_HS.Init.dma_enable = DISABLE;
     hhcd_USB_OTG_HS.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
     hhcd_USB_OTG_HS.Init.Sof_enable = ENABLE;

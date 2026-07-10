@@ -18,6 +18,16 @@ extern "C" {
 #define USBH_MAX_SIZE_CONFIGURATION    256U
 #define USBH_MAX_DATA_BUFFER           512U
 #define USBH_DEBUG_LEVEL               0U
+/* 1U = official ST NAK-process: bulk IN transfers are re-submitted by
+   software (NakTimer/USBH_NAK_SOF_COUNT paced) when the device NAKs.
+   Empirically REQUIRED in this bare-metal polling bootloader: with 0U
+   (stock BOT relying on the HAL's hardware channel auto-reactivation)
+   bulk IN never completed here — not even sector 0 — while control and
+   bulk OUT worked. NOTE: the old custom BOT hacks (resend on URB_IDLE)
+   that used to accompany this flag were REMOVED (usbh_msc_bot.c is now
+   the stock/app copy, which implements NAK-process officially); those
+   hacks resubmitted in-flight transfers and corrupted the BOT protocol
+   at 160 MHz. */
 #define USBH_IN_NAK_PROCESS            1U
 #define USBH_NAK_SOF_COUNT             20U
 #define USBH_USE_OS                    0U

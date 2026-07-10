@@ -46,6 +46,16 @@ EndBSPDependencies */
 #include <stdio.h>
 #include "stm32u5xx_hal.h"
 
+/* Read timeout in wall-clock ms (HAL_GetTick), NOT SOF ticks — phost->Timer
+   ticks every 125 µs in HS but every 1 ms in FS, so a tick-based timeout
+   changes 8x with link speed. A healthy <=64 KB read completes in ~1 ms;
+   a drive stalling for internal housekeeping recovers well under 2 s or
+   never. (Project change: was 10 s in SOF ticks.) */
+#define MSC_READ_TIMEOUT_MS  2000U
+
+/* Last read-failure diagnostics, captured before the state-machine reset. */
+USBH_MSC_ErrInfoTypeDef USBH_MSC_LastErr;
+
 
 /** @addtogroup USBH_LIB
   * @{
@@ -864,14 +874,20 @@ USBH_StatusTypeDef USBH_MSC_Read(USBH_HandleTypeDef *phost,
 
   (void)USBH_MSC_SCSI_Read(phost, lun, address, pbuf, length);
 
-  timeout = phost->Timer;
+  timeout = HAL_GetTick();
 
   while ((rw_status = USBH_MSC_RdWrProcess(phost, lun)) == USBH_BUSY)
   {
-    /* phost->Timer increments every 125 µs (HS SOF).
-     * Fixed 10 s timeout (80 000 ticks). */
-    if (((phost->Timer - timeout) > 80000U) || (phost->device.PortEnabled == 0U))
+    if (((HAL_GetTick() - timeout) > MSC_READ_TIMEOUT_MS) ||
+        (phost->device.PortEnabled == 0U))
     {
+      /* Snapshot diagnostics BEFORE wiping the state machine. */
+      USBH_MSC_LastErr.timed_out  = 1U;
+      USBH_MSC_LastErr.unit_state = (uint8_t)MSC_Handle->unit[lun].state;
+      USBH_MSC_LastErr.bot_state  = (uint8_t)MSC_Handle->hbot.state;
+      USBH_MSC_LastErr.cmd_state  = (uint8_t)MSC_Handle->hbot.cmd_state;
+      USBH_MSC_LastErr.elapsed_ms = HAL_GetTick() - timeout;
+
       MSC_Handle->unit[lun].state = MSC_IDLE;
       MSC_Handle->hbot.state      = BOT_SEND_CBW;
       MSC_Handle->hbot.cmd_state  = BOT_CMD_SEND;
@@ -881,6 +897,13 @@ USBH_StatusTypeDef USBH_MSC_Read(USBH_HandleTypeDef *phost,
 
   if (rw_status != USBH_OK)
   {
+    /* Snapshot diagnostics BEFORE wiping the state machine. */
+    USBH_MSC_LastErr.timed_out  = 0U;
+    USBH_MSC_LastErr.unit_state = (uint8_t)MSC_Handle->unit[lun].state;
+    USBH_MSC_LastErr.bot_state  = (uint8_t)MSC_Handle->hbot.state;
+    USBH_MSC_LastErr.cmd_state  = (uint8_t)MSC_Handle->hbot.cmd_state;
+    USBH_MSC_LastErr.elapsed_ms = HAL_GetTick() - timeout;
+
     MSC_Handle->unit[lun].state = MSC_IDLE;
     MSC_Handle->hbot.state      = BOT_SEND_CBW;
     MSC_Handle->hbot.cmd_state  = BOT_CMD_SEND;

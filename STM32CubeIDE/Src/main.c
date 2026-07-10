@@ -77,8 +77,10 @@ static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total);
 #define CHUNKED_READ_INTER_BLOCK_DELAY_MS 500U     /* pause between blocks            */
 
 /* Single shared IO buffer — used by FlashAppInt and FlashAppOspi.
- * These functions never run concurrently so one buffer is sufficient. */
-static uint8_t io_buf[CHUNKED_READ_BLOCK_SIZE];
+ * These functions never run concurrently so one buffer is sufficient.
+ * 32-bit aligned: whole-sector FatFs reads land here directly via
+ * USB host DMA (dma_enable in usbh_conf.c). */
+static uint8_t io_buf[CHUNKED_READ_BLOCK_SIZE] __attribute__((aligned(4)));
 static uint8_t boot_display_initialized;
 
 int _write(int file, char *ptr, int len)
@@ -1128,6 +1130,13 @@ static void SystemClock_Config(void)
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
+    /* Voltage scale 1 is required to run SYSCLK at 160 MHz (mirrors the
+       application project). */
+    if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSIState       = RCC_HSI_ON;
     RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
@@ -1149,12 +1158,19 @@ static void SystemClock_Config(void)
     RCC_ClkInitStruct.ClockType      = RCC_CLOCKTYPE_HCLK  | RCC_CLOCKTYPE_SYSCLK |
                                        RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2  |
                                        RCC_CLOCKTYPE_PCLK3;
-    RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_HSI;
+    /* SYSCLK from PLL1R = 160 MHz (was HSI 16 MHz). Mandatory for USB host
+       DMA mode (usbh_conf.c): the OTG core's DMA needs a much faster AHB
+       than 16 MHz — with HSI the device connected but never enumerated.
+       At 16 MHz in slave mode the CPU could not service HS bulk FIFOs
+       (~20-30 KB/s + periodic wedged BOT recovery). OSPI (PLL1) and LTDC
+       (PLL3) kernels are unaffected by this switch; SWV viewers must be
+       reconfigured for a 160 MHz core clock. */
+    RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
     RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
     RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
     RCC_ClkInitStruct.APB3CLKDivider = RCC_HCLK_DIV1;
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
     {
         Error_Handler();
     }

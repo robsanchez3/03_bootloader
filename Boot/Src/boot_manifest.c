@@ -8,8 +8,11 @@
 /* Maximum manifest file size.  A realistic manifest.ini is < 300 bytes. */
 #define MANIFEST_BUF_SIZE  512U
 
-/* Internal read buffer — keeps the allocation out of the caller. */
-static uint8_t manifest_buf[MANIFEST_BUF_SIZE];
+/* Internal read buffer — keeps the allocation out of the caller.
+   32-bit aligned: a whole-sector f_read lands here directly via USB host
+   DMA (sig_buf below is sub-sector and always goes through the FatFs
+   window buffer, so it does not need alignment). */
+static uint8_t manifest_buf[MANIFEST_BUF_SIZE] __attribute__((aligned(4)));
 
 /* manifest.sig is 128 bytes on disk (IV + AES-CBC(magic + boot_sig_payload_t
    + padding)) — see boot_crypto.h. Buffer kept just above that. */
