@@ -1,3 +1,6 @@
 UPDATE/
 ZLOGS/
 to_be_deleted/
+
+# Encryption secrets — must never be committed
+Boot/Inc/secrets.h

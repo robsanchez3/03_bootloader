@@ -57,6 +57,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/boot_crc.h</locationURI>
 		</link>
 		<link>
+			<name>Boot/Inc/boot_crypto.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/boot_crypto.h</locationURI>
+		</link>
+		<link>
 			<name>Boot/Inc/boot_display.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/boot_display.h</locationURI>
@@ -69,7 +74,7 @@
 		<link>
 			<name>Boot/Inc/boot_jump.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/O3_Bootloader%20-%20copia%20(2)/Boot/Inc/boot_jump.h</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/boot_jump.h</locationURI>
 		</link>
 		<link>
 			<name>Boot/Inc/boot_manifest.h</name>
@@ -82,9 +87,29 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/boot_ospi.h</locationURI>
 		</link>
 		<link>
+			<name>Boot/Inc/secrets.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/secrets.h</locationURI>
+		</link>
+		<link>
+			<name>Boot/Inc/sw_aes.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/sw_aes.h</locationURI>
+		</link>
+		<link>
+			<name>Boot/Inc/sw_sha256.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Inc/sw_sha256.h</locationURI>
+		</link>
+		<link>
 			<name>Boot/Src/boot_crc.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/boot_crc.c</locationURI>
+		</link>
+		<link>
+			<name>Boot/Src/boot_crypto.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/boot_crypto.c</locationURI>
 		</link>
 		<link>
 			<name>Boot/Src/boot_display.c</name>
@@ -110,6 +135,16 @@
 			<name>Boot/Src/boot_ospi.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/boot_ospi.c</locationURI>
+		</link>
+		<link>
+			<name>Boot/Src/sw_aes.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/sw_aes.c</locationURI>
+		</link>
+		<link>
+			<name>Boot/Src/sw_sha256.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Boot/Src/sw_sha256.c</locationURI>
 		</link>
 		<link>
 			<name>FATFS/Target/ffconf.h</name>

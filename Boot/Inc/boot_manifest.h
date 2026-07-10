@@ -2,6 +2,7 @@
 #define BOOT_MANIFEST_H
 
 #include <stdint.h>
+#include "boot_crypto.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,6 +16,14 @@ typedef enum
     BOOT_MANIFEST_ERR_PARSE,
     BOOT_MANIFEST_ERR_INTEGRITY
 } BootManifestResult_t;
+
+typedef enum
+{
+    BOOT_SIG_OK = 0,
+    BOOT_SIG_ERR_MISSING,    /* manifest.sig not found                    */
+    BOOT_SIG_ERR_READ,       /* USB read error                            */
+    BOOT_SIG_ERR_BAD_KEY     /* decryption failed with both known keys    */
+} BootSigResult_t;
 
 typedef struct
 {
@@ -50,6 +59,18 @@ BootManifestResult_t BootManifest_LoadAndParse(const char *path,
  * @brief  Print parsed manifest fields to SWV for diagnostics.
  */
 void BootManifest_Print(const BootManifest_t *m);
+
+/**
+ * @brief  Load and decrypt manifest.sig (companion of manifest.ini). Only
+ *         validates the key/signature — does NOT check sizes or SHA-256 of
+ *         app_int.bin/app_ospi.bin (that happens in the BOOT_PRE_FLASH_CRC_CHECK
+ *         loop in main.c, see Plan_Cifrado_Bootloader_Consola.txt).
+ * @param  sig_path  FatFs path to manifest.sig (e.g. "0:/UPDATE/manifest.sig")
+ * @param  out       Decrypted payload (sizes + expected SHA-256 of both binaries)
+ * @retval BOOT_SIG_OK on success
+ */
+BootSigResult_t BootSig_LoadAndDecrypt(const char *sig_path,
+                                       boot_sig_payload_t *out);
 
 #ifdef __cplusplus
 }

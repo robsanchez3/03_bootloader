@@ -1,0 +1,15 @@
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:138:16:xtime	2
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:144:13:key_expand	6
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:167:13:add_round_key	2
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:177:13:sub_bytes	3
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:182:13:inv_sub_bytes	3
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:187:13:shift_rows	1
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:194:13:inv_shift_rows	1
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:201:13:mix_columns	2
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:213:13:inv_mix_columns	2
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:226:13:load_state	3
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:231:13:store_state	3
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:238:6:sw_aes256_ecb_encrypt	2
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:264:13:ecb_decrypt_block	2
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:282:6:sw_aes256_cbc_decrypt	3
+C:/Roberto/O3/O3_Bootloader/Boot/Src/sw_aes.c:307:6:sw_aes256_cbc_decrypt_inplace	3

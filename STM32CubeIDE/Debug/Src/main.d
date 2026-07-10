@@ -55,6 +55,8 @@ Src/main.o: ../Src/main.c \
  ../Inc/main.h ../../Boot/Inc/boot_jump.h ../../Boot/Inc/boot_flash.h \
  ../../Boot/Inc/boot_ospi.h ../../Boot/Inc/boot_display.h \
  ../../Boot/Inc/boot_crc.h ../../Boot/Inc/boot_manifest.h \
+ ../../Boot/Inc/boot_crypto.h ../../Boot/Inc/boot_crypto.h \
+ ../../Boot/Inc/sw_sha256.h ../../Boot/Inc/secrets.h \
  ../../Boot/USB/Inc/usb_msc_service.h \
  ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h \
  ../../Boot/USB/Inc/usbh_conf.h \
@@ -125,6 +127,10 @@ Src/main.o: ../Src/main.c \
 ../../Boot/Inc/boot_display.h:
 ../../Boot/Inc/boot_crc.h:
 ../../Boot/Inc/boot_manifest.h:
+../../Boot/Inc/boot_crypto.h:
+../../Boot/Inc/boot_crypto.h:
+../../Boot/Inc/sw_sha256.h:
+../../Boot/Inc/secrets.h:
 ../../Boot/USB/Inc/usb_msc_service.h:
 ../../Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h:
 ../../Boot/USB/Inc/usbh_conf.h:

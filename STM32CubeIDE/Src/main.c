@@ -17,6 +17,9 @@
 #include "boot_display.h"
 #include "boot_crc.h"
 #include "boot_manifest.h"
+#include "boot_crypto.h"
+#include "sw_sha256.h"
+#include "secrets.h"
 #include "usb_msc_service.h"
 #include "usb_fs_service.h"
 #include "ff.h"
@@ -66,6 +69,7 @@ static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total);
 #define USB_UPDATE_APP_INT_BIN            "0:/UPDATE/app_int.bin"
 #define USB_UPDATE_APP_OSPI_BIN           "0:/UPDATE/app_ospi.bin"
 #define USB_UPDATE_MANIFEST               "0:/UPDATE/manifest.ini"
+#define USB_UPDATE_MANIFEST_SIG           "0:/UPDATE/manifest.sig"
 
 /* Chunked read configuration */
 #define CHUNKED_READ_BLOCK_SIZE           1048576U /* bytes per open/read/close cycle */
@@ -758,6 +762,9 @@ static uint8_t UsbProcessUpdate(void)
     uint32_t fsize_tmp;
     BootManifest_t manifest;
     BootManifestResult_t mresult;
+#ifdef ENABLE_CRYPTO
+    boot_sig_payload_t sig_payload;
+#endif
     char ver_line[56];
 
     printf("[UPDATE] USB drive ready, mounting to check for UPDATE directory\n");
@@ -919,14 +926,41 @@ static uint8_t UsbProcessUpdate(void)
         }
     }
 
+#ifdef ENABLE_CRYPTO
+    /* Authorization check — manifest.sig must decrypt with a known key.
+       Per-file hash verification happens inside the pre-flash CRC loops
+       below, folded into the same USB read pass (no extra read). */
+    BootDisplay_Log("CHECKING AUTHORIZATION...");
+    {
+        BootSigResult_t sig_result = BootSig_LoadAndDecrypt(USB_UPDATE_MANIFEST_SIG, &sig_payload);
+        if (sig_result != BOOT_SIG_OK)
+        {
+            const char *sig_err = (sig_result == BOOT_SIG_ERR_MISSING) ? "UNAUTHORIZED: NO SIG" :
+                                  (sig_result == BOOT_SIG_ERR_BAD_KEY) ? "UNAUTHORIZED: BAD SIG" :
+                                                                          "UNAUTHORIZED: SIG READ FAIL";
+            BootDisplay_Fail(sig_err, 0U);
+            printf("[UPDATE] manifest.sig FAILED result=%u\n", (unsigned int)sig_result);
+            return 1U;
+        }
+        printf("[UPDATE] manifest.sig OK\n");
+    }
+#endif
+
 #if BOOT_PRE_FLASH_CRC_CHECK
     /* Pre-flash CRC check of app_int.bin — read from USB and verify before
-     * touching any flash.  app_ospi.bin is too large to pre-verify. */
+     * touching any flash.  app_ospi.bin is too large to pre-verify.
+     * Under ENABLE_CRYPTO, SHA-256 is accumulated in the SAME read pass to
+     * verify manifest.sig's authorization without any extra USB read
+     * (see Plan_Cifrado_Bootloader_Consola.txt, NOTA DE RENDIMIENTO). */
     BootDisplay_Log("VERIFYING INT BIN CRC...");
     {
         uint32_t pre_crc = 0U;
         uint32_t pre_off = 0U;
         uint32_t pre_read = 0U;
+#ifdef ENABLE_CRYPTO
+        sw_sha256_ctx_t sha_ctx;
+        sw_sha256_init(&sha_ctx);
+#endif
 
         while (pre_off < manifest.app_int.size)
         {
@@ -945,6 +979,9 @@ static uint8_t UsbProcessUpdate(void)
                 return 1U;
             }
             pre_crc = BootCrc32_Compute(pre_crc, io_buf, pre_read);
+#ifdef ENABLE_CRYPTO
+            sw_sha256_update(&sha_ctx, io_buf, pre_read);
+#endif
             pre_off += pre_read;
         }
 
@@ -956,6 +993,18 @@ static uint8_t UsbProcessUpdate(void)
                    (unsigned long)manifest.app_int.crc32);
             return 1U;
         }
+#ifdef ENABLE_CRYPTO
+        {
+            uint8_t digest[32];
+            sw_sha256_final(&sha_ctx, digest);
+            if (memcmp(digest, sig_payload.app_int_sha256, sizeof digest) != 0)
+            {
+                BootDisplay_Fail("UNAUTHORIZED: HASH MISMATCH", 0U);
+                printf("[UPDATE] app_int.bin SHA-256 mismatch\n");
+                return 1U;
+            }
+        }
+#endif
         printf("[UPDATE] app_int.bin pre-CRC OK\n");
         BootDisplay_Log("INT BIN CRC OK");
     }
@@ -967,6 +1016,10 @@ static uint8_t UsbProcessUpdate(void)
         uint32_t pre_crc = 0U;
         uint32_t pre_off = 0U;
         uint32_t pre_read = 0U;
+#ifdef ENABLE_CRYPTO
+        sw_sha256_ctx_t sha_ctx;
+        sw_sha256_init(&sha_ctx);
+#endif
 
         while (pre_off < manifest.app_ospi.size)
         {
@@ -985,6 +1038,9 @@ static uint8_t UsbProcessUpdate(void)
                 return 1U;
             }
             pre_crc = BootCrc32_Compute(pre_crc, io_buf, pre_read);
+#ifdef ENABLE_CRYPTO
+            sw_sha256_update(&sha_ctx, io_buf, pre_read);
+#endif
             pre_off += pre_read;
             BootDisplay_UpdateProgress("VERIFYING OSPI BIN CRC...",
                                        pre_off, manifest.app_ospi.size);
@@ -1003,6 +1059,18 @@ static uint8_t UsbProcessUpdate(void)
                    (unsigned long)manifest.app_ospi.crc32);
             return 1U;
         }
+#ifdef ENABLE_CRYPTO
+        {
+            uint8_t digest[32];
+            sw_sha256_final(&sha_ctx, digest);
+            if (memcmp(digest, sig_payload.app_ospi_sha256, sizeof digest) != 0)
+            {
+                BootDisplay_Fail("UNAUTHORIZED: HASH MISMATCH", 1U);
+                printf("[UPDATE] app_ospi.bin SHA-256 mismatch\n");
+                return 1U;
+            }
+        }
+#endif
         printf("[UPDATE] app_ospi.bin pre-CRC OK\n");
         BootDisplay_Log("OSPI BIN CRC OK");
         BootDisplay_ClearProgress();

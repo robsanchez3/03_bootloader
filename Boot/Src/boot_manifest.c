@@ -1,6 +1,7 @@
 #include "boot_manifest.h"
 #include "boot_crc.h"
 #include "usb_fs_service.h"
+#include "stm32u5xx_hal.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -9,6 +10,11 @@
 
 /* Internal read buffer — keeps the allocation out of the caller. */
 static uint8_t manifest_buf[MANIFEST_BUF_SIZE];
+
+/* manifest.sig is 128 bytes on disk (IV + AES-CBC(magic + boot_sig_payload_t
+   + padding)) — see boot_crypto.h. Buffer kept just above that. */
+#define SIG_BUF_SIZE  256U
+static uint8_t sig_buf[SIG_BUF_SIZE];
 
 /* -----------------------------------------------------------------------
  * INI parser helpers
@@ -375,6 +381,43 @@ BootManifestResult_t BootManifest_LoadAndParse(const char *path,
     }
 
     return BOOT_MANIFEST_OK;
+}
+
+BootSigResult_t BootSig_LoadAndDecrypt(const char *sig_path,
+                                       boot_sig_payload_t *out)
+{
+    UsbFsResult_t usb_result;
+    uint32_t bytes_read = 0U;
+    uint8_t  uid[CRYPTO_UID_SIZE];
+    uint32_t w0, w1, w2;
+
+    if (UsbFsService_FileExists(sig_path) != USB_FS_RESULT_OK)
+    {
+        printf("[SIG] manifest.sig not found\n");
+        return BOOT_SIG_ERR_MISSING;
+    }
+
+    usb_result = UsbFsService_ReadFile(sig_path, sig_buf, 0U,
+                                       SIG_BUF_SIZE, &bytes_read);
+    if (usb_result != USB_FS_RESULT_OK)
+    {
+        printf("[SIG] read FAILED result=%u\n", (unsigned int)usb_result);
+        return BOOT_SIG_ERR_READ;
+    }
+
+    w0 = HAL_GetUIDw0(); w1 = HAL_GetUIDw1(); w2 = HAL_GetUIDw2();
+    memcpy(uid,      &w0, 4U);
+    memcpy(uid + 4U, &w1, 4U);
+    memcpy(uid + 8U, &w2, 4U);
+
+    if (!crypto_decrypt_sig(sig_buf, bytes_read, uid, out))
+    {
+        printf("[SIG] decrypt FAILED (bad key or corrupted)\n");
+        return BOOT_SIG_ERR_BAD_KEY;
+    }
+
+    printf("[SIG] OK product=%s type=%u\n", out->product, out->type);
+    return BOOT_SIG_OK;
 }
 
 void BootManifest_Print(const BootManifest_t *m)
