@@ -1,11 +1,13 @@
 /*
  * usbh_diskio.c
  *
- * FatFs diskio driver for USB MSC (bare-metal, polling, no DMA).
+ * FatFs diskio driver for USB MSC (bare-metal, polling, FIFO mode).
  *
  * Translates FatFs disk_xxx calls into USBH_MSC_xxx calls.
- * Single-attempt read: on failure, recovery is handled at a higher level
- * (chunked read with full USB host restart).
+ * Reads are split into sub-transfers of at most USBH_READ_MAX_SECTORS,
+ * each retried locally up to USBH_READ_LOCAL_RETRIES times; only if that
+ * fails (or the port drops) does the error escalate to the caller's
+ * full recovery (ForceRestart + re-enumeration + remount in main.c).
  *
  * Write is intentionally disabled (RES_WRPRT): the bootloader only
  * reads from the USB drive.

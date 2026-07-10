@@ -7,43 +7,43 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         00017a0c  08000270  08000270  00001270  2**3
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       000027cf  08017c7c  08017c7c  00018c7c  2**2
+  2 .rodata       00002757  08017c7c  08017c7c  00018c7c  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM          00000008  0801a44c  0801a44c  0001b44c  2**2
+  3 .ARM          00000008  0801a3d4  0801a3d4  0001b3d4  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  4 .init_array   00000004  0801a454  0801a454  0001b454  2**2
+  4 .init_array   00000004  0801a3dc  0801a3dc  0001b3dc  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .fini_array   00000004  0801a458  0801a458  0001b458  2**2
+  5 .fini_array   00000004  0801a3e0  0801a3e0  0001b3e0  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  6 .data         000000b0  20000000  0801a45c  0001c000  2**2
+  6 .data         000000b0  20000000  0801a3e4  0001c000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .bss          00155cc6  200000b0  0801a50c  0001c0b0  2**2
+  7 .bss          00155cc6  200000b0  0801a494  0001c0b0  2**2
                   ALLOC
-  8 ._user_heap_stack 00002202  20155d76  0801a50c  0001cd76  2**0
+  8 ._user_heap_stack 00002202  20155d76  0801a494  0001cd76  2**0
                   ALLOC
   9 .ARM.attributes 00000036  00000000  00000000  0001c0b0  2**0
                   CONTENTS, READONLY
- 10 .debug_info   0002df8a  00000000  00000000  0001c0e6  2**0
+ 10 .debug_info   0002df61  00000000  00000000  0001c0e6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 11 .debug_abbrev 00006fbd  00000000  00000000  0004a070  2**0
+ 11 .debug_abbrev 00006fbc  00000000  00000000  0004a047  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 12 .debug_aranges 000022b8  00000000  00000000  00051030  2**3
+ 12 .debug_aranges 000022b0  00000000  00000000  00051008  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_rnglists 00001ab6  00000000  00000000  000532e8  2**0
+ 13 .debug_rnglists 00001ab0  00000000  00000000  000532b8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_macro  0004afb2  00000000  00000000  00054d9e  2**0
+ 14 .debug_macro  0004afb2  00000000  00000000  00054d68  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_line   00037f6e  00000000  00000000  0009fd50  2**0
+ 15 .debug_line   00037f4c  00000000  00000000  0009fd1a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_str    001b77f4  00000000  00000000  000d7cbe  2**0
+ 16 .debug_str    001b77de  00000000  00000000  000d7c66  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .comment      00000043  00000000  00000000  0028f4b2  2**0
+ 17 .comment      00000043  00000000  00000000  0028f444  2**0
                   CONTENTS, READONLY
- 18 .debug_frame  000092f0  00000000  00000000  0028f4f8  2**2
+ 18 .debug_frame  000092cc  00000000  00000000  0028f488  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_loclists 000003bb  00000000  00000000  002987e8  2**0
+ 19 .debug_loclists 000003bb  00000000  00000000  00298754  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_line_str 00000053  00000000  00000000  00298ba3  2**0
+ 20 .debug_line_str 00000053  00000000  00000000  00298b0f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -507,7 +507,7 @@ bool crypto_decrypt_sig(const uint8_t *sig_buf, uint32_t sig_size,
  8000552:	3738      	adds	r7, #56	@ 0x38
  8000554:	46bd      	mov	sp, r7
  8000556:	bd80      	pop	{r7, pc}
- 8000558:	08019900 	.word	0x08019900
+ 8000558:	08019888 	.word	0x08019888
 
 0800055c <BootDisplay_GetGlyph>:
 static const uint8_t font_e[16] = {0x00,0x00,0x00,0x00,0x00,0x3C,0x42,0x42,0x7E,0x40,0x42,0x3C,0x00,0x00,0x00,0x00};
@@ -769,54 +769,54 @@ static const uint8_t *BootDisplay_GetGlyph(char c)
  8000794:	f85d 7b04 	ldr.w	r7, [sp], #4
  8000798:	4770      	bx	lr
  800079a:	bf00      	nop
- 800079c:	08019930 	.word	0x08019930
- 80007a0:	08019940 	.word	0x08019940
- 80007a4:	08019950 	.word	0x08019950
- 80007a8:	08019960 	.word	0x08019960
- 80007ac:	08019970 	.word	0x08019970
- 80007b0:	08019980 	.word	0x08019980
- 80007b4:	08019990 	.word	0x08019990
- 80007b8:	080199a0 	.word	0x080199a0
- 80007bc:	080199b0 	.word	0x080199b0
- 80007c0:	080199c0 	.word	0x080199c0
- 80007c4:	080199d0 	.word	0x080199d0
- 80007c8:	080199e0 	.word	0x080199e0
- 80007cc:	080199f0 	.word	0x080199f0
- 80007d0:	08019a00 	.word	0x08019a00
- 80007d4:	08019a10 	.word	0x08019a10
- 80007d8:	08019a20 	.word	0x08019a20
- 80007dc:	08019a30 	.word	0x08019a30
- 80007e0:	08019a40 	.word	0x08019a40
- 80007e4:	08019ac0 	.word	0x08019ac0
- 80007e8:	08019b30 	.word	0x08019b30
- 80007ec:	08019b00 	.word	0x08019b00
- 80007f0:	08019a50 	.word	0x08019a50
- 80007f4:	08019a60 	.word	0x08019a60
- 80007f8:	08019a70 	.word	0x08019a70
- 80007fc:	08019b10 	.word	0x08019b10
- 8000800:	08019a90 	.word	0x08019a90
- 8000804:	08019aa0 	.word	0x08019aa0
- 8000808:	08019ab0 	.word	0x08019ab0
- 800080c:	08019ad0 	.word	0x08019ad0
- 8000810:	08019ae0 	.word	0x08019ae0
- 8000814:	08019af0 	.word	0x08019af0
- 8000818:	08019b90 	.word	0x08019b90
- 800081c:	08019b20 	.word	0x08019b20
- 8000820:	08019a80 	.word	0x08019a80
- 8000824:	08019b40 	.word	0x08019b40
- 8000828:	08019b50 	.word	0x08019b50
- 800082c:	08019b60 	.word	0x08019b60
- 8000830:	08019b70 	.word	0x08019b70
- 8000834:	08019bf0 	.word	0x08019bf0
- 8000838:	08019c00 	.word	0x08019c00
- 800083c:	08019c10 	.word	0x08019c10
- 8000840:	08019b80 	.word	0x08019b80
- 8000844:	08019ba0 	.word	0x08019ba0
- 8000848:	08019bb0 	.word	0x08019bb0
- 800084c:	08019bd0 	.word	0x08019bd0
- 8000850:	08019bc0 	.word	0x08019bc0
- 8000854:	08019be0 	.word	0x08019be0
- 8000858:	08019920 	.word	0x08019920
+ 800079c:	080198b8 	.word	0x080198b8
+ 80007a0:	080198c8 	.word	0x080198c8
+ 80007a4:	080198d8 	.word	0x080198d8
+ 80007a8:	080198e8 	.word	0x080198e8
+ 80007ac:	080198f8 	.word	0x080198f8
+ 80007b0:	08019908 	.word	0x08019908
+ 80007b4:	08019918 	.word	0x08019918
+ 80007b8:	08019928 	.word	0x08019928
+ 80007bc:	08019938 	.word	0x08019938
+ 80007c0:	08019948 	.word	0x08019948
+ 80007c4:	08019958 	.word	0x08019958
+ 80007c8:	08019968 	.word	0x08019968
+ 80007cc:	08019978 	.word	0x08019978
+ 80007d0:	08019988 	.word	0x08019988
+ 80007d4:	08019998 	.word	0x08019998
+ 80007d8:	080199a8 	.word	0x080199a8
+ 80007dc:	080199b8 	.word	0x080199b8
+ 80007e0:	080199c8 	.word	0x080199c8
+ 80007e4:	08019a48 	.word	0x08019a48
+ 80007e8:	08019ab8 	.word	0x08019ab8
+ 80007ec:	08019a88 	.word	0x08019a88
+ 80007f0:	080199d8 	.word	0x080199d8
+ 80007f4:	080199e8 	.word	0x080199e8
+ 80007f8:	080199f8 	.word	0x080199f8
+ 80007fc:	08019a98 	.word	0x08019a98
+ 8000800:	08019a18 	.word	0x08019a18
+ 8000804:	08019a28 	.word	0x08019a28
+ 8000808:	08019a38 	.word	0x08019a38
+ 800080c:	08019a58 	.word	0x08019a58
+ 8000810:	08019a68 	.word	0x08019a68
+ 8000814:	08019a78 	.word	0x08019a78
+ 8000818:	08019b18 	.word	0x08019b18
+ 800081c:	08019aa8 	.word	0x08019aa8
+ 8000820:	08019a08 	.word	0x08019a08
+ 8000824:	08019ac8 	.word	0x08019ac8
+ 8000828:	08019ad8 	.word	0x08019ad8
+ 800082c:	08019ae8 	.word	0x08019ae8
+ 8000830:	08019af8 	.word	0x08019af8
+ 8000834:	08019b78 	.word	0x08019b78
+ 8000838:	08019b88 	.word	0x08019b88
+ 800083c:	08019b98 	.word	0x08019b98
+ 8000840:	08019b08 	.word	0x08019b08
+ 8000844:	08019b28 	.word	0x08019b28
+ 8000848:	08019b38 	.word	0x08019b38
+ 800084c:	08019b58 	.word	0x08019b58
+ 8000850:	08019b48 	.word	0x08019b48
+ 8000854:	08019b68 	.word	0x08019b68
+ 8000858:	080198a8 	.word	0x080198a8
 
 0800085c <BootDisplay_Init>:
 
@@ -5975,8 +5975,8 @@ static void key_expand(const uint8_t *key, uint32_t *rk) {
  8002934:	46bd      	mov	sp, r7
  8002936:	f85d 7b04 	ldr.w	r7, [sp], #4
  800293a:	4770      	bx	lr
- 800293c:	08019c20 	.word	0x08019c20
- 8002940:	08019e20 	.word	0x08019e20
+ 800293c:	08019ba8 	.word	0x08019ba8
+ 8002940:	08019da8 	.word	0x08019da8
 
 08002944 <add_round_key>:
 
@@ -6143,7 +6143,7 @@ static void sub_bytes(state_t st) {
  8002a64:	f85d 7b04 	ldr.w	r7, [sp], #4
  8002a68:	4770      	bx	lr
  8002a6a:	bf00      	nop
- 8002a6c:	08019c20 	.word	0x08019c20
+ 8002a6c:	08019ba8 	.word	0x08019ba8
 
 08002a70 <inv_sub_bytes>:
 
@@ -6198,7 +6198,7 @@ static void inv_sub_bytes(state_t st) {
  8002ac8:	f85d 7b04 	ldr.w	r7, [sp], #4
  8002acc:	4770      	bx	lr
  8002ace:	bf00      	nop
- 8002ad0:	08019d20 	.word	0x08019d20
+ 8002ad0:	08019ca8 	.word	0x08019ca8
 
 08002ad4 <shift_rows>:
 
@@ -6746,10 +6746,10 @@ static void inv_mix_columns(state_t st) {
  8002ef0:	46bd      	mov	sp, r7
  8002ef2:	f85d 7b04 	ldr.w	r7, [sp], #4
  8002ef6:	4770      	bx	lr
- 8002ef8:	0801a128 	.word	0x0801a128
- 8002efc:	08019f28 	.word	0x08019f28
- 8002f00:	0801a028 	.word	0x0801a028
- 8002f04:	08019e28 	.word	0x08019e28
+ 8002ef8:	0801a0b0 	.word	0x0801a0b0
+ 8002efc:	08019eb0 	.word	0x08019eb0
+ 8002f00:	08019fb0 	.word	0x08019fb0
+ 8002f04:	08019db0 	.word	0x08019db0
 
 08002f08 <load_state>:
 
@@ -7413,8 +7413,8 @@ static void sha256_transform(sw_sha256_ctx_t *ctx, const uint8_t block[SW_SHA256
  80033f8:	b04b      	add	sp, #300	@ 0x12c
  80033fa:	e8bd 8ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}
  80033fe:	bf00      	nop
- 8003400:	0801a324 	.word	0x0801a324
- 8003404:	0801a224 	.word	0x0801a224
+ 8003400:	0801a2ac 	.word	0x0801a2ac
+ 8003404:	0801a1ac 	.word	0x0801a1ac
 
 08003408 <sw_sha256_init>:
 {
@@ -7761,7 +7761,7 @@ UsbFsResult_t UsbFsService_Mount(void)
  8003616:	bf00      	nop
  8003618:	2005539d 	.word	0x2005539d
  800361c:	20055398 	.word	0x20055398
- 8003620:	0801a328 	.word	0x0801a328
+ 8003620:	0801a2b0 	.word	0x0801a2b0
  8003624:	200553a0 	.word	0x200553a0
  8003628:	20055168 	.word	0x20055168
  800362c:	2005539c 	.word	0x2005539c
@@ -11070,7 +11070,7 @@ HAL_StatusTypeDef HAL_Init(void)
  8004b16:	bd80      	pop	{r7, pc}
  8004b18:	40022000 	.word	0x40022000
  8004b1c:	46020c00 	.word	0x46020c00
- 8004b20:	0801a3c8 	.word	0x0801a3c8
+ 8004b20:	0801a350 	.word	0x0801a350
  8004b24:	20000050 	.word	0x20000050
 
 08004b28 <HAL_MspInit>:
@@ -14369,7 +14369,7 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, const GPIO_InitTypeDef *pGPIO_Init)
  8005ca0:	e01e      	b.n	8005ce0 <HAL_GPIO_Init+0x1c4>
  8005ca2:	bf00      	nop
  8005ca4:	46020000 	.word	0x46020000
- 8005ca8:	0801a33c 	.word	0x0801a33c
+ 8005ca8:	0801a2c4 	.word	0x0801a2c4
       {
         /* Check the parameters */
         assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
@@ -27662,7 +27662,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(const RCC_ClkInitTypeDef   *const pRCC_Clk
  800adfe:	bd80      	pop	{r7, pc}
  800ae00:	46020c00 	.word	0x46020c00
  800ae04:	40022000 	.word	0x40022000
- 800ae08:	0801a3c8 	.word	0x0801a3c8
+ 800ae08:	0801a350 	.word	0x0801a350
  800ae0c:	20000050 	.word	0x20000050
  800ae10:	2000000c 	.word	0x2000000c
 
@@ -27951,7 +27951,7 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  800b000:	4770      	bx	lr
  800b002:	bf00      	nop
  800b004:	46020c00 	.word	0x46020c00
- 800b008:	0801a3d8 	.word	0x0801a3d8
+ 800b008:	0801a360 	.word	0x0801a360
  800b00c:	00f42400 	.word	0x00f42400
  800b010:	017d7840 	.word	0x017d7840
  800b014:	4b742400 	.word	0x4b742400
@@ -27986,7 +27986,7 @@ uint32_t HAL_RCC_GetHCLKFreq(void)
  800b044:	bd80      	pop	{r7, pc}
  800b046:	bf00      	nop
  800b048:	46020c00 	.word	0x46020c00
- 800b04c:	0801a3c8 	.word	0x0801a3c8
+ 800b04c:	0801a350 	.word	0x0801a350
  800b050:	20000050 	.word	0x20000050
 
 0800b054 <RCC_SetFlashLatencyFromMSIRange>:
@@ -46982,8 +46982,8 @@ static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_
  801260a:	3714      	adds	r7, #20
  801260c:	46bd      	mov	sp, r7
  801260e:	bd90      	pop	{r4, r7, pc}
- 8012610:	0801899c 	.word	0x0801899c
- 8012614:	080189c8 	.word	0x080189c8
+ 8012610:	08018924 	.word	0x08018924
+ 8012614:	08018950 	.word	0x08018950
 
 08012618 <USBH_MSC_IsReady>:
   *         The function check if the MSC function is ready
@@ -54701,7 +54701,7 @@ static void BootDisplay_Fail(const char *message, uint8_t clear_progress)
  801515c:	bd80      	pop	{r7, pc}
  801515e:	bf00      	nop
  8015160:	cccccccd 	.word	0xcccccccd
- 8015164:	080189f0 	.word	0x080189f0
+ 8015164:	08018978 	.word	0x08018978
 
 08015168 <Boot_ShowApplicationLaunchCountdown>:
 
@@ -54741,9 +54741,9 @@ static void Boot_ShowApplicationLaunchCountdown(void)
  801519a:	bf00      	nop
  801519c:	46bd      	mov	sp, r7
  801519e:	bd80      	pop	{r7, pc}
- 80151a0:	080189fc 	.word	0x080189fc
- 80151a4:	08018a0c 	.word	0x08018a0c
- 80151a8:	08018a10 	.word	0x08018a10
+ 80151a0:	08018984 	.word	0x08018984
+ 80151a4:	08018994 	.word	0x08018994
+ 80151a8:	08018998 	.word	0x08018998
 
 080151ac <Boot_ShowProgrammingCountdown>:
 
@@ -54805,8 +54805,8 @@ static void Boot_ShowProgrammingCountdown(const char *ver_line, const char *buil
  801520a:	3708      	adds	r7, #8
  801520c:	46bd      	mov	sp, r7
  801520e:	bd80      	pop	{r7, pc}
- 8015210:	08018a28 	.word	0x08018a28
- 8015214:	08018a48 	.word	0x08018a48
+ 8015210:	080189b0 	.word	0x080189b0
+ 8015214:	080189d0 	.word	0x080189d0
 
 08015218 <BootDisplay_FlashEraseProgress>:
 
@@ -54827,7 +54827,7 @@ static void BootDisplay_FlashEraseProgress(uint32_t current, uint32_t total)
  801522e:	3708      	adds	r7, #8
  8015230:	46bd      	mov	sp, r7
  8015232:	bd80      	pop	{r7, pc}
- 8015234:	08018a64 	.word	0x08018a64
+ 8015234:	080189ec 	.word	0x080189ec
 
 08015238 <BootDisplay_OspiEraseProgress>:
 
@@ -54848,7 +54848,7 @@ static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total)
  801524e:	3708      	adds	r7, #8
  8015250:	46bd      	mov	sp, r7
  8015252:	bd80      	pop	{r7, pc}
- 8015254:	08018a7c 	.word	0x08018a7c
+ 8015254:	08018a04 	.word	0x08018a04
 
 08015258 <UsbReadChunkWithRecovery>:
                                                uint8_t *buf,
@@ -54977,8 +54977,8 @@ static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total)
  8015302:	46bd      	mov	sp, r7
  8015304:	bd80      	pop	{r7, pc}
  8015306:	bf00      	nop
- 8015308:	08018a94 	.word	0x08018a94
- 801530c:	08018ac4 	.word	0x08018ac4
+ 8015308:	08018a1c 	.word	0x08018a1c
+ 801530c:	08018a4c 	.word	0x08018a4c
 
 08015310 <main>:
 
@@ -55047,7 +55047,7 @@ int main(void)
  801536c:	bf00      	nop
  801536e:	e7fd      	b.n	801536c <main+0x5c>
  8015370:	46020c00 	.word	0x46020c00
- 8015374:	08018adc 	.word	0x08018adc
+ 8015374:	08018a64 	.word	0x08018a64
 
 08015378 <Recovery_Loop>:
 
@@ -55103,11 +55103,11 @@ static void Recovery_Loop(void)
  80153c6:	f7f0 fda1 	bl	8005f0c <HAL_GPIO_TogglePin>
         if ((HAL_GetTick() - last_blink) >= 250U)
  80153ca:	e7ef      	b.n	80153ac <Recovery_Loop+0x34>
- 80153cc:	08018ae8 	.word	0x08018ae8
- 80153d0:	08018af8 	.word	0x08018af8
- 80153d4:	08018a0c 	.word	0x08018a0c
- 80153d8:	08018b08 	.word	0x08018b08
- 80153dc:	08018b1c 	.word	0x08018b1c
+ 80153cc:	08018a70 	.word	0x08018a70
+ 80153d0:	08018a80 	.word	0x08018a80
+ 80153d4:	08018994 	.word	0x08018994
+ 80153d8:	08018a90 	.word	0x08018a90
+ 80153dc:	08018aa4 	.word	0x08018aa4
  80153e0:	42020400 	.word	0x42020400
 
 080153e4 <Boot_SelectBootPath>:
@@ -55216,7 +55216,7 @@ static void Boot_SelectAppOrRecovery(void)
  8015464:	bd80      	pop	{r7, pc}
  8015466:	bf00      	nop
  8015468:	08020000 	.word	0x08020000
- 801546c:	08018b28 	.word	0x08018b28
+ 801546c:	08018ab0 	.word	0x08018ab0
 
 08015470 <FlashAppInt>:
 
@@ -55622,40 +55622,40 @@ static void FlashAppInt(uint32_t expected_crc32)
  80156e4:	bd80      	pop	{r7, pc}
  80156e6:	bf00      	nop
  80156e8:	20055c24 	.word	0x20055c24
- 80156ec:	08018b40 	.word	0x08018b40
- 80156f0:	08018b70 	.word	0x08018b70
- 80156f4:	08018b84 	.word	0x08018b84
- 80156f8:	08018b9c 	.word	0x08018b9c
- 80156fc:	08018bb4 	.word	0x08018bb4
- 8015700:	08018bdc 	.word	0x08018bdc
- 8015704:	08018bfc 	.word	0x08018bfc
- 8015708:	08018a64 	.word	0x08018a64
+ 80156ec:	08018ac8 	.word	0x08018ac8
+ 80156f0:	08018af8 	.word	0x08018af8
+ 80156f4:	08018b0c 	.word	0x08018b0c
+ 80156f8:	08018b24 	.word	0x08018b24
+ 80156fc:	08018b3c 	.word	0x08018b3c
+ 8015700:	08018b64 	.word	0x08018b64
+ 8015704:	08018b84 	.word	0x08018b84
+ 8015708:	080189ec 	.word	0x080189ec
  801570c:	08015219 	.word	0x08015219
- 8015710:	08018c10 	.word	0x08018c10
- 8015714:	08018c28 	.word	0x08018c28
- 8015718:	08018c48 	.word	0x08018c48
- 801571c:	08018c60 	.word	0x08018c60
- 8015720:	08018c78 	.word	0x08018c78
- 8015724:	08018c90 	.word	0x08018c90
- 8015728:	08018c98 	.word	0x08018c98
- 801572c:	08018cb0 	.word	0x08018cb0
- 8015730:	08018cd4 	.word	0x08018cd4
- 8015734:	08018cec 	.word	0x08018cec
- 8015738:	08018d1c 	.word	0x08018d1c
- 801573c:	08018d34 	.word	0x08018d34
- 8015740:	08018d5c 	.word	0x08018d5c
- 8015744:	08018d80 	.word	0x08018d80
- 8015748:	08018d98 	.word	0x08018d98
+ 8015710:	08018b98 	.word	0x08018b98
+ 8015714:	08018bb0 	.word	0x08018bb0
+ 8015718:	08018bd0 	.word	0x08018bd0
+ 801571c:	08018be8 	.word	0x08018be8
+ 8015720:	08018c00 	.word	0x08018c00
+ 8015724:	08018c18 	.word	0x08018c18
+ 8015728:	08018c20 	.word	0x08018c20
+ 801572c:	08018c38 	.word	0x08018c38
+ 8015730:	08018c5c 	.word	0x08018c5c
+ 8015734:	08018c74 	.word	0x08018c74
+ 8015738:	08018ca4 	.word	0x08018ca4
+ 801573c:	08018cbc 	.word	0x08018cbc
+ 8015740:	08018ce4 	.word	0x08018ce4
+ 8015744:	08018d08 	.word	0x08018d08
+ 8015748:	08018d20 	.word	0x08018d20
  801574c:	08020000 	.word	0x08020000
- 8015750:	08018db0 	.word	0x08018db0
- 8015754:	08018dc4 	.word	0x08018dc4
- 8015758:	08018dd8 	.word	0x08018dd8
- 801575c:	08018de0 	.word	0x08018de0
- 8015760:	08018dec 	.word	0x08018dec
- 8015764:	08018e18 	.word	0x08018e18
- 8015768:	08018e20 	.word	0x08018e20
- 801576c:	08018e28 	.word	0x08018e28
- 8015770:	08018e50 	.word	0x08018e50
+ 8015750:	08018d38 	.word	0x08018d38
+ 8015754:	08018d4c 	.word	0x08018d4c
+ 8015758:	08018d60 	.word	0x08018d60
+ 801575c:	08018d68 	.word	0x08018d68
+ 8015760:	08018d74 	.word	0x08018d74
+ 8015764:	08018da0 	.word	0x08018da0
+ 8015768:	08018da8 	.word	0x08018da8
+ 801576c:	08018db0 	.word	0x08018db0
+ 8015770:	08018dd8 	.word	0x08018dd8
 
 08015774 <FlashAppOspi>:
  *                re-enable memory-mapped mode and decide final app state.
@@ -56099,40 +56099,40 @@ static void FlashAppOspi(uint32_t expected_crc32,
  8015a3c:	e047      	b.n	8015ace <FlashAppOspi+0x35a>
  8015a3e:	bf00      	nop
  8015a40:	20055c24 	.word	0x20055c24
- 8015a44:	08018e68 	.word	0x08018e68
- 8015a48:	08018e94 	.word	0x08018e94
- 8015a4c:	08018ea8 	.word	0x08018ea8
- 8015a50:	08018ec0 	.word	0x08018ec0
- 8015a54:	08018ed4 	.word	0x08018ed4
- 8015a58:	08018ef4 	.word	0x08018ef4
- 8015a5c:	08018f0c 	.word	0x08018f0c
- 8015a60:	08018f1c 	.word	0x08018f1c
- 8015a64:	08018f44 	.word	0x08018f44
- 8015a68:	08018f60 	.word	0x08018f60
- 8015a6c:	08018a7c 	.word	0x08018a7c
+ 8015a44:	08018df0 	.word	0x08018df0
+ 8015a48:	08018e1c 	.word	0x08018e1c
+ 8015a4c:	08018e30 	.word	0x08018e30
+ 8015a50:	08018e48 	.word	0x08018e48
+ 8015a54:	08018e5c 	.word	0x08018e5c
+ 8015a58:	08018e7c 	.word	0x08018e7c
+ 8015a5c:	08018e94 	.word	0x08018e94
+ 8015a60:	08018ea4 	.word	0x08018ea4
+ 8015a64:	08018ecc 	.word	0x08018ecc
+ 8015a68:	08018ee8 	.word	0x08018ee8
+ 8015a6c:	08018a04 	.word	0x08018a04
  8015a70:	08015239 	.word	0x08015239
- 8015a74:	08018f74 	.word	0x08018f74
- 8015a78:	08018f8c 	.word	0x08018f8c
- 8015a7c:	08018fac 	.word	0x08018fac
- 8015a80:	08018fc4 	.word	0x08018fc4
- 8015a84:	08018fdc 	.word	0x08018fdc
- 8015a88:	08018ff4 	.word	0x08018ff4
- 8015a8c:	08018ffc 	.word	0x08018ffc
- 8015a90:	08019010 	.word	0x08019010
- 8015a94:	08019034 	.word	0x08019034
- 8015a98:	0801904c 	.word	0x0801904c
- 8015a9c:	0801907c 	.word	0x0801907c
- 8015aa0:	080190a4 	.word	0x080190a4
- 8015aa4:	080190b8 	.word	0x080190b8
- 8015aa8:	080190e4 	.word	0x080190e4
- 8015aac:	08019118 	.word	0x08019118
- 8015ab0:	08019130 	.word	0x08019130
- 8015ab4:	08019148 	.word	0x08019148
- 8015ab8:	08018dd8 	.word	0x08018dd8
- 8015abc:	08018de0 	.word	0x08018de0
- 8015ac0:	08019170 	.word	0x08019170
- 8015ac4:	080191a4 	.word	0x080191a4
- 8015ac8:	080191b8 	.word	0x080191b8
+ 8015a74:	08018efc 	.word	0x08018efc
+ 8015a78:	08018f14 	.word	0x08018f14
+ 8015a7c:	08018f34 	.word	0x08018f34
+ 8015a80:	08018f4c 	.word	0x08018f4c
+ 8015a84:	08018f64 	.word	0x08018f64
+ 8015a88:	08018f7c 	.word	0x08018f7c
+ 8015a8c:	08018f84 	.word	0x08018f84
+ 8015a90:	08018f98 	.word	0x08018f98
+ 8015a94:	08018fbc 	.word	0x08018fbc
+ 8015a98:	08018fd4 	.word	0x08018fd4
+ 8015a9c:	08019004 	.word	0x08019004
+ 8015aa0:	0801902c 	.word	0x0801902c
+ 8015aa4:	08019040 	.word	0x08019040
+ 8015aa8:	0801906c 	.word	0x0801906c
+ 8015aac:	080190a0 	.word	0x080190a0
+ 8015ab0:	080190b8 	.word	0x080190b8
+ 8015ab4:	080190d0 	.word	0x080190d0
+ 8015ab8:	08018d60 	.word	0x08018d60
+ 8015abc:	08018d68 	.word	0x08018d68
+ 8015ac0:	080190f8 	.word	0x080190f8
+ 8015ac4:	0801912c 	.word	0x0801912c
+ 8015ac8:	08019140 	.word	0x08019140
  8015acc:	2304      	movs	r3, #4
  8015ace:	4619      	mov	r1, r3
  8015ad0:	f7ea ff46 	bl	8000960 <BootDisplay_LogColor>
@@ -56196,12 +56196,12 @@ static void FlashAppOspi(uint32_t expected_crc32,
  8015b2e:	46bd      	mov	sp, r7
  8015b30:	bdb0      	pop	{r4, r5, r7, pc}
  8015b32:	bf00      	nop
- 8015b34:	080191cc 	.word	0x080191cc
+ 8015b34:	08019154 	.word	0x08019154
  8015b38:	08020000 	.word	0x08020000
- 8015b3c:	080191e4 	.word	0x080191e4
- 8015b40:	080189fc 	.word	0x080189fc
- 8015b44:	08019204 	.word	0x08019204
- 8015b48:	08019210 	.word	0x08019210
+ 8015b3c:	0801916c 	.word	0x0801916c
+ 8015b40:	08018984 	.word	0x08018984
+ 8015b44:	0801918c 	.word	0x0801918c
+ 8015b48:	08019198 	.word	0x08019198
 
 08015b4c <UsbProcessUpdate>:
 /* -----------------------------------------------------------------------
@@ -56535,39 +56535,39 @@ static uint8_t UsbProcessUpdate(void)
  8015d9e:	2301      	movs	r3, #1
  8015da0:	e36a      	b.n	8016478 <UsbProcessUpdate+0x92c>
  8015da2:	bf00      	nop
- 8015da4:	0801923c 	.word	0x0801923c
- 8015da8:	08019280 	.word	0x08019280
- 8015dac:	080192a4 	.word	0x080192a4
- 8015db0:	080192b8 	.word	0x080192b8
- 8015db4:	080192ec 	.word	0x080192ec
- 8015db8:	080192f8 	.word	0x080192f8
- 8015dbc:	08019334 	.word	0x08019334
- 8015dc0:	08019348 	.word	0x08019348
- 8015dc4:	08019360 	.word	0x08019360
- 8015dc8:	08019374 	.word	0x08019374
- 8015dcc:	08019388 	.word	0x08019388
- 8015dd0:	080193a4 	.word	0x080193a4
- 8015dd4:	080193a8 	.word	0x080193a8
- 8015dd8:	0801a3bc 	.word	0x0801a3bc
- 8015ddc:	080193e4 	.word	0x080193e4
- 8015de0:	080193e8 	.word	0x080193e8
- 8015de4:	080193f4 	.word	0x080193f4
- 8015de8:	08019408 	.word	0x08019408
- 8015dec:	08019420 	.word	0x08019420
- 8015df0:	08019444 	.word	0x08019444
- 8015df4:	08019460 	.word	0x08019460
- 8015df8:	08019470 	.word	0x08019470
- 8015dfc:	08019484 	.word	0x08019484
- 8015e00:	0801949c 	.word	0x0801949c
- 8015e04:	080194ac 	.word	0x080194ac
- 8015e08:	080194c0 	.word	0x080194c0
- 8015e0c:	080194d8 	.word	0x080194d8
- 8015e10:	080194f4 	.word	0x080194f4
- 8015e14:	08019504 	.word	0x08019504
- 8015e18:	0801951c 	.word	0x0801951c
- 8015e1c:	08019540 	.word	0x08019540
- 8015e20:	08019550 	.word	0x08019550
- 8015e24:	08019564 	.word	0x08019564
+ 8015da4:	080191c4 	.word	0x080191c4
+ 8015da8:	08019208 	.word	0x08019208
+ 8015dac:	0801922c 	.word	0x0801922c
+ 8015db0:	08019240 	.word	0x08019240
+ 8015db4:	08019274 	.word	0x08019274
+ 8015db8:	08019280 	.word	0x08019280
+ 8015dbc:	080192bc 	.word	0x080192bc
+ 8015dc0:	080192d0 	.word	0x080192d0
+ 8015dc4:	080192e8 	.word	0x080192e8
+ 8015dc8:	080192fc 	.word	0x080192fc
+ 8015dcc:	08019310 	.word	0x08019310
+ 8015dd0:	0801932c 	.word	0x0801932c
+ 8015dd4:	08019330 	.word	0x08019330
+ 8015dd8:	0801a344 	.word	0x0801a344
+ 8015ddc:	0801936c 	.word	0x0801936c
+ 8015de0:	08019370 	.word	0x08019370
+ 8015de4:	0801937c 	.word	0x0801937c
+ 8015de8:	08019390 	.word	0x08019390
+ 8015dec:	080193a8 	.word	0x080193a8
+ 8015df0:	080193cc 	.word	0x080193cc
+ 8015df4:	080193e8 	.word	0x080193e8
+ 8015df8:	080193f8 	.word	0x080193f8
+ 8015dfc:	0801940c 	.word	0x0801940c
+ 8015e00:	08019424 	.word	0x08019424
+ 8015e04:	08019434 	.word	0x08019434
+ 8015e08:	08019448 	.word	0x08019448
+ 8015e0c:	08019460 	.word	0x08019460
+ 8015e10:	0801947c 	.word	0x0801947c
+ 8015e14:	0801948c 	.word	0x0801948c
+ 8015e18:	080194a4 	.word	0x080194a4
+ 8015e1c:	080194c8 	.word	0x080194c8
+ 8015e20:	080194d8 	.word	0x080194d8
+ 8015e24:	080194ec 	.word	0x080194ec
     }
 
     BootDisplay_Log("MANIFEST OK");
@@ -56804,7 +56804,7 @@ static uint8_t UsbProcessUpdate(void)
  8016006:	4865      	ldr	r0, [pc, #404]	@ (801619c <UsbProcessUpdate+0x650>)
  8016008:	f000 fe2a 	bl	8016c60 <puts>
     /* Pre-flash CRC check of app_int.bin — read from USB and verify before
-     * touching any flash.  app_ospi.bin is too large to pre-verify.
+     * touching any flash.
      * Under ENABLE_CRYPTO, SHA-256 is accumulated in the SAME read pass to
      * verify manifest.sig's authorization without any extra USB read
      * (see Plan_Cifrado_Bootloader_Consola.txt, NOTA DE RENDIMIENTO). */
@@ -56972,32 +56972,32 @@ static uint8_t UsbProcessUpdate(void)
  8016158:	2301      	movs	r3, #1
                 return 1U;
  801615a:	e18d      	b.n	8016478 <UsbProcessUpdate+0x92c>
- 801615c:	08019584 	.word	0x08019584
- 8016160:	08019590 	.word	0x08019590
- 8016164:	08019598 	.word	0x08019598
- 8016168:	080195a0 	.word	0x080195a0
- 801616c:	08018b84 	.word	0x08018b84
- 8016170:	080195b4 	.word	0x080195b4
- 8016174:	080195d0 	.word	0x080195d0
- 8016178:	080195e8 	.word	0x080195e8
- 801617c:	08018ef4 	.word	0x08018ef4
- 8016180:	0801960c 	.word	0x0801960c
- 8016184:	08019624 	.word	0x08019624
- 8016188:	08019640 	.word	0x08019640
- 801618c:	08019658 	.word	0x08019658
- 8016190:	08019670 	.word	0x08019670
- 8016194:	0801968c 	.word	0x0801968c
- 8016198:	080196a4 	.word	0x080196a4
- 801619c:	080196cc 	.word	0x080196cc
- 80161a0:	080196e8 	.word	0x080196e8
- 80161a4:	08019704 	.word	0x08019704
+ 801615c:	0801950c 	.word	0x0801950c
+ 8016160:	08019518 	.word	0x08019518
+ 8016164:	08019520 	.word	0x08019520
+ 8016168:	08019528 	.word	0x08019528
+ 801616c:	08018b0c 	.word	0x08018b0c
+ 8016170:	0801953c 	.word	0x0801953c
+ 8016174:	08019558 	.word	0x08019558
+ 8016178:	08019570 	.word	0x08019570
+ 801617c:	08018e7c 	.word	0x08018e7c
+ 8016180:	08019594 	.word	0x08019594
+ 8016184:	080195ac 	.word	0x080195ac
+ 8016188:	080195c8 	.word	0x080195c8
+ 801618c:	080195e0 	.word	0x080195e0
+ 8016190:	080195f8 	.word	0x080195f8
+ 8016194:	08019614 	.word	0x08019614
+ 8016198:	0801962c 	.word	0x0801962c
+ 801619c:	08019654 	.word	0x08019654
+ 80161a0:	08019670 	.word	0x08019670
+ 80161a4:	0801968c 	.word	0x0801968c
  80161a8:	20055c24 	.word	0x20055c24
- 80161ac:	0801970c 	.word	0x0801970c
- 80161b0:	08019720 	.word	0x08019720
- 80161b4:	0801974c 	.word	0x0801974c
- 80161b8:	08019764 	.word	0x08019764
- 80161bc:	08019794 	.word	0x08019794
- 80161c0:	080197b0 	.word	0x080197b0
+ 80161ac:	08019694 	.word	0x08019694
+ 80161b0:	080196a8 	.word	0x080196a8
+ 80161b4:	080196d4 	.word	0x080196d4
+ 80161b8:	080196ec 	.word	0x080196ec
+ 80161bc:	0801971c 	.word	0x0801971c
+ 80161c0:	08019738 	.word	0x08019738
             }
         }
 #endif
@@ -57009,7 +57009,8 @@ static uint8_t UsbProcessUpdate(void)
  80161cc:	f7ea fbbb 	bl	8000946 <BootDisplay_Log>
     }
 
-    /* Pre-flash CRC check of app_ospi.bin — same approach, slower (~140s). */
+    /* Pre-flash CRC check of app_ospi.bin — same approach (~20 s for 17.5 MB
+     * at ~1.2 MB/s USB read with SHA-256 built -O2). */
     BootDisplay_Log("VERIFYING OSPI BIN CRC...");
  80161d0:	48ae      	ldr	r0, [pc, #696]	@ (801648c <UsbProcessUpdate+0x940>)
  80161d2:	f7ea fbb8 	bl	8000946 <BootDisplay_Log>
@@ -57337,21 +57338,21 @@ static uint8_t UsbProcessUpdate(void)
  801647e:	46bd      	mov	sp, r7
  8016480:	bd90      	pop	{r4, r7, pc}
  8016482:	bf00      	nop
- 8016484:	080197d8 	.word	0x080197d8
- 8016488:	080197f8 	.word	0x080197f8
- 801648c:	08019808 	.word	0x08019808
- 8016490:	08019704 	.word	0x08019704
+ 8016484:	08019760 	.word	0x08019760
+ 8016488:	08019780 	.word	0x08019780
+ 801648c:	08019790 	.word	0x08019790
+ 8016490:	0801968c 	.word	0x0801968c
  8016494:	20055c24 	.word	0x20055c24
- 8016498:	08018ef4 	.word	0x08018ef4
- 801649c:	08019824 	.word	0x08019824
- 80164a0:	08019720 	.word	0x08019720
- 80164a4:	0801983c 	.word	0x0801983c
- 80164a8:	0801985c 	.word	0x0801985c
- 80164ac:	08019874 	.word	0x08019874
- 80164b0:	08019794 	.word	0x08019794
- 80164b4:	080198a4 	.word	0x080198a4
- 80164b8:	080198cc 	.word	0x080198cc
- 80164bc:	080198f0 	.word	0x080198f0
+ 8016498:	08018e7c 	.word	0x08018e7c
+ 801649c:	080197ac 	.word	0x080197ac
+ 80164a0:	080196a8 	.word	0x080196a8
+ 80164a4:	080197c4 	.word	0x080197c4
+ 80164a8:	080197e4 	.word	0x080197e4
+ 80164ac:	080197fc 	.word	0x080197fc
+ 80164b0:	0801971c 	.word	0x0801971c
+ 80164b4:	0801982c 	.word	0x0801982c
+ 80164b8:	08019854 	.word	0x08019854
+ 80164bc:	08019878 	.word	0x08019878
 
 080164c0 <SystemPower_Config>:
 
@@ -58106,7 +58107,7 @@ LoopForever:
   ldr r1, =_edata
  8016878:	200000b0 	.word	0x200000b0
   ldr r2, =_sidata
- 801687c:	0801a45c 	.word	0x0801a45c
+ 801687c:	0801a3e4 	.word	0x0801a3e4
   ldr r2, =_sbss
  8016880:	200000b0 	.word	0x200000b0
   ldr r4, =_ebss
@@ -59033,10 +59034,10 @@ Infinite_Loop:
  8017066:	3601      	adds	r6, #1
  8017068:	4798      	blx	r3
  801706a:	e7f2      	b.n	8017052 <__libc_init_array+0x1e>
- 801706c:	0801a454 	.word	0x0801a454
- 8017070:	0801a454 	.word	0x0801a454
- 8017074:	0801a454 	.word	0x0801a454
- 8017078:	0801a458 	.word	0x0801a458
+ 801706c:	0801a3dc 	.word	0x0801a3dc
+ 8017070:	0801a3dc 	.word	0x0801a3dc
+ 8017074:	0801a3dc 	.word	0x0801a3dc
+ 8017078:	0801a3e0 	.word	0x0801a3e0
 
 0801707c <__retarget_lock_init_recursive>:
  801707c:	4770      	bx	lr
@@ -59409,11 +59410,11 @@ Infinite_Loop:
  80173c4:	f000 f9bc 	bl	8017740 <_printf_i>
  80173c8:	e7ee      	b.n	80173a8 <_svfiprintf_r+0x1b8>
  80173ca:	bf00      	nop
- 80173cc:	0801a418 	.word	0x0801a418
- 80173d0:	0801a422 	.word	0x0801a422
+ 80173cc:	0801a3a0 	.word	0x0801a3a0
+ 80173d0:	0801a3aa 	.word	0x0801a3aa
  80173d4:	00000000 	.word	0x00000000
  80173d8:	08017131 	.word	0x08017131
- 80173dc:	0801a41e 	.word	0x0801a41e
+ 80173dc:	0801a3a6 	.word	0x0801a3a6
 
 080173e0 <__sfputc_r>:
  80173e0:	6893      	ldr	r3, [r2, #8]
@@ -59678,11 +59679,11 @@ Infinite_Loop:
  8017640:	f000 f87e 	bl	8017740 <_printf_i>
  8017644:	e7e5      	b.n	8017612 <_vfiprintf_r+0x1de>
  8017646:	bf00      	nop
- 8017648:	0801a418 	.word	0x0801a418
- 801764c:	0801a422 	.word	0x0801a422
+ 8017648:	0801a3a0 	.word	0x0801a3a0
+ 801764c:	0801a3aa 	.word	0x0801a3aa
  8017650:	00000000 	.word	0x00000000
  8017654:	0801740f 	.word	0x0801740f
- 8017658:	0801a41e 	.word	0x0801a41e
+ 8017658:	0801a3a6 	.word	0x0801a3a6
 
 0801765c <_printf_common>:
  801765c:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
@@ -60016,8 +60017,8 @@ Infinite_Loop:
  801797c:	f104 0619 	add.w	r6, r4, #25
  8017980:	e7f5      	b.n	801796e <_printf_i+0x22e>
  8017982:	bf00      	nop
- 8017984:	0801a429 	.word	0x0801a429
- 8017988:	0801a43a 	.word	0x0801a43a
+ 8017984:	0801a3b1 	.word	0x0801a3b1
+ 8017988:	0801a3c2 	.word	0x0801a3c2
 
 0801798c <__sflush_r>:
  801798c:	f9b1 200c 	ldrsh.w	r2, [r1, #12]

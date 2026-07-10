@@ -955,7 +955,7 @@ static uint8_t UsbProcessUpdate(void)
 
 #if BOOT_PRE_FLASH_CRC_CHECK
     /* Pre-flash CRC check of app_int.bin — read from USB and verify before
-     * touching any flash.  app_ospi.bin is too large to pre-verify.
+     * touching any flash.
      * Under ENABLE_CRYPTO, SHA-256 is accumulated in the SAME read pass to
      * verify manifest.sig's authorization without any extra USB read
      * (see Plan_Cifrado_Bootloader_Consola.txt, NOTA DE RENDIMIENTO). */
@@ -1016,7 +1016,8 @@ static uint8_t UsbProcessUpdate(void)
         BootDisplay_Log("INT BIN CRC OK");
     }
 
-    /* Pre-flash CRC check of app_ospi.bin — same approach, slower (~140s). */
+    /* Pre-flash CRC check of app_ospi.bin — same approach (~20 s for 17.5 MB
+     * at ~1.2 MB/s USB read with SHA-256 built -O2). */
     BootDisplay_Log("VERIFYING OSPI BIN CRC...");
     BootDisplay_ShowProgress("VERIFYING OSPI BIN CRC...", 0U, manifest.app_ospi.size);
     {

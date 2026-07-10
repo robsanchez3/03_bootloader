@@ -112,7 +112,9 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_MSC_ClassRequest(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_MSC_SOFProcess(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_t lun);
+#if (BOOT_USB_ST_TRACE_VERBOSE != 0U)
 static const char *USBH_MSC_StatusString(USBH_StatusTypeDef status);
+#endif
 
 USBH_ClassTypeDef  USBH_msc =
 {
@@ -604,6 +606,9 @@ static USBH_StatusTypeDef USBH_MSC_SOFProcess(USBH_HandleTypeDef *phost)
   return USBH_OK;
 }
 
+#if (BOOT_USB_ST_TRACE_VERBOSE != 0U)
+/* Only referenced from BOOT_USB_ST_TRACE() calls — compiled out (and this
+   function with it) when verbose USB tracing is disabled. */
 static const char *USBH_MSC_StatusString(USBH_StatusTypeDef status)
 {
   switch (status)
@@ -624,6 +629,7 @@ static const char *USBH_MSC_StatusString(USBH_StatusTypeDef status)
       return "USBH_UNKNOWN";
   }
 }
+#endif /* (BOOT_USB_ST_TRACE_VERBOSE != 0U) */
 /**
   * @brief  USBH_MSC_RdWrProcess
   *         The function is for managing state machine for MSC I/O Process

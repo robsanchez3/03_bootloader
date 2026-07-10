@@ -17,7 +17,7 @@
 ../Src/main.c:446:13:FlashAppInt	14
 ../Src/main.c:579:13:FlashAppOspi	16
 ../Src/main.c:757:16:UsbProcessUpdate	38
-../Src/main.c:1126:13:SystemPower_Config	2
-../Src/main.c:1137:13:SystemClock_Config	4
-../Src/main.c:1191:13:MX_GPIO_Init	1
-../Src/main.c:1216:6:Error_Handler	1
+../Src/main.c:1127:13:SystemPower_Config	2
+../Src/main.c:1138:13:SystemClock_Config	4
+../Src/main.c:1192:13:MX_GPIO_Init	1
+../Src/main.c:1217:6:Error_Handler	1
