@@ -4,7 +4,7 @@ C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:28:6:UsbFsService_Rese
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:35:9:UsbFsService_IsMounted	4	static
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:40:15:UsbFsService_Mount	16	static
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:70:15:UsbFsService_Unmount	8	static
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:87:15:UsbFsService_FileExists	48	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:87:15:UsbFsService_FileExists	304	static
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:119:15:UsbFsService_ReadFile	600	static
-C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:173:15:UsbFsService_GetFileSize	48	static
+C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:173:15:UsbFsService_GetFileSize	304	static
 C:/Roberto/O3/O3_Bootloader/Boot/USB/Src/usb_fs_service.c:202:10:UsbFsService_GetLastError	4	static

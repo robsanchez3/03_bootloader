@@ -757,6 +757,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/ffsystem_baremetal.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/Vendor/FatFs/source/ffunicode.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/Vendor/FatFs/source/ffunicode.c</locationURI>
+		</link>
+		<link>
 			<name>Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Inc/usbh_core.h</locationURI>

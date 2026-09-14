@@ -38,6 +38,7 @@
 "./Drivers/Vendor/FatFs/source/ff.o"
 "./Drivers/Vendor/FatFs/source/ff_gen_drv.o"
 "./Drivers/Vendor/FatFs/source/ffsystem_baremetal.o"
+"./Drivers/Vendor/FatFs/source/ffunicode.o"
 "./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o"
 "./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.o"
 "./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.o"

@@ -7,7 +7,7 @@ C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:106:13:copy_str	5
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:124:16:parse_uint32_dec	5
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:147:16:parse_uint32_hex	9
 C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:184:13:parse_kv	16
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:243:29:parse_buf	17
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:333:22:BootManifest_LoadAndParse	6
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:389:17:BootSig_LoadAndDecrypt	4
-C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:426:6:BootManifest_Print	1
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:243:29:parse_buf	19
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:343:22:BootManifest_LoadAndParse	6
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:399:17:BootSig_LoadAndDecrypt	4
+C:/Roberto/O3/O3_Bootloader/Boot/Src/boot_manifest.c:436:6:BootManifest_Print	1

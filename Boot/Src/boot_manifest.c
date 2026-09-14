@@ -317,6 +317,16 @@ static BootManifestResult_t parse_buf(const uint8_t *buf, uint32_t len,
         out->error_msg = "MANIFEST FAIL: OSPI SIZE";
         return BOOT_MANIFEST_ERR_PARSE;
     }
+    if (out->app_int.filename[0] == '\0')
+    {
+        out->error_msg = "MANIFEST FAIL: INT FILENAME";
+        return BOOT_MANIFEST_ERR_PARSE;
+    }
+    if (out->app_ospi.filename[0] == '\0')
+    {
+        out->error_msg = "MANIFEST FAIL: OSPI FILENAME";
+        return BOOT_MANIFEST_ERR_PARSE;
+    }
     if (*has_integrity == 0U)
     {
         out->error_msg = "MANIFEST FAIL: INTEGRITY";

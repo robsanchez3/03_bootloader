@@ -36,8 +36,8 @@ static void MX_GPIO_Init(void);
 static void Recovery_Loop(void);
 static void Boot_SelectBootPath(void);
 static void Boot_SelectAppOrRecovery(void);
-static void FlashAppInt(uint32_t expected_crc32);
-static void FlashAppOspi(uint32_t expected_crc32,
+static void FlashAppInt(const char *file_path, uint32_t expected_crc32);
+static void FlashAppOspi(const char *file_path, uint32_t expected_crc32,
                          uint32_t int_crc32, uint32_t int_size,
                          uint32_t ospi_size);
 static uint8_t UsbProcessUpdate(void);
@@ -66,10 +66,13 @@ static void BootDisplay_OspiEraseProgress(uint32_t current, uint32_t total);
 #define BOOT_USB_READY_TIMEOUT_MS         2500U
 
 #define USB_UPDATE_DIR_PATH               "0:/UPDATE"
-#define USB_UPDATE_APP_INT_BIN            "0:/UPDATE/app_int.bin"
-#define USB_UPDATE_APP_OSPI_BIN           "0:/UPDATE/app_ospi.bin"
 #define USB_UPDATE_MANIFEST               "0:/UPDATE/manifest.ini"
 #define USB_UPDATE_MANIFEST_SIG           "0:/UPDATE/manifest.sig"
+
+/* app_int.bin / app_ospi.bin no longer have fixed names — their real
+ * filenames come from manifest.ini (BootManifestImage_t.filename[32]).
+ * "0:/UPDATE/" (10) + '/' + filename (31) + NUL fits comfortably in 64. */
+#define UPDATE_FILE_PATH_MAX              64U
 
 /* Chunked read configuration */
 #define CHUNKED_READ_BLOCK_SIZE           1048576U /* bytes per open/read/close cycle */
@@ -443,7 +446,7 @@ static void Boot_SelectAppOrRecovery(void)
 /* -----------------------------------------------------------------------
  * FlashAppInt — Read app_int.bin from USB, program internal flash, verify.
  * ----------------------------------------------------------------------- */
-static void FlashAppInt(uint32_t expected_crc32)
+static void FlashAppInt(const char *file_path, uint32_t expected_crc32)
 {
     uint8_t * const chunk = io_buf;
     UsbFsResult_t  result;
@@ -458,7 +461,7 @@ static void FlashAppInt(uint32_t expected_crc32)
     BootDisplay_LogColor("INT FLASH UPDATE", BOOT_DISPLAY_COLOR_BLUE);
 
     /* Preparation: resolve input file size before touching flash. */
-    result = UsbFsService_GetFileSize(USB_UPDATE_APP_INT_BIN, &file_size);
+    result = UsbFsService_GetFileSize(file_path, &file_size);
     if (result != USB_FS_RESULT_OK)
     {
         BootDisplay_Fail("INT FLASH FILE ERROR", 0U);
@@ -494,7 +497,7 @@ static void FlashAppInt(uint32_t expected_crc32)
             to_read = CHUNKED_READ_BLOCK_SIZE;
         }
 
-        result = UsbReadChunkWithRecovery(USB_UPDATE_APP_INT_BIN, chunk,
+        result = UsbReadChunkWithRecovery(file_path, chunk,
                                           offset, to_read, &bytes_read, "FLASH");
         if (result != USB_FS_RESULT_OK)
         {
@@ -576,7 +579,7 @@ static void FlashAppInt(uint32_t expected_crc32)
  * FlashAppOspi — Read app_ospi.bin from USB, program OSPI flash, verify,
  *                re-enable memory-mapped mode and decide final app state.
  * ----------------------------------------------------------------------- */
-static void FlashAppOspi(uint32_t expected_crc32,
+static void FlashAppOspi(const char *file_path, uint32_t expected_crc32,
                          uint32_t int_crc32, uint32_t int_size,
                          uint32_t ospi_size)
 {
@@ -602,7 +605,7 @@ static void FlashAppOspi(uint32_t expected_crc32,
         return;
     }
 
-    result = UsbFsService_GetFileSize(USB_UPDATE_APP_OSPI_BIN, &file_size);
+    result = UsbFsService_GetFileSize(file_path, &file_size);
     if (result != USB_FS_RESULT_OK)
     {
         BootDisplay_Fail("OSPI FILE ERROR", 0U);
@@ -638,7 +641,7 @@ static void FlashAppOspi(uint32_t expected_crc32,
             to_read = CHUNKED_READ_BLOCK_SIZE;
         }
 
-        result = UsbReadChunkWithRecovery(USB_UPDATE_APP_OSPI_BIN, chunk,
+        result = UsbReadChunkWithRecovery(file_path, chunk,
                                           offset, to_read, &bytes_read, "OSPI");
         if (result != USB_FS_RESULT_OK)
         {
@@ -757,18 +760,13 @@ static void FlashAppOspi(uint32_t expected_crc32,
 static uint8_t UsbProcessUpdate(void)
 {
     UsbFsResult_t mount_result;
-    static const char * const update_paths[3] =
-    {
-        USB_UPDATE_APP_INT_BIN,
-        USB_UPDATE_APP_OSPI_BIN,
-        USB_UPDATE_MANIFEST
-    };
-    uint32_t i;
     UsbFsResult_t stat_result;
     uint8_t all_present;
     uint32_t fsize_tmp;
     BootManifest_t manifest;
     BootManifestResult_t mresult;
+    char app_int_path[UPDATE_FILE_PATH_MAX];
+    char app_ospi_path[UPDATE_FILE_PATH_MAX];
 #ifdef ENABLE_CRYPTO
     boot_sig_payload_t sig_payload;
 #endif
@@ -820,28 +818,20 @@ static uint8_t UsbProcessUpdate(void)
         }
     }
 
-    all_present = 1U;
-    for (i = 0U; i < 3U; i++)
-    {
-        stat_result = UsbFsService_FileExists(update_paths[i]);
-        printf("[UPDATE] %s -> %s\n",
-               update_paths[i],
-               (stat_result == USB_FS_RESULT_OK) ? "OK" : "NOT FOUND");
-        if (stat_result != USB_FS_RESULT_OK)
-        {
-            all_present = 0U;
-        }
-    }
-
-    if (all_present == 0U)
+    /* app_int.bin / app_ospi.bin no longer have fixed names, so their
+     * presence can only be checked once manifest.ini has been parsed and
+     * declares their real filenames (see below). Only manifest.ini itself
+     * is checked here, by its fixed path. */
+    stat_result = UsbFsService_FileExists(USB_UPDATE_MANIFEST);
+    printf("[UPDATE] %s -> %s\n", USB_UPDATE_MANIFEST,
+           (stat_result == USB_FS_RESULT_OK) ? "OK" : "NOT FOUND");
+    if (stat_result != USB_FS_RESULT_OK)
     {
         BootDisplay_Fail("UPDATE FILES MISSING", 0U);
-        printf("[UPDATE] one or more files missing\n");
+        printf("[UPDATE] manifest.ini missing\n");
         return 1U;
     }
 
-    printf("[UPDATE] all files present\n");
-    BootDisplay_Log("ALL FILES FOUND");
     BootDisplay_Log("READING MANIFEST...");
 
     /* Parse manifest and validate its integrity CRC */
@@ -881,6 +871,38 @@ static uint8_t UsbProcessUpdate(void)
 
     BootDisplay_Log("MANIFEST OK");
 
+    /* Binary filenames come from the manifest (no longer fixed). Build
+     * their full paths and check both exist before going any further. */
+    (void)snprintf(app_int_path, sizeof(app_int_path), "%s/%s",
+                   USB_UPDATE_DIR_PATH, manifest.app_int.filename);
+    (void)snprintf(app_ospi_path, sizeof(app_ospi_path), "%s/%s",
+                   USB_UPDATE_DIR_PATH, manifest.app_ospi.filename);
+
+    BootDisplay_Log("CHECKING BINARY FILES...");
+    all_present = 1U;
+    stat_result = UsbFsService_FileExists(app_int_path);
+    printf("[UPDATE] %s -> %s\n", app_int_path,
+           (stat_result == USB_FS_RESULT_OK) ? "OK" : "NOT FOUND");
+    if (stat_result != USB_FS_RESULT_OK)
+    {
+        all_present = 0U;
+    }
+    stat_result = UsbFsService_FileExists(app_ospi_path);
+    printf("[UPDATE] %s -> %s\n", app_ospi_path,
+           (stat_result == USB_FS_RESULT_OK) ? "OK" : "NOT FOUND");
+    if (stat_result != USB_FS_RESULT_OK)
+    {
+        all_present = 0U;
+    }
+    if (all_present == 0U)
+    {
+        BootDisplay_Fail("UPDATE FILES MISSING", 0U);
+        printf("[UPDATE] one or more binaries missing\n");
+        return 1U;
+    }
+    printf("[UPDATE] all files present\n");
+    BootDisplay_Log("ALL FILES FOUND");
+
     /* Display version info — strip trailing _x suffix (e.g. V1.R1.P1_b -> V1.R1.P1) */
     {
         char sw_short[20];
@@ -910,9 +932,9 @@ static uint8_t UsbProcessUpdate(void)
     }
 
     /* Validate file sizes against manifest */
-    if (UsbFsService_GetFileSize(USB_UPDATE_APP_INT_BIN, &fsize_tmp) == USB_FS_RESULT_OK)
+    if (UsbFsService_GetFileSize(app_int_path, &fsize_tmp) == USB_FS_RESULT_OK)
     {
-        printf("[UPDATE] %s size=%lu bytes\n", USB_UPDATE_APP_INT_BIN, (unsigned long)fsize_tmp);
+        printf("[UPDATE] %s size=%lu bytes\n", app_int_path, (unsigned long)fsize_tmp);
         if (fsize_tmp != manifest.app_int.size)
         {
             BootDisplay_Fail("INT FILE SIZE MISMATCH", 0U);
@@ -921,9 +943,9 @@ static uint8_t UsbProcessUpdate(void)
             return 1U;
         }
     }
-    if (UsbFsService_GetFileSize(USB_UPDATE_APP_OSPI_BIN, &fsize_tmp) == USB_FS_RESULT_OK)
+    if (UsbFsService_GetFileSize(app_ospi_path, &fsize_tmp) == USB_FS_RESULT_OK)
     {
-        printf("[UPDATE] %s size=%lu bytes\n", USB_UPDATE_APP_OSPI_BIN, (unsigned long)fsize_tmp);
+        printf("[UPDATE] %s size=%lu bytes\n", app_ospi_path, (unsigned long)fsize_tmp);
         if (fsize_tmp != manifest.app_ospi.size)
         {
             BootDisplay_Fail("OSPI FILE SIZE MISMATCH", 0U);
@@ -976,7 +998,7 @@ static uint8_t UsbProcessUpdate(void)
             {
                 pre_len = CHUNKED_READ_BLOCK_SIZE;
             }
-            if (UsbReadChunkWithRecovery(USB_UPDATE_APP_INT_BIN, io_buf,
+            if (UsbReadChunkWithRecovery(app_int_path, io_buf,
                                          pre_off, pre_len, &pre_read,
                                          "PRE-CRC") != USB_FS_RESULT_OK)
             {
@@ -1036,7 +1058,7 @@ static uint8_t UsbProcessUpdate(void)
             {
                 pre_len = CHUNKED_READ_BLOCK_SIZE;
             }
-            if (UsbReadChunkWithRecovery(USB_UPDATE_APP_OSPI_BIN, io_buf,
+            if (UsbReadChunkWithRecovery(app_ospi_path, io_buf,
                                          pre_off, pre_len, &pre_read,
                                          "PRE-CRC") != USB_FS_RESULT_OK)
             {
@@ -1114,8 +1136,8 @@ static uint8_t UsbProcessUpdate(void)
      * corruption. */
     Boot_StoreAppCrc(0U, 0U, 0U, 0U);
 
-    FlashAppInt(manifest.app_int.crc32);
-    FlashAppOspi(manifest.app_ospi.crc32,
+    FlashAppInt(app_int_path, manifest.app_int.crc32);
+    FlashAppOspi(app_ospi_path, manifest.app_ospi.crc32,
                  manifest.app_int.crc32, manifest.app_int.size,
                  manifest.app_ospi.size);
     return 1U;
