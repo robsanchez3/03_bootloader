@@ -2,5 +2,10 @@ UPDATE/
 ZLOGS/
 to_be_deleted/
 
+# Build output — regenerated files, must not be tracked (caused stale absolute
+# paths in generated makefiles to survive a project relocation)
+STM32CubeIDE/Debug/
+STM32CubeIDE/Release/
+
 # Encryption secrets — must never be committed
 Boot/Inc/secrets.h
